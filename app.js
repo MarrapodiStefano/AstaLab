@@ -683,7 +683,7 @@ function renderBrain(){
           return '<div class="brain-role-row">'+
             '<div class="brain-role-label">'+label+'</div>'+
             '<input type="number" min="0" max="100" value="'+pct+'" onclick="event.stopPropagation()" onchange="updateBrainAllocation('+s.id+',\''+r+'\',this.value)">'+
-            '<div class="brain-credits">'+Math.round(budget*pct/100)+' cr</div>'+
+            '<div class="brain-credits">'+Math.round(budget*pct/100)+'</div>'+
           '</div>';
         }).join('')+
         '<div class="brain-actions">'+
