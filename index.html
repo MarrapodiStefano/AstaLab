@@ -1665,117 +1665,34 @@ body.campetti-open{
 .brain-total{margin:12px 0 4px;padding:10px;border-radius:12px;background:#f4f5f7;font-weight:700;text-align:center}
 .brain-total.ok{background:#eaf7ee}
 .brain-total.warn{background:#fff1e8}
-/* BRAIN — v3.2: griglia più compatta e leggibile */
+/* BRAIN — v3.3: proposta 3, schede per ruolo */
 .brain-strategy-details{padding:0 12px 12px;overflow:hidden}
-.brain-total{
-  margin:8px 0;
-  padding:9px 12px;
-  border-radius:13px;
-  font-size:16px;
-  line-height:1.2;
-}
-.brain-live-summary{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:0;
-  margin:0 0 8px;
-  padding:9px 12px;
-  border-radius:14px;
-  background:#f4f5f7;
-  font-size:12px;
-}
-.brain-live-summary span{
-  display:flex;
-  flex-direction:column;
-  gap:2px;
-  min-width:0;
-}
-.brain-live-summary span:last-child{
-  text-align:right;
-  align-items:flex-end;
-  border-left:1px solid var(--line);
-  padding-left:10px;
-}
-.brain-live-summary b{font-size:18px;line-height:1.05}
-
-.brain-role-row{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 56px 78px;
-  column-gap:8px;
-  row-gap:4px;
-  align-items:center;
-  padding:10px 0 8px;
-  border-top:1px solid var(--line);
-  min-width:0;
-}
-.brain-role-label{
-  min-width:0;
-  font-weight:800;
-  font-size:17px;
-  line-height:1.05;
-  white-space:nowrap;
-}
-.brain-role-label small{
-  display:none;
-}
-.brain-role-row input{
-  grid-column:2;
-  grid-row:1;
-  width:56px;
-  height:40px;
-  box-sizing:border-box;
-  text-align:center;
-  margin:0;
-  padding:5px 2px;
-  font-size:17px;
-}
-.brain-credits{
-  grid-column:3;
-  grid-row:1;
-  min-width:0;
-  text-align:right;
-  font-weight:850;
-}
-.brain-credits b{font-size:19px;line-height:1}
-.brain-credits small{
-  display:block;
-  font-size:10px;
-  color:var(--muted);
-  font-weight:650;
-  margin-top:3px;
-}
-.brain-live{
-  grid-column:1 / -1;
-  grid-row:2;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:8px;
-  min-width:0;
-  padding:0 0 1px;
-  font-size:12px;
-}
-.brain-live small{
-  display:block;
-  margin:0;
-  font-size:11px;
-  color:var(--muted);
-  font-weight:650;
-}
-.brain-live b{
-  display:inline;
-  font-size:15px;
-  margin-right:3px;
-}
-.brain-live em{
-  font-style:normal;
-  font-size:12px;
-  font-weight:850;
-  color:#16845d;
-}
-.brain-role-meta{color:var(--muted);font-size:11px;font-weight:650}
-.brain-live .brain-live-spent{margin-left:auto;color:var(--muted)}
-.brain-role-dynamic{width:100%;box-sizing:border-box}
+.brain-total{margin:8px 0;padding:9px 12px;border-radius:13px;font-size:16px;line-height:1.2}
+.brain-live-summary{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:0;padding:10px 14px;border-radius:16px;background:#f4f5f7;font-size:12px}
+.brain-live-summary span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.brain-live-summary span:last-child{text-align:right;align-items:flex-end;border-left:1px solid var(--line);padding-left:12px}
+.brain-live-summary b{font-size:19px;line-height:1.05}
+.brain-progress-wrap{margin:8px 2px 10px}
+.brain-progress-track{height:10px;border-radius:999px;background:#e6e9ed;overflow:hidden;border:1px solid rgba(0,0,0,.04)}
+.brain-progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#ff9a3d,#2fa80f,#1677ff)}
+.brain-progress-meta{display:flex;justify-content:space-between;gap:8px;margin-top:5px;font-size:11px;font-weight:750;color:var(--muted)}
+.brain-role-row{display:grid;grid-template-columns:minmax(92px,1fr) 74px minmax(148px,1.35fr);gap:10px;align-items:center;padding:11px 12px;margin:9px 0;border:0;border-radius:18px;min-width:0;box-sizing:border-box}
+.brain-role-row.role-P{background:linear-gradient(90deg,var(--role-p-soft),#fff9f1)}
+.brain-role-row.role-D{background:linear-gradient(90deg,var(--role-d-soft),#f7fcf4)}
+.brain-role-row.role-C{background:linear-gradient(90deg,var(--role-c-soft),#f5f9ff)}
+.brain-role-row.role-A{background:linear-gradient(90deg,var(--role-a-soft),#fff7f6)}
+.brain-role-label{min-width:0;font-weight:850;font-size:16px;line-height:1.08;white-space:normal}
+.brain-role-label:before{content:"";display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:8px;vertical-align:1px;background:var(--role-color,#777);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.role-P .brain-role-label{--role-color:var(--role-p)}.role-D .brain-role-label{--role-color:var(--role-d)}.role-C .brain-role-label{--role-color:var(--role-c)}.role-A .brain-role-label{--role-color:var(--role-a)}
+.brain-role-meta{display:block;margin-top:5px;color:var(--muted);font-size:11px;font-weight:650}
+.brain-percent{width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.72);border:2px solid var(--role-color,#777);box-sizing:border-box}
+.brain-percent input{width:42px;height:34px;border:0!important;background:transparent!important;box-shadow:none!important;padding:0;margin:0;text-align:right;font-size:18px;font-weight:850;color:var(--ink);outline:0}
+.brain-percent span{font-size:14px;font-weight:850;margin-left:1px}
+.brain-role-numbers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;min-width:0}
+.brain-role-numbers span{min-width:0;text-align:center;padding:0 4px;border-left:1px solid rgba(80,90,100,.12)}.brain-role-numbers span:first-child{border-left:0}
+.brain-role-numbers small{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-bottom:3px}.brain-role-numbers b{display:block;font-size:17px;line-height:1.05}.brain-role-numbers .brain-remaining b{color:#16845d}
+.brain-credits,.brain-live{display:contents}
+.brain-role-row input[type=number]::-webkit-inner-spin-button,.brain-role-row input[type=number]::-webkit-outer-spin-button{opacity:0}
 .brain-actions{display:flex;gap:8px;margin-top:10px}
 .brain-actions .btn{flex:1}
 .brain-template-picker{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:12px}
@@ -1805,7 +1722,7 @@ body.campetti-open{
 
       <div class="title">
         <span>Asta Fantacalcio</span>
-        <span class="app-version">V. 3.2</span>
+        <span class="app-version">V. 3.3</span>
       </div>
 
       <div class="sub" id="sub">
