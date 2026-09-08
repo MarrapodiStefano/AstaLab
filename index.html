@@ -1788,6 +1788,117 @@ body.campetti-open{
 .brain-template-desc{font-size:13px;color:var(--muted)}
 .brain-template-values{font-size:12px;font-weight:750;margin-top:6px;color:#555}
 .brain-template-close{width:100%;margin-top:10px}
+
+/* BRAIN 3.4.4 — layout compatto: ogni ruolo su una sola linea */
+.brain-role-row{
+  display:grid !important;
+  grid-template-columns:minmax(118px,1fr) 72px repeat(3,minmax(48px,.62fr)) 34px !important;
+  align-items:center !important;
+  column-gap:8px !important;
+  min-height:0 !important;
+  margin:7px 0 !important;
+  padding:10px 12px !important;
+  border-radius:18px !important;
+  overflow:hidden !important;
+}
+
+.brain-role-top,
+.brain-role-numbers{
+  display:contents !important;
+}
+
+.brain-role-label{
+  grid-column:1 !important;
+  min-width:0 !important;
+  font-size:16px !important;
+  line-height:1.05 !important;
+}
+
+.brain-role-title{
+  gap:8px !important;
+  min-width:0 !important;
+}
+
+.brain-role-dot{
+  width:18px !important;
+  height:18px !important;
+  flex:0 0 18px !important;
+}
+
+.brain-role-meta{
+  margin-top:4px !important;
+  font-size:11px !important;
+  line-height:1.05 !important;
+}
+
+.brain-percent{
+  grid-column:2 !important;
+  width:72px !important;
+  height:72px !important;
+  justify-self:center !important;
+  align-self:center !important;
+}
+
+.brain-percent input{
+  width:43px !important;
+  height:34px !important;
+  font-size:18px !important;
+  line-height:34px !important;
+}
+
+.brain-percent span{
+  margin-left:0 !important;
+  font-size:15px !important;
+  line-height:34px !important;
+}
+
+.brain-role-numbers span{
+  align-self:center !important;
+  min-width:0 !important;
+  text-align:center !important;
+  padding:0 5px !important;
+  border-left:1px solid rgba(80,90,100,.12) !important;
+}
+
+.brain-role-numbers span:nth-child(1){grid-column:3 !important;}
+.brain-role-numbers span:nth-child(2){grid-column:4 !important;}
+.brain-role-numbers span:nth-child(3){grid-column:5 !important;}
+
+.brain-role-numbers small{
+  font-size:10px !important;
+  line-height:1 !important;
+  margin:0 0 5px !important;
+}
+
+.brain-role-numbers b{
+  font-size:18px !important;
+  line-height:1 !important;
+}
+
+.brain-role-symbol{
+  grid-column:6 !important;
+  grid-row:1 !important;
+  width:34px !important;
+  font-size:26px !important;
+  justify-self:center !important;
+}
+
+@media(max-width:390px){
+  .brain-role-row{
+    grid-template-columns:minmax(106px,1fr) 66px repeat(3,minmax(43px,.62fr)) 30px !important;
+    column-gap:5px !important;
+    padding:9px 9px !important;
+  }
+  .brain-role-label{font-size:15px !important;}
+  .brain-role-dot{width:17px !important;height:17px !important;flex-basis:17px !important;}
+  .brain-percent{width:66px !important;height:66px !important;}
+  .brain-percent input{width:39px !important;font-size:17px !important;}
+  .brain-percent span{font-size:14px !important;}
+  .brain-role-numbers span{padding:0 3px !important;}
+  .brain-role-numbers b{font-size:17px !important;}
+  .brain-role-symbol{width:30px !important;font-size:23px !important;}
+}
+
 </style>
 
 </head>
@@ -1806,7 +1917,7 @@ body.campetti-open{
 
       <div class="title">
         <span>Asta Fantacalcio</span>
-        <span class="app-version">V. 3.4.3</span>
+        <span class="app-version">V. 3.4.4</span>
       </div>
 
       <div class="sub" id="sub">
