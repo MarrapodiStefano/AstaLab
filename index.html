@@ -1792,7 +1792,7 @@ body.campetti-open{
 /* BRAIN 3.4.5 — percentuale più compatta e titoli sempre leggibili */
 .brain-role-row{
   display:grid !important;
-  grid-template-columns:minmax(118px,1fr) 64px repeat(3,minmax(46px,.62fr)) 32px !important;
+  grid-template-columns:minmax(118px,1fr) 64px repeat(3,minmax(46px,.62fr)) !important;
   align-items:center !important;
   column-gap:7px !important;
   min-height:0 !important;
@@ -1887,16 +1887,12 @@ body.campetti-open{
 }
 
 .brain-role-symbol{
-  grid-column:6 !important;
-  grid-row:1 !important;
-  width:32px !important;
-  font-size:25px !important;
-  justify-self:center !important;
+  display:none !important;
 }
 
 @media(max-width:390px){
   .brain-role-row{
-    grid-template-columns:minmax(104px,1fr) 58px repeat(3,minmax(41px,.62fr)) 28px !important;
+    grid-template-columns:minmax(104px,1fr) 58px repeat(3,minmax(41px,.62fr)) !important;
     column-gap:5px !important;
     padding:9px 9px !important;
   }
@@ -1908,7 +1904,7 @@ body.campetti-open{
   .brain-percent span{font-size:14px !important;}
   .brain-role-numbers span{padding:0 3px !important;}
   .brain-role-numbers b{font-size:17px !important;}
-  .brain-role-symbol{width:28px !important;font-size:22px !important;}
+  .brain-role-symbol{display:none !important;}
 }
 
 </style>
@@ -1929,7 +1925,7 @@ body.campetti-open{
 
       <div class="title">
         <span>Asta Fantacalcio</span>
-        <span class="app-version">V. 3.4.5</span>
+        <span class="app-version">V. 3.4.6</span>
       </div>
 
       <div class="sub" id="sub">
