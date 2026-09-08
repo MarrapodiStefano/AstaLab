@@ -692,19 +692,15 @@ function renderBrain(){
       const expanded=s.id===brainExpandedId;
 
       return '<div class="card brain-strategy '+(active?'active ':'')+(expanded?'expanded':'')+'">'+
-        '<button class="brain-strategy-title" onclick="toggleBrainStrategy('+s.id+')" aria-expanded="'+expanded+'">'+
+        '<div class="brain-strategy-title">'+
           '<span class="brain-strategy-icon">'+brainStrategyIcon(s.template)+'</span>'+
-          '<span>'+esc(s.name)+'</span>'+
-        '</button>'+
+          '<button class="brain-strategy-edit" type="button" onclick="renameBrainStrategy('+s.id+')" aria-label="Modifica nome strategia">✏️</button>'+
+          '<button class="brain-strategy-name" type="button" onclick="toggleBrainStrategy('+s.id+')" aria-expanded="'+expanded+'">'+esc(s.name)+'</button>'+
+          '<span class="brain-strategy-status '+(active?'':'inactive')+'" aria-label="'+(active?'Strategia attiva':'')+'">✓</span>'+
+        '</div>'+
         (expanded?
           '<div class="brain-strategy-details">'+
-            '<div class="brain-strategy-head">'+
-              '<label class="brain-active-choice">'+
-                '<input class="brain-check" type="radio" name="brainActive" '+(active?'checked':'')+' onchange="selectBrainStrategy('+s.id+')">'+
-                '<span>Strategia attiva</span>'+
-              '</label>'+
-              '<button class="btn secondary" style="min-height:34px;padding:5px 9px" onclick="renameBrainStrategy('+s.id+')">✏️</button>'+
-            '</div>'+
+            ''+
             '<div class="brain-total '+(total===100?'ok':'warn')+'">'+total+'% · Piano '+Math.round(budget*total/100)+' crediti'+(total===100?' ✓':'')+'</div>'+
             '<div class="brain-live-summary"><span>💰 Budget rimasto <b>'+remaining+'</b></span><span>📊 Speso <b>'+spentTotal+'</b></span></div>'+
             BRAIN_ROLES.map(([r,label,symbol])=>{
@@ -715,7 +711,7 @@ function renderBrain(){
               return '<div class="brain-role-row brain-role-dynamic role-'+r+'">'+
                 '<div class="brain-role-top">'+
                   '<div class="brain-role-label"><div class="brain-role-title"><span class="brain-role-dot"></span><span>'+label+'</span></div><span class="brain-role-meta">'+stats[r].count+' acquistati</span></div>'+
-                  '<div class="brain-percent"><input type="number" min="0" max="100" value="'+pct+'" aria-label="Percentuale '+label+'" onchange="updateBrainAllocation('+s.id+',\''+r+'\',this.value)"><span>%</span></div>'+
+                  '<div class="brain-percent"><input type="number" min="0" max="100" value="'+pct+'" style="width:'+(String(pct).length===1?'13px':String(pct).length===2?'24px':'35px')+'!important" aria-label="Percentuale '+label+'" onchange="updateBrainAllocation('+s.id+',\''+r+'\',this.value)"><span>%</span></div>'+
                   '<div class="brain-role-symbol" aria-hidden="true">'+symbol+'</div>'+
                 '</div>'+
                 '<div class="brain-role-numbers">'+
