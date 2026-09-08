@@ -630,7 +630,7 @@ function counts(t){
 const BRAIN_ROLES=[
   ['P','Portieri','🖐️'],
   ['D','Difensori','🛡️'],
-  ['C','Centrocampisti','⚽'],
+  ['C','Centroc.','⚽'],
   ['A','Attaccanti','👟']
 ];
 
@@ -693,10 +693,10 @@ function renderBrain(){
 
       return '<div class="card brain-strategy '+(active?'active ':'')+(expanded?'expanded':'')+'">'+
         '<div class="brain-strategy-title">'+
-          '<span class="brain-strategy-icon">'+brainStrategyIcon(s.template)+'</span>'+
           '<button class="brain-strategy-edit" type="button" onclick="renameBrainStrategy('+s.id+')" aria-label="Modifica nome strategia">✏️</button>'+
+          '<span class="brain-strategy-icon">'+brainStrategyIcon(s.template)+'</span>'+
           '<button class="brain-strategy-name" type="button" onclick="toggleBrainStrategy('+s.id+')" aria-expanded="'+expanded+'">'+esc(s.name)+'</button>'+
-          '<span class="brain-strategy-status '+(active?'':'inactive')+'" aria-label="'+(active?'Strategia attiva':'')+'">✓</span>'+
+          '<span class="brain-strategy-status '+(active?'':'inactive')+'" aria-label="'+(active?'Strategia attiva':'')+'"></span>'+
         '</div>'+
         (expanded?
           '<div class="brain-strategy-details">'+
