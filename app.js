@@ -666,6 +666,47 @@ function brainStrategySlots(strategy){
   return strategy.slots;
 }
 
+function brainAutoSlotDistribution(count){
+  const weights=Array.from({length:count},(_,i)=>Math.pow(count-i,1.55));
+  const total=weights.reduce((a,b)=>a+b,0)||1;
+  const raw=weights.map(w=>w/total*100);
+  const rounded=raw.map(x=>Math.round(x));
+  let diff=100-rounded.reduce((a,b)=>a+b,0);
+  let i=0;
+  while(diff!==0 && rounded.length){
+    const step=diff>0?1:-1;
+    const target=i%rounded.length;
+    if(rounded[target]+step>=0){rounded[target]+=step;diff-=step;}
+    i++;
+  }
+  return rounded;
+}
+
+function brainStrategySlotAllocation(strategy,role){
+  const slots=brainStrategySlots(strategy)[role]||0;
+  if(!strategy.slotAllocation || typeof strategy.slotAllocation!=='object') strategy.slotAllocation={};
+  const current=Array.isArray(strategy.slotAllocation[role])?strategy.slotAllocation[role]:null;
+  if(!current || current.length!==slots){
+    strategy.slotAllocation[role]=brainAutoSlotDistribution(slots);
+  }
+  return strategy.slotAllocation[role];
+}
+
+function updateBrainSlotAllocation(id,role,index,value){
+  const s=current?.brainStrategies.find(x=>x.id===id); if(!s) return;
+  const arr=brainStrategySlotAllocation(s,role).slice();
+  arr[index]=Math.max(0,Math.min(100,Number(value)||0));
+  s.slotAllocation[role]=arr;
+  persist();
+}
+
+function toggleBrainSlots(id,role){
+  if(!window.brainOpenSlots) window.brainOpenSlots={};
+  const key=id+'-'+role;
+  window.brainOpenSlots[key]=!window.brainOpenSlots[key];
+  renderBrain();
+}
+
 /* La squadra dell'utente è sempre la prima della lista dell'asta. */
 function brainMyTeam(){
   if(!current?.teams?.length) return null;
@@ -737,6 +778,9 @@ function renderBrain(){
               const needed=Math.max(0,slots-bought);
               const available=Math.max(0,planned-spent);
               const avg=needed>0?Math.floor(available/needed):0;
+              const slotPercents=brainStrategySlotAllocation(s,r);
+              const slotKey=s.id+'-'+r;
+              const slotsOpen=!!window.brainOpenSlots?.[slotKey];
               return '<div class="brain-role-row brain-role-dynamic role-'+r+'">'+
                 '<div class="brain-role-top">'+
                   '<div class="brain-role-label"><div class="brain-role-title"><span class="brain-role-dot"></span><span>'+label+'</span></div><span class="brain-role-meta">'+bought+' acquistati · '+needed+' da prendere · '+(needed>0?avg+' cr/media':'reparto completo')+'</span></div>'+
@@ -748,6 +792,18 @@ function renderBrain(){
                   '<span><small>Spesi</small><b>'+spent+'</b></span>'+
                   '<span class="brain-remaining"><small>Rimasti</small><b>'+available+'</b></span>'+
                 '</div>'+
+                '<button class="brain-slots-toggle" type="button" onclick="toggleBrainSlots('+s.id+',\''+r+'\')">'+(slotsOpen?'Nascondi slot':'Gestisci '+slots+' slot')+' <span>'+ (slotsOpen?'⌃':'⌄') +'</span></button>'+
+                (slotsOpen?'<div class="brain-slots">'+
+                  slotPercents.map((slotPct,i)=>{
+                    const slotBudget=Math.round(planned*slotPct/100);
+                    return '<div class="brain-slot">'+
+                      '<span class="brain-slot-name">Slot '+(i+1)+'</span>'+
+                      '<div class="brain-slot-value"><input type="number" min="0" max="100" value="'+slotPct+'" onchange="updateBrainSlotAllocation('+s.id+',\''+r+'\','+i+',this.value)"><span>%</span></div>'+
+                      '<b>'+slotBudget+' cr</b>'+
+                    '</div>';
+                  }).join('')+
+                  '<div class="brain-slots-total">'+slotPercents.reduce((a,b)=>a+b,0)+'% del budget '+label+'</div>'+
+                '</div>':'')+
               '</div>';
             }).join('')+            '<div class="brain-actions">'+
               '<button class="btn secondary" onclick="duplicateBrainStrategy('+s.id+')">Duplica</button>'+
@@ -831,6 +887,7 @@ function createBrainFromTemplate(key){
     id:Date.now(),
     name:t.name.replace(/^[^ ]+ /,'')+' '+(existing+1),
     allocation:{...t.allocation},
+    slots:{P:2,D:9,C:9,A:7},
     template:key
   });
   current.activeBrainStrategyId=current.brainStrategies[current.brainStrategies.length-1].id;
@@ -839,7 +896,7 @@ function createBrainFromTemplate(key){
 }
 function duplicateBrainStrategy(id){
   const s=current?.brainStrategies.find(x=>x.id===id); if(!s) return;
-  current.brainStrategies.push({id:Date.now(),name:s.name+' copia',allocation:{...s.allocation}});
+  current.brainStrategies.push({id:Date.now(),name:s.name+' copia',allocation:{...s.allocation},slots:{...brainStrategySlots(s)},slotAllocation:JSON.parse(JSON.stringify(s.slotAllocation||{})),template:s.template});
   persist();
 }
 function renameBrainStrategy(id){
