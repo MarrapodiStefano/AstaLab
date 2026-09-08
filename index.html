@@ -1651,7 +1651,7 @@ body.campetti-open{
 
       <div class="title">
         <span>Asta Fantacalcio</span>
-        <span class="app-version">V. 3.0</span>
+        <span class="app-version">V. 1.0</span>
       </div>
 
       <div class="sub" id="sub">
@@ -1926,7 +1926,8 @@ body.campetti-open{
 
   <div class="objective-search-wrap" style="margin-top:12px">
     <div class="searchbox">
-      <input id="objQ" type="search" placeholder="Cerca nei tuoi obiettivi..." autocomplete="off" oninput="renderObjectives()">
+      <input id="objQ" type="search" placeholder="Cerca nei tuoi obiettivi..." autocomplete="off" list="objSuggestions" oninput="renderObjectives()">
+      <datalist id="objSuggestions"></datalist>
     </div>
   </div>
 
