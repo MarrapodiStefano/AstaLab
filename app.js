@@ -682,7 +682,7 @@ function renderBrain(){
   const spentPct=budget>0?Math.min(100,Math.round(spentTotal/budget*100)):0;
 
   box.innerHTML=
-    '<div class="card">'+
+    '<div class="card brain-auction-budget">'+
       '<div class="muted small">Budget dell’asta in corso</div>'+
       '<div class="brain-budget">💰 '+budget+' crediti</div>'+
     '</div>'+
@@ -702,7 +702,7 @@ function renderBrain(){
           '<div class="brain-strategy-details">'+
             ''+
             '<div class="brain-total '+(total===100?'ok':'warn')+'">'+total+'% · Piano '+Math.round(budget*total/100)+' crediti'+(total===100?' ✓':'')+'</div>'+
-            '<div class="brain-live-summary"><span>💰 Budget rimasto <b>'+remaining+'</b></span><span>📊 Speso <b>'+spentTotal+'</b></span></div>'+
+            '<div class="brain-live-summary"><span>💰 Budget rimasto <b>'+remaining+'</b></span><span>💸 Speso <b>'+spentTotal+'</b></span></div>'+
             BRAIN_ROLES.map(([r,label,symbol])=>{
               const pct=+s.allocation[r]||0;
               const planned=Math.round(budget*pct/100);
