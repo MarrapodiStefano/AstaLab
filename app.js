@@ -623,6 +623,114 @@ function counts(t){
 
 
 
+
+/* =========================
+   BRAIN
+========================= */
+const BRAIN_ROLES=[
+  ['P','🟠 Portieri'],
+  ['D','🟢 Difensori'],
+  ['C','🔵 Centrocampisti'],
+  ['A','🔴 Attaccanti']
+];
+
+function ensureBrain(){
+  if(!current) return;
+  if(!Array.isArray(current.brainStrategies) || !current.brainStrategies.length){
+    current.brainStrategies=[{
+      id:Date.now(),
+      name:'Strategia 1',
+      allocation:{P:10,D:10,C:30,A:50}
+    }];
+    current.activeBrainStrategyId=current.brainStrategies[0].id;
+  }
+  if(!current.activeBrainStrategyId || !current.brainStrategies.some(s=>s.id===current.activeBrainStrategyId)){
+    current.activeBrainStrategyId=current.brainStrategies[0].id;
+  }
+}
+
+function activeBrainStrategy(){
+  ensureBrain();
+  return current?.brainStrategies.find(s=>s.id===current.activeBrainStrategyId);
+}
+
+function renderBrain(){
+  const box=$('brainContent');
+  if(!box) return;
+  if(!current){
+    box.innerHTML='<div class="card muted">Crea o apri un’asta per usare Brain.</div>';
+    return;
+  }
+  ensureBrain();
+  const budget=current.initialCredits||0;
+  box.innerHTML=
+    '<div class="card">'+
+      '<div class="muted small">Budget dell’asta in corso</div>'+
+      '<div class="brain-budget">💰 '+budget+' crediti</div>'+
+    '</div>'+
+    current.brainStrategies.map(s=>{
+      const total=BRAIN_ROLES.reduce((n,[r])=>n+(+s.allocation[r]||0),0);
+      const active=s.id===current.activeBrainStrategyId;
+      return '<div class="card brain-strategy '+(active?'active':'')+'" onclick="selectBrainStrategy('+s.id+')">'+
+        '<div class="brain-strategy-head">'+
+          '<input class="brain-check" type="radio" name="brainActive" '+(active?'checked':'')+' onclick="event.stopPropagation();selectBrainStrategy('+s.id+')">'+
+          '<div class="brain-name">'+esc(s.name)+'</div>'+
+          '<button class="btn secondary" style="min-height:34px;padding:5px 9px" onclick="event.stopPropagation();renameBrainStrategy('+s.id+')">✏️</button>'+
+        '</div>'+
+        '<div class="brain-total '+(total===100?'ok':'warn')+'">'+total+'% · '+Math.round(budget*total/100)+' crediti'+(total===100?' ✓':'')+'</div>'+
+        BRAIN_ROLES.map(([r,label])=>{
+          const pct=+s.allocation[r]||0;
+          return '<div class="brain-role-row">'+
+            '<div class="brain-role-label">'+label+'</div>'+
+            '<input type="number" min="0" max="100" value="'+pct+'" onclick="event.stopPropagation()" onchange="updateBrainAllocation('+s.id+',\''+r+'\',this.value)">'+
+            '<div class="brain-credits">'+Math.round(budget*pct/100)+' cr</div>'+
+          '</div>';
+        }).join('')+
+        '<div class="brain-actions">'+
+          '<button class="btn secondary" onclick="event.stopPropagation();duplicateBrainStrategy('+s.id+')">Duplica</button>'+
+          (current.brainStrategies.length>1?'<button class="btn secondary" onclick="event.stopPropagation();deleteBrainStrategy('+s.id+')">Elimina</button>':'')+
+        '</div>'+
+      '</div>';
+    }).join('');
+}
+
+function selectBrainStrategy(id){
+  if(!current) return;
+  ensureBrain();
+  current.activeBrainStrategyId=id;
+  persist();
+}
+function addBrainStrategy(){
+  if(!current){ alert('Apri prima un’asta.'); return; }
+  ensureBrain();
+  const n=current.brainStrategies.length+1;
+  current.brainStrategies.push({id:Date.now(),name:'Strategia '+n,allocation:{P:10,D:10,C:30,A:50}});
+  persist();
+}
+function duplicateBrainStrategy(id){
+  const s=current?.brainStrategies.find(x=>x.id===id); if(!s) return;
+  current.brainStrategies.push({id:Date.now(),name:s.name+' copia',allocation:{...s.allocation}});
+  persist();
+}
+function renameBrainStrategy(id){
+  const s=current?.brainStrategies.find(x=>x.id===id); if(!s) return;
+  const name=prompt('Nome della strategia',s.name);
+  if(name!==null && name.trim()){s.name=name.trim();persist();}
+}
+function deleteBrainStrategy(id){
+  if(!current || current.brainStrategies.length<=1) return;
+  if(!confirm('Eliminare questa strategia?')) return;
+  current.brainStrategies=current.brainStrategies.filter(s=>s.id!==id);
+  if(current.activeBrainStrategyId===id) current.activeBrainStrategyId=current.brainStrategies[0].id;
+  persist();
+}
+function updateBrainAllocation(id,role,value){
+  const s=current?.brainStrategies.find(x=>x.id===id); if(!s) return;
+  s.allocation[role]=Math.max(0,Math.min(100,+value||0));
+  persist();
+}
+
+
 /* =========================
    BUDGET
 ========================= */
@@ -1073,6 +1181,8 @@ function render(){
     renderFormation();
 
     renderObjectives();
+
+    renderBrain();
 
     renderFree();
 
