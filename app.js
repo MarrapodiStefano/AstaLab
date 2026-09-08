@@ -3142,6 +3142,14 @@ function renderObjectives(){
 
     const q = ($('objQ')?.value || '').trim().toLowerCase();
 
+    const suggestions = allPlayers()
+        .filter(p => current.objectives.includes(p.id) && p.name.toLowerCase().includes(q))
+        .sort((a,b) => a.name.localeCompare(b.name, 'it'));
+    const suggestionBox = $('objSuggestions');
+    if(suggestionBox){
+        suggestionBox.innerHTML = suggestions.map(p => `<option value="${esc(p.name)}">${esc(p.team)} · ${p.role}</option>`).join('');
+    }
+
     let sold = new Set();
 
 
