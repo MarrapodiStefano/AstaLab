@@ -1921,6 +1921,38 @@ body.campetti-open{
 
 </style>
 
+
+<style id="brain-3415">
+/* BRAIN 3.4.15 — R.M. in linea e gestione slot direttamente dalla rotella */
+.brain-role-title{gap:8px!important;}
+.brain-role-gear{
+  width:18px;height:18px;flex:0 0 18px;
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:0;margin:0;border:0;background:transparent;
+  color:var(--role-color);font-family:inherit;font-size:21px;line-height:1;font-weight:700;
+  cursor:pointer;-webkit-appearance:none;
+}
+.brain-role-gear:active{transform:scale(.9);}
+.brain-role-meta{
+  display:flex!important;flex-direction:row!important;align-items:baseline!important;
+  gap:7px!important;margin-top:5px!important;white-space:nowrap;
+}
+.brain-role-meta b{color:var(--ink);font-size:15px;line-height:1;}
+.brain-role-meta span{font-size:12px;line-height:1;font-weight:750;}
+.brain-role-dot{display:none!important;}
+.brain-slots-toggle{display:none!important;}
+.brain-slots{
+  grid-column:1 / -1!important;margin-top:8px;
+  padding:7px 10px 10px!important;border-top:1px solid rgba(80,90,100,.12);
+}
+@media(max-width:390px){
+  .brain-role-gear{width:17px;height:17px;flex-basis:17px;font-size:19px;}
+  .brain-role-meta{gap:6px!important;}
+  .brain-role-meta b{font-size:14px;}
+  .brain-role-meta span{font-size:11px;}
+}
+</style>
+
 </head>
 
 
@@ -1937,7 +1969,7 @@ body.campetti-open{
 
       <div class="title">
         <span>Asta Fantacalcio</span>
-        <span class="app-version">V. 3.4.14</span>
+        <span class="app-version">V. 3.4.15</span>
       </div>
 
       <div class="sub" id="sub">
