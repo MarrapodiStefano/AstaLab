@@ -1635,6 +1635,23 @@ body.campetti-open{
 #setupList .meta{margin-top:1px;font-size:11px;line-height:14px}
 #setupList .tag{padding:2px 5px;font-size:10px;margin-top:1px}
 #setupList button[title]{width:38px!important;height:38px!important;font-size:23px!important;flex:0 0 38px}
+
+/* BRAIN */
+.brain-budget{font-size:28px;font-weight:800;margin-top:4px}
+.brain-strategy{padding:14px;margin-bottom:10px;cursor:pointer}
+.brain-strategy.active{border:2px solid var(--ink)}
+.brain-strategy-head{display:flex;align-items:center;gap:10px}
+.brain-check{width:24px;height:24px;accent-color:#222}
+.brain-name{font-weight:800;font-size:17px;flex:1}
+.brain-total{margin:12px 0 4px;padding:10px;border-radius:12px;background:#f4f5f7;font-weight:700;text-align:center}
+.brain-total.ok{background:#eaf7ee}
+.brain-total.warn{background:#fff1e8}
+.brain-role-row{display:grid;grid-template-columns:1fr 74px 82px;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.brain-role-label{font-weight:750}
+.brain-role-row input{text-align:center;margin:0;padding:8px 4px;min-height:38px}
+.brain-credits{text-align:right;font-weight:800}
+.brain-actions{display:flex;gap:8px;margin-top:10px}
+.brain-actions .btn{flex:1}
 </style>
 
 </head>
@@ -1653,7 +1670,7 @@ body.campetti-open{
 
       <div class="title">
         <span>Asta Fantacalcio</span>
-        <span class="app-version">V. 1.3</span>
+        <span class="app-version">V. 1.4</span>
       </div>
 
       <div class="sub" id="sub">
@@ -1823,6 +1840,20 @@ body.campetti-open{
 </section>
 
 
+
+
+
+<!-- BRAIN -->
+<section id="brain" class="screen">
+  <div class="head">
+    <div>
+      <div class="h2" style="margin:0">🧠 Brain</div>
+      <div class="muted small">Il tuo piano per l'asta</div>
+    </div>
+    <button class="btn secondary" style="min-height:40px;padding:7px 11px" onclick="addBrainStrategy()">＋</button>
+  </div>
+  <div id="brainContent"></div>
+</section>
 
 <!-- SQUADRE DETTAGLIO -->
 
@@ -2119,9 +2150,9 @@ body.campetti-open{
     Campetti
   </button>
 
-  <button class="nav" data-s="teams" onclick="go('teams')">
-    <span class="navicon"><svg class="nav-svg fill" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="8.5" r="2.5"/><path d="M3.5 20c0-4 2.3-6.3 5.5-6.3s5.5 2.3 5.5 6.3z"/><path d="M14 20c.1-3.1 1.8-5 4.4-5 1.4 0 2.7.6 3.6 1.8V20z"/></svg></span>
-    Squadre
+  <button class="nav" data-s="brain" onclick="go('brain')" aria-label="Brain">
+    <span class="navicon">🧠</span>
+    Brain
   </button>
 
 </nav>
