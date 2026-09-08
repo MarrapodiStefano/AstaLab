@@ -723,17 +723,19 @@ function openBrainTemplatePicker(){
   wrap.innerHTML='<div class="brain-template-sheet" onclick="event.stopPropagation()">'+
     '<div class="brain-template-title">🧠 Nuova strategia</div>'+
     '<div class="muted small brain-template-sub">Scegli un modello di partenza. Potrai modificare tutto in seguito.</div>'+
-    BRAIN_TEMPLATES.map(t=>'<button class="brain-template" onclick="createBrainFromTemplate(\\''+t.key+'\\')">'+
+    BRAIN_TEMPLATES.map(t=>'<button class="brain-template" data-template="'+t.key+'">'+
       '<div class="brain-template-name">'+t.name+'</div>'+
       '<div class="brain-template-desc">'+t.desc+'</div>'+
       '<div class="brain-template-values">P '+t.allocation.P+'% · D '+t.allocation.D+'% · C '+t.allocation.C+'% · A '+t.allocation.A+'%</div>'+
     '</button>').join('')+
-    '<button class="btn secondary brain-template-close" onclick="closeBrainTemplatePicker()">Annulla</button>'+
+    '<button class="btn secondary brain-template-close" data-close-brain-template>Annulla</button>'+
   '</div>';
   wrap.onclick=closeBrainTemplatePicker;
+  wrap.querySelector('.brain-template-sheet').onclick=e=>e.stopPropagation();
+  wrap.querySelectorAll('[data-template]').forEach(btn=>btn.onclick=()=>createBrainFromTemplate(btn.dataset.template));
+  wrap.querySelector('[data-close-brain-template]').onclick=closeBrainTemplatePicker;
   document.body.appendChild(wrap);
 }
-
 function closeBrainTemplatePicker(){
   const el=document.getElementById('brainTemplatePicker');
   if(el) el.remove();
