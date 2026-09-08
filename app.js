@@ -678,6 +678,8 @@ function renderBrain(){
   const budget=current.initialCredits||0;
   const stats=brainRoleStats();
   const remaining=brainRemainingBudget();
+  const spentTotal=Math.max(0,budget-remaining);
+  const spentPct=budget>0?Math.min(100,Math.round(spentTotal/budget*100)):0;
 
   box.innerHTML=
     '<div class="card">'+
@@ -704,20 +706,20 @@ function renderBrain(){
               '<button class="btn secondary" style="min-height:34px;padding:5px 9px" onclick="renameBrainStrategy('+s.id+')">✏️</button>'+
             '</div>'+
             '<div class="brain-total '+(total===100?'ok':'warn')+'">'+total+'% · Piano '+Math.round(budget*total/100)+' crediti'+(total===100?' ✓':'')+'</div>'+
-            '<div class="brain-live-summary"><span>💰 Budget rimasto <b>'+remaining+'</b></span><span>📊 Speso <b>'+(budget-remaining)+'</b></span></div>'+
+            '<div class="brain-live-summary"><span>💰 Budget rimasto <b>'+remaining+'</b></span><span>📊 Speso <b>'+spentTotal+'</b></span></div>'+
+            '<div class="brain-progress-wrap"><div class="brain-progress-track"><div class="brain-progress-fill" style="width:'+spentPct+'%"></div></div><div class="brain-progress-meta"><span>'+spentPct+'% speso</span><span>'+remaining+' crediti rimasti</span></div></div>'+
             BRAIN_ROLES.map(([r,label])=>{
               const pct=+s.allocation[r]||0;
               const planned=Math.round(budget*pct/100);
               const spent=stats[r].spent;
               const available=Math.max(0,planned-spent);
-              return '<div class="brain-role-row brain-role-dynamic">'+
-                '<div class="brain-role-label">'+label+'</div>'+
-                '<input type="number" min="0" max="100" value="'+pct+'" onchange="updateBrainAllocation('+s.id+',\''+r+'\',this.value)">'+
-                '<div class="brain-credits"><b>'+planned+'</b><small>piano</small></div>'+
-                '<div class="brain-live">'+
-                  '<span class="brain-role-meta">'+stats[r].count+' acquistati</span>'+
-                  '<span class="brain-live-spent"><b>'+spent+'</b> spesi</span>'+
-                  '<em>'+available+' rimasti</em>'+
+              return '<div class="brain-role-row brain-role-dynamic role-'+r+'">'+
+                '<div class="brain-role-label">'+label+'<span class="brain-role-meta">'+stats[r].count+' acquistati</span></div>'+
+                '<div class="brain-percent"><input type="number" min="0" max="100" value="'+pct+'" aria-label="Percentuale '+label+'" onchange="updateBrainAllocation('+s.id+',\''+r+'\',this.value)"><span>%</span></div>'+
+                '<div class="brain-role-numbers">'+
+                  '<span><small>Piano</small><b>'+planned+'</b></span>'+
+                  '<span><small>Spesi</small><b>'+spent+'</b></span>'+
+                  '<span class="brain-remaining"><small>Rimasti</small><b>'+available+'</b></span>'+
                 '</div>'+
               '</div>';
             }).join('')+            '<div class="brain-actions">'+
