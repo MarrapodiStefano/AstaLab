@@ -1665,100 +1665,117 @@ body.campetti-open{
 .brain-total{margin:12px 0 4px;padding:10px;border-radius:12px;background:#f4f5f7;font-weight:700;text-align:center}
 .brain-total.ok{background:#eaf7ee}
 .brain-total.warn{background:#fff1e8}
-/* BRAIN — layout mobile compatto: nessuna colonna può uscire dallo schermo */
+/* BRAIN — v3.2: griglia più compatta e leggibile */
+.brain-strategy-details{padding:0 12px 12px;overflow:hidden}
+.brain-total{
+  margin:8px 0;
+  padding:9px 12px;
+  border-radius:13px;
+  font-size:16px;
+  line-height:1.2;
+}
+.brain-live-summary{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+  margin:0 0 8px;
+  padding:9px 12px;
+  border-radius:14px;
+  background:#f4f5f7;
+  font-size:12px;
+}
+.brain-live-summary span{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+}
+.brain-live-summary span:last-child{
+  text-align:right;
+  align-items:flex-end;
+  border-left:1px solid var(--line);
+  padding-left:10px;
+}
+.brain-live-summary b{font-size:18px;line-height:1.05}
+
 .brain-role-row{
   display:grid;
-  grid-template-columns:minmax(0,1fr) 58px 64px;
-  gap:8px;
+  grid-template-columns:minmax(0,1fr) 56px 78px;
+  column-gap:8px;
+  row-gap:4px;
   align-items:center;
-  padding:11px 0 9px;
+  padding:10px 0 8px;
   border-top:1px solid var(--line);
   min-width:0;
 }
 .brain-role-label{
   min-width:0;
   font-weight:800;
-  line-height:1.08;
+  font-size:17px;
+  line-height:1.05;
+  white-space:nowrap;
 }
-.brain-role-label small,
-.brain-credits small,
-.brain-live small{
-  display:block;
-  font-size:10px;
-  color:var(--muted);
-  font-weight:650;
-  margin-top:4px;
+.brain-role-label small{
+  display:none;
 }
 .brain-role-row input{
-  width:58px;
+  grid-column:2;
+  grid-row:1;
+  width:56px;
+  height:40px;
   box-sizing:border-box;
   text-align:center;
   margin:0;
-  padding:8px 2px;
-  min-height:42px;
+  padding:5px 2px;
+  font-size:17px;
 }
 .brain-credits{
+  grid-column:3;
+  grid-row:1;
   min-width:0;
   text-align:right;
   font-weight:850;
 }
-.brain-credits b{
-  font-size:18px;
+.brain-credits b{font-size:19px;line-height:1}
+.brain-credits small{
+  display:block;
+  font-size:10px;
+  color:var(--muted);
+  font-weight:650;
+  margin-top:3px;
 }
 .brain-live{
   grid-column:1 / -1;
+  grid-row:2;
   display:flex;
-  align-items:baseline;
-  justify-content:flex-end;
-  gap:5px;
-  padding-top:1px;
-  text-align:right;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
   min-width:0;
-}
-.brain-live b{
-  font-size:16px;
+  padding:0 0 1px;
+  font-size:12px;
 }
 .brain-live small{
+  display:block;
+  margin:0;
+  font-size:11px;
+  color:var(--muted);
+  font-weight:650;
+}
+.brain-live b{
   display:inline;
-  margin:0 6px 0 0;
+  font-size:15px;
+  margin-right:3px;
 }
 .brain-live em{
-  display:inline;
   font-style:normal;
   font-size:12px;
   font-weight:850;
   color:#16845d;
 }
-.brain-live-summary{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-  margin:8px 0 12px;
-  padding:12px 14px;
-  border-radius:14px;
-  background:#f4f5f7;
-  font-size:13px;
-}
-.brain-live-summary span{
-  display:flex;
-  flex-direction:column;
-  gap:3px;
-  min-width:0;
-}
-.brain-live-summary span:last-child{
-  text-align:right;
-  align-items:flex-end;
-}
-.brain-live-summary b{
-  font-size:20px;
-}
-.brain-strategy-details{
-  overflow:hidden;
-}
-.brain-role-dynamic{
-  width:100%;
-  box-sizing:border-box;
-}
+.brain-role-meta{color:var(--muted);font-size:11px;font-weight:650}
+.brain-live .brain-live-spent{margin-left:auto;color:var(--muted)}
+.brain-role-dynamic{width:100%;box-sizing:border-box}
 .brain-actions{display:flex;gap:8px;margin-top:10px}
 .brain-actions .btn{flex:1}
 .brain-template-picker{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:12px}
@@ -1788,7 +1805,7 @@ body.campetti-open{
 
       <div class="title">
         <span>Asta Fantacalcio</span>
-        <span class="app-version">V. 3.1</span>
+        <span class="app-version">V. 3.2</span>
       </div>
 
       <div class="sub" id="sub">
