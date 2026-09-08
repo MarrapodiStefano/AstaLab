@@ -654,8 +654,6 @@ function activeBrainStrategy(){
   return current?.brainStrategies.find(s=>s.id===current.activeBrainStrategyId);
 }
 
-let brainExpandedId=null;
-
 function renderBrain(){
   const box=$('brainContent');
   if(!box) return;
@@ -665,7 +663,6 @@ function renderBrain(){
   }
   ensureBrain();
   const budget=current.initialCredits||0;
-
   box.innerHTML=
     '<div class="card">'+
       '<div class="muted small">Budget dell’asta in corso</div>'+
@@ -674,43 +671,27 @@ function renderBrain(){
     current.brainStrategies.map(s=>{
       const total=BRAIN_ROLES.reduce((n,[r])=>n+(+s.allocation[r]||0),0);
       const active=s.id===current.activeBrainStrategyId;
-      const expanded=s.id===brainExpandedId;
-
-      return '<div class="card brain-strategy '+(active?'active ':'')+(expanded?'expanded':'')+'">'+
-        '<button class="brain-strategy-title" onclick="toggleBrainStrategy('+s.id+')" aria-expanded="'+expanded+'">'+
-          '<span>'+esc(s.name)+'</span>'+
-        '</button>'+
-        (expanded?
-          '<div class="brain-strategy-details">'+
-            '<div class="brain-strategy-head">'+
-              '<label class="brain-active-choice">'+
-                '<input class="brain-check" type="radio" name="brainActive" '+(active?'checked':'')+' onchange="selectBrainStrategy('+s.id+')">'+
-                '<span>Strategia attiva</span>'+
-              '</label>'+
-              '<button class="btn secondary" style="min-height:34px;padding:5px 9px" onclick="renameBrainStrategy('+s.id+')">✏️</button>'+
-            '</div>'+
-            '<div class="brain-total '+(total===100?'ok':'warn')+'">'+total+'% · '+Math.round(budget*total/100)+' crediti'+(total===100?' ✓':'')+'</div>'+
-            BRAIN_ROLES.map(([r,label])=>{
-              const pct=+s.allocation[r]||0;
-              return '<div class="brain-role-row">'+
-                '<div class="brain-role-label">'+label+'</div>'+
-                '<input type="number" min="0" max="100" value="'+pct+'" onchange="updateBrainAllocation('+s.id+',\\''+r+'\\',this.value)">'+
-                '<div class="brain-credits">'+Math.round(budget*pct/100)+'</div>'+
-              '</div>';
-            }).join('')+
-            '<div class="brain-actions">'+
-              '<button class="btn secondary" onclick="duplicateBrainStrategy('+s.id+')">Duplica</button>'+
-              '<button class="btn danger" onclick="deleteBrainStrategy('+s.id+')" aria-label="Elimina strategia">🗑️ Elimina</button>'+
-            '</div>'+
-          '</div>'
-        :'')+
+      return '<div class="card brain-strategy '+(active?'active':'')+'" onclick="selectBrainStrategy('+s.id+')">'+
+        '<div class="brain-strategy-head">'+
+          '<input class="brain-check" type="radio" name="brainActive" '+(active?'checked':'')+' onclick="event.stopPropagation();selectBrainStrategy('+s.id+')">'+
+          '<div class="brain-name">'+esc(s.name)+'</div>'+
+          '<button class="btn secondary" style="min-height:34px;padding:5px 9px" onclick="event.stopPropagation();renameBrainStrategy('+s.id+')">✏️</button>'+
+        '</div>'+
+        '<div class="brain-total '+(total===100?'ok':'warn')+'">'+total+'% · '+Math.round(budget*total/100)+' crediti'+(total===100?' ✓':'')+'</div>'+
+        BRAIN_ROLES.map(([r,label])=>{
+          const pct=+s.allocation[r]||0;
+          return '<div class="brain-role-row">'+
+            '<div class="brain-role-label">'+label+'</div>'+
+            '<input type="number" min="0" max="100" value="'+pct+'" onclick="event.stopPropagation()" onchange="updateBrainAllocation('+s.id+',\''+r+'\',this.value)">'+
+            '<div class="brain-credits">'+Math.round(budget*pct/100)+'</div>'+
+          '</div>';
+        }).join('')+
+        '<div class="brain-actions">'+
+          '<button class="btn secondary" onclick="event.stopPropagation();duplicateBrainStrategy('+s.id+')">Duplica</button>'+
+          '<button class="btn danger" onclick="event.stopPropagation();deleteBrainStrategy('+s.id+')" aria-label="Elimina strategia">🗑️ Elimina</button>'+
+        '</div>'+
       '</div>';
     }).join('');
-}
-
-function toggleBrainStrategy(id){
-  brainExpandedId=brainExpandedId===id?null:id;
-  renderBrain();
 }
 
 function selectBrainStrategy(id){
@@ -719,7 +700,6 @@ function selectBrainStrategy(id){
   current.activeBrainStrategyId=id;
   persist();
 }
-
 const BRAIN_TEMPLATES=[
   {key:'balanced',name:'⚖️ Equilibrata',desc:'Distribuzione bilanciata tra tutti i reparti.',allocation:{P:10,D:10,C:30,A:50}},
   {key:'attack',name:'⚽ Attacco Pesante',desc:'Massima priorità agli attaccanti.',allocation:{P:8,D:8,C:24,A:60}},
