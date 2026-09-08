@@ -628,10 +628,10 @@ function counts(t){
    BRAIN
 ========================= */
 const BRAIN_ROLES=[
-  ['P','🟠 Portieri'],
-  ['D','🟢 Difensori'],
-  ['C','🔵 Centrocampisti'],
-  ['A','🔴 Attaccanti']
+  ['P','Portieri','🖐️'],
+  ['D','Difensori','🛡️'],
+  ['C','Centrocampisti','⚽'],
+  ['A','Attaccanti','👟']
 ];
 
 function ensureBrain(){
@@ -707,8 +707,7 @@ function renderBrain(){
             '</div>'+
             '<div class="brain-total '+(total===100?'ok':'warn')+'">'+total+'% · Piano '+Math.round(budget*total/100)+' crediti'+(total===100?' ✓':'')+'</div>'+
             '<div class="brain-live-summary"><span>💰 Budget rimasto <b>'+remaining+'</b></span><span>📊 Speso <b>'+spentTotal+'</b></span></div>'+
-            '<div class="brain-progress-wrap"><div class="brain-progress-track"><div class="brain-progress-fill" style="width:'+spentPct+'%"></div></div><div class="brain-progress-meta"><span>'+spentPct+'% speso</span><span>'+remaining+' crediti rimasti</span></div></div>'+
-            BRAIN_ROLES.map(([r,label])=>{
+            BRAIN_ROLES.map(([r,label,symbol])=>{
               const pct=+s.allocation[r]||0;
               const planned=Math.round(budget*pct/100);
               const spent=stats[r].spent;
@@ -721,6 +720,7 @@ function renderBrain(){
                   '<span><small>Spesi</small><b>'+spent+'</b></span>'+
                   '<span class="brain-remaining"><small>Rimasti</small><b>'+available+'</b></span>'+
                 '</div>'+
+                '<div class="brain-role-symbol" aria-hidden="true">'+symbol+'</div>'+
               '</div>';
             }).join('')+            '<div class="brain-actions">'+
               '<button class="btn secondary" onclick="duplicateBrainStrategy('+s.id+')">Duplica</button>'+
