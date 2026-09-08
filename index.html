@@ -2241,7 +2241,7 @@ body.campetti-open{
 
       <div class="title">
         <span>Asta Fantacalcio</span>
-        <span class="app-version">V. 3.4.20</span>
+        <span class="app-version">V. 3.4.21</span>
       </div>
 
       <div class="sub" id="sub">
@@ -2770,6 +2770,25 @@ body.campetti-open{
 
 
 
+
+<script>
+/* NAVIGAZIONE INFERIORE: su iOS/PWA la barra deve essere figlia diretta del body.
+   In questo modo position:fixed resta ancorato al viewport e non al contenitore
+   dell'app o alla posizione di scorrimento del contenuto. */
+(function(){
+  function anchorBottomNav(){
+    const nav=document.querySelector('.bottom');
+    if(nav && nav.parentElement!==document.body){
+      document.body.appendChild(nav);
+    }
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',anchorBottomNav,{once:true});
+  }else{
+    anchorBottomNav();
+  }
+})();
+</script>
 
 <script>
 /* Prova a bloccare l'orientamento dove la PWA/browser lo consente.
