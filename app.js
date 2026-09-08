@@ -986,7 +986,7 @@ function render(){
 
             <div class="card">
 
-                <div class="head">
+                <div class="head" style="min-height:38px!important;padding:0!important">
 
                     <div>
 
@@ -3142,14 +3142,6 @@ function renderObjectives(){
 
     const q = ($('objQ')?.value || '').trim().toLowerCase();
 
-    const suggestions = allPlayers()
-        .filter(p => current.objectives.includes(p.id) && p.name.toLowerCase().includes(q))
-        .sort((a,b) => a.name.localeCompare(b.name, 'it'));
-    const suggestionBox = $('objSuggestions');
-    if(suggestionBox){
-        suggestionBox.innerHTML = suggestions.map(p => `<option value="${esc(p.name)}">${esc(p.team)} · ${p.role}</option>`).join('');
-    }
-
     let sold = new Set();
 
 
@@ -3196,10 +3188,11 @@ function renderObjectives(){
 
             <div
                 class="result objective-result"
+                style="padding:5px 10px!important;margin:0 0 4px!important;min-height:0!important"
                 onclick="openPlayer(${p.id}, 'objectives')">
 
 
-                <div class="head">
+                <div class="head" style="min-height:38px!important;padding:0!important">
 
 
                     <div>
@@ -3238,7 +3231,7 @@ function renderObjectives(){
 
 
                     <div
-                        class="objective-priority"
+                        class="objective-priority" style="padding:2px 5px!important;min-width:44px!important;line-height:1!important"
                         onclick="cycleObjectivePriority(${p.id}, event)"
                         title="Tocca per cambiare priorità">
 
