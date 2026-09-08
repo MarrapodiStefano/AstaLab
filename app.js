@@ -700,11 +700,57 @@ function selectBrainStrategy(id){
   current.activeBrainStrategyId=id;
   persist();
 }
+const BRAIN_TEMPLATES=[
+  {key:'balanced',name:'⚖️ Equilibrata',desc:'Distribuzione bilanciata tra tutti i reparti.',allocation:{P:10,D:10,C:30,A:50}},
+  {key:'attack',name:'⚽ Attacco Pesante',desc:'Massima priorità agli attaccanti.',allocation:{P:8,D:8,C:24,A:60}},
+  {key:'midfield',name:'⚙️ Centrocampo Forte',desc:'Più investimento sulla qualità del centrocampo.',allocation:{P:8,D:8,C:39,A:45}},
+  {key:'defense',name:'🛡️ Difesa Solida',desc:'Più risorse per portieri e difensori.',allocation:{P:15,D:20,C:25,A:40}},
+  {key:'custom',name:'✏️ Personalizzata',desc:'Base neutra da modificare liberamente.',allocation:{P:25,D:25,C:25,A:25}}
+];
+
 function addBrainStrategy(){
   if(!current){ alert('Apri prima un’asta.'); return; }
   ensureBrain();
-  const n=current.brainStrategies.length+1;
-  current.brainStrategies.push({id:Date.now(),name:'Strategia '+n,allocation:{P:10,D:10,C:30,A:50}});
+  openBrainTemplatePicker();
+}
+
+function openBrainTemplatePicker(){
+  const old=document.getElementById('brainTemplatePicker');
+  if(old) old.remove();
+  const wrap=document.createElement('div');
+  wrap.id='brainTemplatePicker';
+  wrap.className='brain-template-picker';
+  wrap.innerHTML='<div class="brain-template-sheet" onclick="event.stopPropagation()">'+
+    '<div class="brain-template-title">🧠 Nuova strategia</div>'+
+    '<div class="muted small brain-template-sub">Scegli un modello di partenza. Potrai modificare tutto in seguito.</div>'+
+    BRAIN_TEMPLATES.map(t=>'<button class="brain-template" onclick="createBrainFromTemplate(\\''+t.key+'\\')">'+
+      '<div class="brain-template-name">'+t.name+'</div>'+
+      '<div class="brain-template-desc">'+t.desc+'</div>'+
+      '<div class="brain-template-values">P '+t.allocation.P+'% · D '+t.allocation.D+'% · C '+t.allocation.C+'% · A '+t.allocation.A+'%</div>'+
+    '</button>').join('')+
+    '<button class="btn secondary brain-template-close" onclick="closeBrainTemplatePicker()">Annulla</button>'+
+  '</div>';
+  wrap.onclick=closeBrainTemplatePicker;
+  document.body.appendChild(wrap);
+}
+
+function closeBrainTemplatePicker(){
+  const el=document.getElementById('brainTemplatePicker');
+  if(el) el.remove();
+}
+
+function createBrainFromTemplate(key){
+  const t=BRAIN_TEMPLATES.find(x=>x.key===key);
+  if(!t || !current) return;
+  const existing=current.brainStrategies.length;
+  current.brainStrategies.push({
+    id:Date.now(),
+    name:t.name.replace(/^[^ ]+ /,'')+' '+(existing+1),
+    allocation:{...t.allocation},
+    template:key
+  });
+  current.activeBrainStrategyId=current.brainStrategies[current.brainStrategies.length-1].id;
+  closeBrainTemplatePicker();
   persist();
 }
 function duplicateBrainStrategy(id){
