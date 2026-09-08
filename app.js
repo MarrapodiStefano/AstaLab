@@ -654,6 +654,17 @@ function activeBrainStrategy(){
   return current?.brainStrategies.find(s=>s.id===current.activeBrainStrategyId);
 }
 
+function brainRoleStats(){
+  const stats={P:{spent:0,count:0},D:{spent:0,count:0},C:{spent:0,count:0},A:{spent:0,count:0}};
+  const my=current?.teams?.find(t=>t.id===current.myTeamId);
+  (my?.players||[]).forEach(p=>{ if(stats[p.role]){stats[p.role].spent+=+(p.price||0);stats[p.role].count++;} });
+  return stats;
+}
+function brainRemainingBudget(){
+  const my=current?.teams?.find(t=>t.id===current.myTeamId);
+  return Math.max(0,(+current?.initialCredits||0)-(+my?.spent||0));
+}
+
 let brainExpandedId=null;
 
 function renderBrain(){
@@ -665,6 +676,8 @@ function renderBrain(){
   }
   ensureBrain();
   const budget=current.initialCredits||0;
+  const stats=brainRoleStats();
+  const remaining=brainRemainingBudget();
 
   box.innerHTML=
     '<div class="card">'+
@@ -690,16 +703,20 @@ function renderBrain(){
               '</label>'+
               '<button class="btn secondary" style="min-height:34px;padding:5px 9px" onclick="renameBrainStrategy('+s.id+')">✏️</button>'+
             '</div>'+
-            '<div class="brain-total '+(total===100?'ok':'warn')+'">'+total+'% · '+Math.round(budget*total/100)+' crediti'+(total===100?' ✓':'')+'</div>'+
+            '<div class="brain-total '+(total===100?'ok':'warn')+'">'+total+'% · Piano '+Math.round(budget*total/100)+' crediti'+(total===100?' ✓':'')+'</div>'+
+            '<div class="brain-live-summary"><span>💰 Budget rimasto <b>'+remaining+'</b></span><span>📊 Speso <b>'+(budget-remaining)+'</b></span></div>'+
             BRAIN_ROLES.map(([r,label])=>{
               const pct=+s.allocation[r]||0;
-              return '<div class="brain-role-row">'+
-                '<div class="brain-role-label">'+label+'</div>'+
+              const planned=Math.round(budget*pct/100);
+              const spent=stats[r].spent;
+              const available=Math.max(0,planned-spent);
+              return '<div class="brain-role-row brain-role-dynamic">'+
+                '<div class="brain-role-label">'+label+'<small>'+stats[r].count+' acquistati</small></div>'+
                 '<input type="number" min="0" max="100" value="'+pct+'" onchange="updateBrainAllocation('+s.id+',\''+r+'\',this.value)">'+
-                '<div class="brain-credits">'+Math.round(budget*pct/100)+'</div>'+
+                '<div class="brain-credits"><b>'+planned+'</b><small>piano</small></div>'+
+                '<div class="brain-live"><b>'+spent+'</b><small>spesi</small><em>'+available+' rimasti</em></div>'+
               '</div>';
-            }).join('')+
-            '<div class="brain-actions">'+
+            }).join('')+            '<div class="brain-actions">'+
               '<button class="btn secondary" onclick="duplicateBrainStrategy('+s.id+')">Duplica</button>'+
               '<button class="btn danger" onclick="deleteBrainStrategy('+s.id+')" aria-label="Elimina strategia">🗑️ Elimina</button>'+
             '</div>'+
