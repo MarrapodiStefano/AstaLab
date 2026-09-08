@@ -1622,6 +1622,17 @@ body.campetti-open{
   font-size:19px;
 }
 
+
+/* VERSIONE 1.0 — OBIETTIVI */
+.objective-search-wrap .searchbox input{min-height:42px}
+.setup-objectives-close{position:absolute;top:12px;right:12px;z-index:4;width:42px;height:42px;border:1px solid var(--line);border-radius:50%;background:#f5f6f8;color:var(--ink);font-size:30px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.setup-objectives-title{padding-right:52px}
+#setupList .result{padding:6px 0}
+#setupList .result .head{min-height:42px}
+#setupList .name{font-size:15px;line-height:17px}
+#setupList .meta{margin-top:1px;font-size:11px;line-height:14px}
+#setupList .tag{padding:2px 5px;font-size:10px;margin-top:1px}
+#setupList button[title]{width:38px!important;height:38px!important;font-size:23px!important;flex:0 0 38px}
 </style>
 
 </head>
@@ -1912,6 +1923,12 @@ body.campetti-open{
 
   </div>
 
+
+  <div class="objective-search-wrap" style="margin-top:12px">
+    <div class="searchbox">
+      <input id="objQ" type="search" placeholder="Cerca nei tuoi obiettivi..." autocomplete="off" oninput="renderObjectives()">
+    </div>
+  </div>
 
   <div class="objective-tabs">
 
