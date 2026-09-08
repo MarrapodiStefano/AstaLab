@@ -678,6 +678,7 @@ function renderBrain(){
 
       return '<div class="card brain-strategy '+(active?'active ':'')+(expanded?'expanded':'')+'">'+
         '<button class="brain-strategy-title" onclick="toggleBrainStrategy('+s.id+')" aria-expanded="'+expanded+'">'+
+          '<span class="brain-strategy-icon">'+brainStrategyIcon(s.template)+'</span>'+
           '<span>'+esc(s.name)+'</span>'+
         '</button>'+
         (expanded?
@@ -718,6 +719,17 @@ function selectBrainStrategy(id){
   ensureBrain();
   current.activeBrainStrategyId=id;
   persist();
+}
+
+function brainStrategyIcon(template){
+  const icons={
+    balanced:'⚖️',
+    attack:'⚽',
+    midfield:'⚙️',
+    defense:'🛡️',
+    custom:'✏️'
+  };
+  return icons[template]||'🧠';
 }
 
 const BRAIN_TEMPLATES=[
