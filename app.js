@@ -711,10 +711,14 @@ function renderBrain(){
               const spent=stats[r].spent;
               const available=Math.max(0,planned-spent);
               return '<div class="brain-role-row brain-role-dynamic">'+
-                '<div class="brain-role-label">'+label+'<small>'+stats[r].count+' acquistati</small></div>'+
+                '<div class="brain-role-label">'+label+'</div>'+
                 '<input type="number" min="0" max="100" value="'+pct+'" onchange="updateBrainAllocation('+s.id+',\''+r+'\',this.value)">'+
                 '<div class="brain-credits"><b>'+planned+'</b><small>piano</small></div>'+
-                '<div class="brain-live"><b>'+spent+'</b><small>spesi</small><em>'+available+' rimasti</em></div>'+
+                '<div class="brain-live">'+
+                  '<span class="brain-role-meta">'+stats[r].count+' acquistati</span>'+
+                  '<span class="brain-live-spent"><b>'+spent+'</b> spesi</span>'+
+                  '<em>'+available+' rimasti</em>'+
+                '</div>'+
               '</div>';
             }).join('')+            '<div class="brain-actions">'+
               '<button class="btn secondary" onclick="duplicateBrainStrategy('+s.id+')">Duplica</button>'+
