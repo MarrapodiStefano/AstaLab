@@ -700,6 +700,51 @@ function updateBrainSlotAllocation(id,role,index,value){
   persist();
 }
 
+function brainSlotTargets(strategy,role){
+  const slots=brainStrategySlots(strategy)[role]||0;
+  if(!strategy.slotTargets || typeof strategy.slotTargets!=='object') strategy.slotTargets={};
+  let targets=Array.isArray(strategy.slotTargets[role])?strategy.slotTargets[role]:[];
+  targets=targets.slice(0,slots);
+  while(targets.length<slots) targets.push({priority:'base',playerId:null});
+  targets=targets.map(t=>({
+    priority:PRIORITIES?.[t?.priority]?t.priority:'base',
+    playerId:t?.playerId??null
+  }));
+  strategy.slotTargets[role]=targets;
+  return targets;
+}
+
+function brainSlotPlayers(role,priority){
+  return allPlayers()
+    .filter(p=>p.role===role && current?.objectives?.includes(p.id) && objectivePriority(p.id)===priority)
+    .sort((a,b)=>{
+      const aa=Number(a.appeal??-1), bb=Number(b.appeal??-1);
+      if(bb!==aa) return bb-aa;
+      return String(a.name).localeCompare(String(b.name),'it');
+    });
+}
+
+function updateBrainSlotPriority(id,role,index,value){
+  const s=current?.brainStrategies.find(x=>x.id===id); if(!s) return;
+  const targets=brainSlotTargets(s,role);
+  const priority=PRIORITIES?.[value]?value:'base';
+  targets[index].priority=priority;
+  const valid=brainSlotPlayers(role,priority).some(p=>String(p.id)===String(targets[index].playerId));
+  if(!valid) targets[index].playerId=null;
+  s.slotTargets[role]=targets;
+  persist();
+}
+
+function updateBrainSlotPlayer(id,role,index,value){
+  const s=current?.brainStrategies.find(x=>x.id===id); if(!s) return;
+  const targets=brainSlotTargets(s,role);
+  const playerId=value===''?null:Number(value);
+  const valid=playerId!=null && brainSlotPlayers(role,targets[index].priority).some(p=>String(p.id)===String(playerId));
+  targets[index].playerId=valid?playerId:null;
+  s.slotTargets[role]=targets;
+  persist();
+}
+
 function toggleBrainSlots(id,role){
   if(!window.brainOpenSlots) window.brainOpenSlots={};
   const key=id+'-'+role;
@@ -779,6 +824,7 @@ function renderBrain(){
               const available=Math.max(0,planned-spent);
               const avg=needed>0?Math.floor(available/needed):0;
               const slotPercents=brainStrategySlotAllocation(s,r);
+              const slotTargets=brainSlotTargets(s,r);
               const slotKey=s.id+'-'+r;
               const slotsOpen=!!window.brainOpenSlots?.[slotKey];
               return '<div class="brain-role-row brain-role-dynamic role-'+r+'">'+
@@ -795,10 +841,21 @@ function renderBrain(){
                 (slotsOpen?'<div class="brain-slots">'+
                   slotPercents.map((slotPct,i)=>{
                     const slotBudget=Math.round(planned*slotPct/100);
+                    const target=slotTargets[i]||{priority:'base',playerId:null};
+                    const priority=PRIORITIES[target.priority]||PRIORITIES.base;
+                    const players=brainSlotPlayers(r,target.priority);
+                    const selectedId=target.playerId==null?'':String(target.playerId);
                     return '<div class="brain-slot">'+
-                      '<span class="brain-slot-name">Slot '+(i+1)+'</span>'+
-                      '<div class="brain-slot-percent"><input type="number" min="0" max="100" value="'+slotPct+'" aria-label="Percentuale Slot '+(i+1)+'" onchange="updateBrainSlotAllocation('+s.id+',\''+r+'\','+i+',this.value)"><span>%</span></div>'+
-                      '<div class="brain-slot-budget" aria-label="Budget calcolato">'+slotBudget+' cr</div>'+
+                      '<span class="brain-slot-name">'+(i+1)+'</span>'+
+                      '<div class="brain-slot-percent"><input type="number" min="0" max="99" value="'+slotPct+'" aria-label="Percentuale slot '+(i+1)+'" onchange="updateBrainSlotAllocation('+s.id+',\''+r+'\','+i+',this.value)"><span>%</span></div>'+
+                      '<div class="brain-slot-budget" aria-label="Budget calcolato">'+slotBudget+'</div>'+
+                      '<select class="brain-slot-priority" aria-label="Appetibilità slot '+(i+1)+'" onchange="updateBrainSlotPriority('+s.id+',\''+r+'\','+i+',this.value)">'+
+                        Object.entries(PRIORITIES).map(([key,p])=>'<option value="'+key+'" '+(key===target.priority?'selected':'')+'>'+p.icon+'</option>').join('')+
+                      '</select>'+
+                      '<select class="brain-slot-player" aria-label="Giocatore slot '+(i+1)+'" onchange="updateBrainSlotPlayer('+s.id+',\''+r+'\','+i+',this.value)">'+
+                        '<option value="">Scegli giocatore</option>'+
+                        players.map(p=>'<option value="'+p.id+'" '+(String(p.id)===selectedId?'selected':'')+'>'+esc(p.name)+'</option>').join('')+
+                      '</select>'+
                     '</div>';
                   }).join('')+
                 '</div>':'')+
