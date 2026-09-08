@@ -688,7 +688,7 @@ function renderBrain(){
         }).join('')+
         '<div class="brain-actions">'+
           '<button class="btn secondary" onclick="event.stopPropagation();duplicateBrainStrategy('+s.id+')">Duplica</button>'+
-          (current.brainStrategies.length>1?'<button class="btn secondary" onclick="event.stopPropagation();deleteBrainStrategy('+s.id+')">Elimina</button>':'')+
+          (current.brainStrategies.length>1?'<button class="btn danger" onclick="event.stopPropagation();deleteBrainStrategy('+s.id+')" aria-label="Elimina strategia">🗑️ Elimina</button>':'')+
         '</div>'+
       '</div>';
     }).join('');
