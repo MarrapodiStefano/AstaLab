@@ -640,7 +640,8 @@ function ensureBrain(){
     current.brainStrategies=[{
       id:Date.now(),
       name:'Strategia 1',
-      allocation:{P:10,D:10,C:30,A:50}
+      allocation:{P:10,D:10,C:30,A:50},
+      slots:{P:2,D:9,C:9,A:7}
     }];
     current.activeBrainStrategyId=current.brainStrategies[0].id;
   }
@@ -652,6 +653,17 @@ function ensureBrain(){
 function activeBrainStrategy(){
   ensureBrain();
   return current?.brainStrategies.find(s=>s.id===current.activeBrainStrategyId);
+}
+
+function brainStrategySlots(strategy){
+  const defaults={P:2,D:9,C:9,A:7};
+  if(!strategy) return defaults;
+  if(!strategy.slots || typeof strategy.slots!=='object') strategy.slots={...defaults};
+  for(const r in defaults){
+    const n=Number(strategy.slots[r]);
+    strategy.slots[r]=Number.isFinite(n)&&n>=0?Math.round(n):defaults[r];
+  }
+  return strategy.slots;
 }
 
 /* La squadra dell'utente è sempre la prima della lista dell'asta. */
@@ -720,10 +732,13 @@ function renderBrain(){
               const pct=+s.allocation[r]||0;
               const planned=Math.round(budget*pct/100);
               const spent=stats[r].spent;
+              const slots=brainStrategySlots(s)[r];
+              const bought=stats[r].count;
+              const needed=Math.max(0,slots-bought);
               const available=Math.max(0,planned-spent);
               return '<div class="brain-role-row brain-role-dynamic role-'+r+'">'+
                 '<div class="brain-role-top">'+
-                  '<div class="brain-role-label"><div class="brain-role-title"><span class="brain-role-dot"></span><span>'+label+'</span></div><span class="brain-role-meta">'+stats[r].count+' acquistati</span></div>'+
+                  '<div class="brain-role-label"><div class="brain-role-title"><span class="brain-role-dot"></span><span>'+label+'</span></div><span class="brain-role-meta">'+bought+' acquistati · '+needed+' da prendere</span></div>'+
                   '<div class="brain-percent"><input type="number" min="0" max="100" value="'+pct+'" style="width:'+(String(pct).length===1?'13px':String(pct).length===2?'24px':'35px')+'!important" aria-label="Percentuale '+label+'" onchange="updateBrainAllocation('+s.id+',\''+r+'\',this.value)"><span>%</span></div>'+
                   '<div class="brain-role-symbol" aria-hidden="true">'+symbol+'</div>'+
                 '</div>'+
