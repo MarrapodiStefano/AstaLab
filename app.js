@@ -736,9 +736,10 @@ function renderBrain(){
               const bought=stats[r].count;
               const needed=Math.max(0,slots-bought);
               const available=Math.max(0,planned-spent);
+              const avg=needed>0?Math.floor(available/needed):0;
               return '<div class="brain-role-row brain-role-dynamic role-'+r+'">'+
                 '<div class="brain-role-top">'+
-                  '<div class="brain-role-label"><div class="brain-role-title"><span class="brain-role-dot"></span><span>'+label+'</span></div><span class="brain-role-meta">'+bought+' acquistati · '+needed+' da prendere</span></div>'+
+                  '<div class="brain-role-label"><div class="brain-role-title"><span class="brain-role-dot"></span><span>'+label+'</span></div><span class="brain-role-meta">'+bought+' acquistati · '+needed+' da prendere · '+(needed>0?avg+' cr/media':'reparto completo')+'</span></div>'+
                   '<div class="brain-percent"><input type="number" min="0" max="100" value="'+pct+'" style="width:'+(String(pct).length===1?'13px':String(pct).length===2?'24px':'35px')+'!important" aria-label="Percentuale '+label+'" onchange="updateBrainAllocation('+s.id+',\''+r+'\',this.value)"><span>%</span></div>'+
                   '<div class="brain-role-symbol" aria-hidden="true">'+symbol+'</div>'+
                 '</div>'+
