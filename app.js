@@ -2865,28 +2865,28 @@ function editObjectives(){
 
 
             <button
-                class="chip active"
+                class="chip role-P active"
                 onclick="setupRole('P',this)">
                 P
             </button>
 
 
             <button
-                class="chip"
+                class="chip role-D"
                 onclick="setupRole('D',this)">
                 D
             </button>
 
 
             <button
-                class="chip"
+                class="chip role-C"
                 onclick="setupRole('C',this)">
                 C
             </button>
 
 
             <button
-                class="chip"
+                class="chip role-A"
                 onclick="setupRole('A',this)">
                 A
             </button>
