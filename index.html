@@ -2225,26 +2225,34 @@ body > .bottom{
 </style>
 
 
-<style id="bottom-nav-3419">
-/* 3.4.19 — barra di navigazione sempre ancorata al fondo del viewport */
-.bottom{
+<style id="bottom-nav-3422">
+/* 3.4.22 — barra originale: altezza 58px, fissa al viewport */
+html,body{width:100%;min-height:100%;overflow-x:hidden;}
+
+body > .bottom{
   position:fixed!important;
-  top:auto!important;
   left:0!important;
   right:0!important;
+  top:auto!important;
   bottom:0!important;
-  z-index:999!important;
-  width:min(100%,430px)!important;
-  max-width:430px!important;
-  margin:0 auto!important;
-  transform:none!important;
-  height:calc(58px + env(safe-area-inset-bottom))!important;
-  min-height:calc(58px + env(safe-area-inset-bottom))!important;
-  padding:0 6px env(safe-area-inset-bottom)!important;
+
+  width:100%!important;
+  max-width:none!important;
+  height:58px!important;
+  min-height:58px!important;
+
+  margin:0!important;
+  padding:0 6px!important;
   box-sizing:border-box!important;
+
+  transform:none!important;
+  -webkit-transform:none!important;
+
+  z-index:2147483647!important;
 }
+
 .app{
-  padding-bottom:calc(58px + env(safe-area-inset-bottom))!important;
+  padding-bottom:58px!important;
 }
 </style>
 
@@ -2264,7 +2272,7 @@ body > .bottom{
 
       <div class="title">
         <span>Asta Fantacalcio</span>
-        <span class="app-version">V. 3.4.21</span>
+        <span class="app-version">V. 3.4.22</span>
       </div>
 
       <div class="sub" id="sub">
