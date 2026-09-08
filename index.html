@@ -1953,6 +1953,82 @@ body.campetti-open{
 }
 </style>
 
+<style id="brain-3416">
+/* BRAIN 3.4.16 — Slot essenziali: percentuale modificabile + budget automatico */
+.brain-role-meta span{
+  font-size:14px!important;
+  line-height:1.05!important;
+  font-weight:850!important;
+  letter-spacing:.01em;
+}
+.brain-slots{
+  padding:8px 10px 10px!important;
+}
+.brain-slot{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 92px 112px!important;
+  align-items:center!important;
+  gap:8px!important;
+  min-height:50px!important;
+  padding:5px 0!important;
+  border-bottom:0!important;
+}
+.brain-slot-name{
+  font-size:16px!important;
+  font-weight:800!important;
+  white-space:nowrap;
+}
+.brain-slot-percent{
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  padding:0 10px;
+  border:1px solid rgba(80,90,100,.22);
+  border-radius:12px;
+  background:rgba(255,255,255,.58);
+  box-sizing:border-box;
+  font-size:16px;
+  font-weight:850;
+}
+.brain-slot-percent input{
+  width:44px!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  text-align:right!important;
+  font:inherit!important;
+  font-weight:850!important;
+  outline:0!important;
+}
+.brain-slot-budget{
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 10px;
+  border:1px solid rgba(80,90,100,.18);
+  border-radius:12px;
+  background:rgba(255,255,255,.42);
+  box-sizing:border-box;
+  color:var(--ink);
+  font-size:16px;
+  font-weight:850;
+  white-space:nowrap;
+}
+.brain-slots-total{display:none!important;}
+@media(max-width:390px){
+  .brain-role-meta span{font-size:13px!important;}
+  .brain-slot{grid-template-columns:minmax(0,1fr) 82px 98px!important;gap:6px!important;}
+  .brain-slot-name{font-size:15px!important;}
+  .brain-slot-percent,.brain-slot-budget{height:40px;font-size:15px;padding:0 7px;}
+  .brain-slot-percent input{width:38px!important;}
+}
+</style>
 </head>
 
 
@@ -1969,7 +2045,7 @@ body.campetti-open{
 
       <div class="title">
         <span>Asta Fantacalcio</span>
-        <span class="app-version">V. 3.4.15</span>
+        <span class="app-version">V. 3.4.16</span>
       </div>
 
       <div class="sub" id="sub">
