@@ -1920,20 +1920,8 @@ body.campetti-open{
 }
 
 
-/* BLOCCO DEFINITIVO NAVIGAZIONE INFERIORE */
-body > .bottom{
-  position:fixed !important;
-  inset:auto auto 0 50% !important;
-  width:min(430px,100vw) !important;
-  transform:translate3d(-50%,0,0) !important;
-  -webkit-transform:translate3d(-50%,0,0) !important;
-}
-@supports (-webkit-touch-callout:none){
-  body > .bottom{
-    position:fixed !important;
-    bottom:0 !important;
-  }
-}
+/* NAVIGAZIONE INFERIORE: ripristinata la gestione originale del repository Asta-Fantacalcio.
+   Nessun transform o inset alternativo: .bottom usa la definizione base position:fixed; left/right:0; bottom:0. */
 
 </style>
 
