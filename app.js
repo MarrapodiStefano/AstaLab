@@ -790,7 +790,7 @@ function renderFormation(){
   const title=$('formationTitle'),select=$('formationModule'),pitch=$('pitch'),bench=$('formationBench');
 
   if(!current||formationTeamId===null){
-    title.innerHTML='<svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="2.5" width="18" height="19" rx="1.5"/><path d="M12 2.5v19"/><circle cx="12" cy="12" r="2.7"/><path d="M3 7h3.5v10H3M21 7h-3.5v10H21"/></svg> Formazione';
+    title.innerHTML='<svg class="field-icon" viewBox="0 0 28 24" aria-hidden="true"><rect x="2" y="4" width="24" height="16" rx="1.4"/><path d="M14 4v16"/><circle cx="14" cy="12" r="2.7"/><path d="M2 7.5h4.5v9H2M26 7.5h-4.5v9H26"/></svg> Formazione';
     pitch.innerHTML='';
     bench.innerHTML='';
     return;
@@ -802,7 +802,7 @@ function renderFormation(){
     return;
   }
 
-  title.innerHTML='<svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="2.5" width="18" height="19" rx="1.5"/><path d="M12 2.5v19"/><circle cx="12" cy="12" r="2.7"/><path d="M3 7h3.5v10H3M21 7h-3.5v10H21"/></svg> '+esc(team.name);
+  title.innerHTML='<svg class="field-icon" viewBox="0 0 28 24" aria-hidden="true"><rect x="2" y="4" width="24" height="16" rx="1.4"/><path d="M14 4v16"/><circle cx="14" cy="12" r="2.7"/><path d="M2 7.5h4.5v9H2M26 7.5h-4.5v9H26"/></svg> '+esc(team.name);
 
   const saved=team.formationModule||'3-4-3';
   select.innerHTML=Object.keys(FORMATION_MODULES)
@@ -1011,7 +1011,7 @@ function render(){
 
                     <div class="teamrow-actions">
                         <div class="budget">${spendableBudget(t)}</div>
-                        <button class="ball-btn" onclick="openFormation(${t.id})" aria-label="Apri formazione" title="Apri campetto"><svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="2.5" width="18" height="19" rx="1.5"/><path d="M12 2.5v19"/><circle cx="12" cy="12" r="2.7"/><path d="M3 7h3.5v10H3M21 7h-3.5v10H21"/></svg></button>
+                        <button class="ball-btn" onclick="openFormation(${t.id})" aria-label="Apri formazione" title="Apri campetto"><svg class="field-icon" viewBox="0 0 28 24" aria-hidden="true"><rect x="2" y="4" width="24" height="16" rx="1.4"/><path d="M14 4v16"/><circle cx="14" cy="12" r="2.7"/><path d="M2 7.5h4.5v9H2M26 7.5h-4.5v9H26"/></svg></button>
                     </div>
 
                 </div>
