@@ -706,17 +706,34 @@ function brainSlotTargets(strategy,role){
   let targets=Array.isArray(strategy.slotTargets[role])?strategy.slotTargets[role]:[];
   targets=targets.slice(0,slots);
   while(targets.length<slots) targets.push({priority:'base',playerId:null});
-  targets=targets.map(t=>({
-    priority:PRIORITIES?.[t?.priority]?t.priority:'base',
-    playerId:t?.playerId??null
-  }));
+  const sold=brainSoldPlayerIds();
+  targets=targets.map(t=>{
+    const priority=PRIORITIES?.[t?.priority]?t.priority:'base';
+    const playerId=t?.playerId??null;
+    return {
+      priority,
+      playerId:playerId!=null && !sold.has(String(playerId)) ? playerId : null
+    };
+  });
   strategy.slotTargets[role]=targets;
   return targets;
 }
 
+function brainSoldPlayerIds(){
+  const sold=new Set();
+  (current?.teams||[]).forEach(t=>(t.players||[]).forEach(p=>sold.add(String(p.id))));
+  return sold;
+}
+
 function brainSlotPlayers(role,priority){
+  const sold=brainSoldPlayerIds();
   return allPlayers()
-    .filter(p=>p.role===role && current?.objectives?.includes(p.id) && objectivePriority(p.id)===priority)
+    .filter(p=>
+      p.role===role &&
+      current?.objectives?.includes(p.id) &&
+      objectivePriority(p.id)===priority &&
+      !sold.has(String(p.id))
+    )
     .sort((a,b)=>{
       const aa=Number(a.appeal??-1), bb=Number(b.appeal??-1);
       if(bb!==aa) return bb-aa;
@@ -733,6 +750,22 @@ function updateBrainSlotPriority(id,role,index,value){
   if(!valid) targets[index].playerId=null;
   s.slotTargets[role]=targets;
   persist();
+  renderBrain();
+}
+
+function cycleBrainSlotPriority(id,role,index,event){
+  if(event) event.preventDefault();
+  const s=current?.brainStrategies.find(x=>x.id===id); if(!s) return;
+  const targets=brainSlotTargets(s,role);
+  const next={
+    base:'max',
+    max:'high',
+    high:'low',
+    low:'bet',
+    bet:'max'
+  };
+  const currentPriority=targets[index]?.priority||'base';
+  updateBrainSlotPriority(id,role,index,next[currentPriority]||'max');
 }
 
 function updateBrainSlotPlayer(id,role,index,value){
@@ -880,9 +913,9 @@ function renderBrain(){
                       '<span class="brain-slot-name">'+(i+1)+'</span>'+
                       '<div class="brain-slot-percent"><input type="number" min="0" max="99" value="'+slotPct+'" aria-label="Percentuale slot '+(i+1)+'" onchange="updateBrainSlotAllocation('+s.id+',\''+r+'\','+i+',this.value)"><span>%</span></div>'+
                       '<div class="brain-slot-budget" aria-label="Budget calcolato">'+slotBudget+'</div>'+
-                      '<select class="brain-slot-priority" aria-label="Appetibilità slot '+(i+1)+'" onchange="updateBrainSlotPriority('+s.id+',\''+r+'\','+i+',this.value)">'+
-                        Object.entries(PRIORITIES).map(([key,p])=>'<option value="'+key+'" '+(key===target.priority?'selected':'')+'>'+p.icon+'</option>').join('')+
-                      '</select>'+
+                      '<button type="button" class="brain-slot-priority" aria-label="Appetibilità slot '+(i+1)+'" title="Tocca per cambiare appetibilità" onclick="cycleBrainSlotPriority('+s.id+',\''+r+'\','+i+',event)">'+
+                        priority.icon+
+                      '</button>'+
                       '<button type="button" class="brain-slot-player '+(selectedId?'has-player':'')+'" aria-label="Giocatore slot '+(i+1)+'" onclick="openBrainSlotPlayerPicker('+s.id+',\''+r+'\','+i+')">'+
                         (selectedId?(esc((players.find(p=>String(p.id)===selectedId)||{}).name||'Scegli giocatore')):'Scegli giocatore')+
                       '</button>'+
@@ -981,7 +1014,7 @@ function createBrainFromTemplate(key){
 }
 function duplicateBrainStrategy(id){
   const s=current?.brainStrategies.find(x=>x.id===id); if(!s) return;
-  current.brainStrategies.push({id:Date.now(),name:s.name+' copia',allocation:{...s.allocation},slots:{...brainStrategySlots(s)},slotAllocation:JSON.parse(JSON.stringify(s.slotAllocation||{})),template:s.template});
+  current.brainStrategies.push({id:Date.now(),name:s.name+' copia',allocation:{...s.allocation},slots:{...brainStrategySlots(s)},slotAllocation:JSON.parse(JSON.stringify(s.slotAllocation||{})),slotTargets:JSON.parse(JSON.stringify(s.slotTargets||{})),template:s.template});
   persist();
 }
 function renameBrainStrategy(id){
