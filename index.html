@@ -1656,6 +1656,11 @@ body.campetti-open{
 .brain-budget{font-size:28px;font-weight:800;margin-top:4px}
 .brain-strategy{padding:0;margin-bottom:10px;overflow:hidden}
 .brain-strategy-title{width:100%;border:0;background:transparent;color:var(--ink);padding:18px 16px;text-align:left;font:inherit;font-size:19px;font-weight:850;cursor:pointer;display:flex;align-items:center;gap:10px}
+.brain-strategy-edit{width:34px;height:34px;min-width:34px;border:0;border-radius:10px;background:#eef1f4;color:var(--ink);font-size:19px;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.brain-strategy-edit:active{transform:scale(.94)}
+.brain-strategy-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brain-strategy-status{margin-left:auto;width:30px;height:30px;min-width:30px;border-radius:50%;background:#e8f6ef;color:var(--green);display:inline-flex;align-items:center;justify-content:center;font-size:19px;font-weight:900;line-height:1}
+.brain-strategy-status.inactive{visibility:hidden}
 .brain-strategy-icon{font-size:24px;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:30px;flex:0 0 30px}
 .brain-strategy-details{padding:0 12px 14px;overflow:hidden}
 .brain-active-choice{display:flex;align-items:center;gap:8px;font-weight:750;font-size:14px}
@@ -1820,7 +1825,7 @@ body.campetti-open{
 }
 
 .brain-role-row.role-C .brain-role-label{
-  font-size:14px !important;
+  font-size:13px !important;
 }
 
 .brain-role-row.role-C .brain-role-title{
@@ -1848,13 +1853,15 @@ body.campetti-open{
 }
 
 .brain-percent input{
-  width:30px !important;
+  width:auto !important;
+  min-width:0 !important;
   height:32px !important;
   padding:0 !important;
   margin:0 !important;
   font-size:18px !important;
   line-height:32px !important;
-  text-align:right !important;
+  text-align:center !important;
+  flex:0 0 auto !important;
 }
 
 .brain-percent span{
@@ -1897,10 +1904,10 @@ body.campetti-open{
     padding:9px 9px !important;
   }
   .brain-role-label{font-size:15px !important;}
-  .brain-role-row.role-C .brain-role-label{font-size:13px !important;}
+  .brain-role-row.role-C .brain-role-label{font-size:12px !important;}
   .brain-role-dot{width:17px !important;height:17px !important;flex-basis:17px !important;}
   .brain-percent{width:58px !important;height:58px !important;}
-  .brain-percent input{width:28px !important;font-size:17px !important;}
+  .brain-percent input{width:auto !important;min-width:0 !important;font-size:17px !important;}
   .brain-percent span{font-size:14px !important;}
   .brain-role-numbers span{padding:0 3px !important;}
   .brain-role-numbers b{font-size:17px !important;}
@@ -1925,7 +1932,7 @@ body.campetti-open{
 
       <div class="title">
         <span>Asta Fantacalcio</span>
-        <span class="app-version">V. 3.4.6</span>
+        <span class="app-version">V. 3.4.7</span>
       </div>
 
       <div class="sub" id="sub">
