@@ -1485,7 +1485,8 @@ function renderFreeSuggestions(){
         .filter(p =>
             !sold.has(p.id) &&
             (freeRole === 'ALL' || p.role === freeRole) &&
-            p.name.toLowerCase().includes(query)
+            (p.name||'').toLowerCase().includes(query) ||
+            (p.team||'').toLowerCase().includes(query)
         )
         .sort((a,b) => a.name.localeCompare(b.name, 'it'))
         .slice(0, 8);
@@ -1594,7 +1595,8 @@ function renderFree(){
             (freeRole === 'ALL' || p.role === freeRole) &&
             (
                 !query ||
-                p.name.toLowerCase().includes(query)
+                (p.name||'').toLowerCase().includes(query) ||
+                (p.team||'').toLowerCase().includes(query)
             )
         )
         .sort((a,b) => {
