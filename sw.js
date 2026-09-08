@@ -1,4 +1,4 @@
-const CACHE = "asta-fantacalcio-v77";
+const CACHE = "asta-fantacalcio-v78";
 
 const ASSETS = [
     "./",
