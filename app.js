@@ -2840,7 +2840,9 @@ function editObjectives(){
     openModal(`
 
 
-        <div class="h2">
+        <button type="button" class="setup-objectives-close" onclick="closeModal()" aria-label="Chiudi">×</button>
+
+        <div class="h2 setup-objectives-title">
 
             🎯 Imposta obiettivi
 
@@ -2932,6 +2934,11 @@ function editObjectives(){
 }
 
 
+
+function clearObjectiveSetupSearch(){
+    const input = $('oq');
+    if(input) input.value = '';
+}
 
 function setupRole(r,el){
 
@@ -3133,6 +3140,8 @@ function renderObjectives(){
     if(!current) return;
 
 
+    const q = ($('objQ')?.value || '').trim().toLowerCase();
+
     let sold = new Set();
 
 
@@ -3153,6 +3162,10 @@ function renderObjectives(){
         .filter(p =>
             p.role === objRole &&
             current.objectives.includes(p.id) &&
+            (
+                !q ||
+                p.name.toLowerCase().includes(q)
+            ) &&
             (
                 objStatus === 'available'
                     ? !sold.has(p.id)
