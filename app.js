@@ -783,7 +783,7 @@ function renderBrain(){
               const slotsOpen=!!window.brainOpenSlots?.[slotKey];
               return '<div class="brain-role-row brain-role-dynamic role-'+r+'">'+
                 '<div class="brain-role-top">'+
-                  '<div class="brain-role-label"><div class="brain-role-title"><button class="brain-role-gear" type="button" onclick="toggleBrainSlots('+s.id+',\\''+r+'\\')" aria-label="Gestisci slot '+label+'" aria-expanded="'+slotsOpen+'">⚙</button><span>'+label+'</span></div><span class="brain-role-meta"><b>'+bought+'/'+slots+'</b><span>R.M. '+(needed>0?avg:'—')+'</span></span></div>'+
+                  '<div class="brain-role-label"><div class="brain-role-title"><button class="brain-role-gear" type="button" onclick="toggleBrainSlots('+s.id+',\''+r+'\')" aria-label="Gestisci slot '+label+'" aria-expanded="'+slotsOpen+'">⚙</button><span>'+label+'</span></div><span class="brain-role-meta"><b>'+bought+'/'+slots+'</b><span>R.M. '+(needed>0?avg:'—')+'</span></span></div>'+
                   '<div class="brain-percent"><input type="number" min="0" max="100" value="'+pct+'" style="width:'+(String(pct).length===1?'13px':String(pct).length===2?'24px':'35px')+'!important" aria-label="Percentuale '+label+'" onchange="updateBrainAllocation('+s.id+',\''+r+'\',this.value)"><span>%</span></div>'+
                   '<div class="brain-role-symbol" aria-hidden="true">'+symbol+'</div>'+
                 '</div>'+
