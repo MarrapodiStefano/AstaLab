@@ -745,6 +745,37 @@ function updateBrainSlotPlayer(id,role,index,value){
   persist();
 }
 
+function openBrainSlotPlayerPicker(id,role,index){
+  const s=current?.brainStrategies.find(x=>x.id===id); if(!s) return;
+  const targets=brainSlotTargets(s,role);
+  const target=targets[index]||{priority:'base',playerId:null};
+  const priority=PRIORITIES[target.priority]||PRIORITIES.base;
+  const players=brainSlotPlayers(role,target.priority);
+  const selectedId=target.playerId==null?'':String(target.playerId);
+
+  openModal(
+    '<div class="brain-player-picker">'+
+      '<div class="brain-picker-head">'+
+        '<div><div class="h2">Scegli giocatore</div><div class="sub">Obiettivi '+esc(priority.label||'')+' '+esc(priority.icon||'')+'</div></div>'+
+        '<button type="button" class="brain-picker-close" onclick="closeModal()" aria-label="Chiudi">×</button>'+
+      '</div>'+
+      '<div class="brain-player-list">'+
+        '<button type="button" class="brain-player-option '+(!selectedId?'selected':'')+'" onclick="updateBrainSlotPlayer('+id+',\''+role+'\','+index+',\'\');closeModal()">'+
+          '<span>Nessun giocatore</span><b>'+(!selectedId?'✓':'')+'</b>'+
+        '</button>'+
+        (players.length
+          ? players.map(p=>'<button type="button" class="brain-player-option '+(String(p.id)===selectedId?'selected':'')+'" onclick="updateBrainSlotPlayer('+id+',\''+role+'\','+index+','+p.id+');closeModal()">'+
+              '<span class="brain-player-option-name">'+esc(p.name)+'</span>'+
+              '<span class="brain-player-option-team">'+esc(p.team||'')+'</span>'+
+              '<b>'+(String(p.id)===selectedId?'✓':'')+'</b>'+
+            '</button>').join('')
+          : '<div class="brain-player-empty">Nessun obiettivo disponibile con questa appetibilità.</div>'
+        )+
+      '</div>'+
+    '</div>'
+  );
+}
+
 function toggleBrainSlots(id,role){
   if(!window.brainOpenSlots) window.brainOpenSlots={};
   const key=id+'-'+role;
@@ -852,10 +883,9 @@ function renderBrain(){
                       '<select class="brain-slot-priority" aria-label="Appetibilità slot '+(i+1)+'" onchange="updateBrainSlotPriority('+s.id+',\''+r+'\','+i+',this.value)">'+
                         Object.entries(PRIORITIES).map(([key,p])=>'<option value="'+key+'" '+(key===target.priority?'selected':'')+'>'+p.icon+'</option>').join('')+
                       '</select>'+
-                      '<select class="brain-slot-player" aria-label="Giocatore slot '+(i+1)+'" onchange="updateBrainSlotPlayer('+s.id+',\''+r+'\','+i+',this.value)">'+
-                        '<option value="">Scegli giocatore</option>'+
-                        players.map(p=>'<option value="'+p.id+'" '+(String(p.id)===selectedId?'selected':'')+'>'+esc(p.name)+'</option>').join('')+
-                      '</select>'+
+                      '<button type="button" class="brain-slot-player '+(selectedId?'has-player':'')+'" aria-label="Giocatore slot '+(i+1)+'" onclick="openBrainSlotPlayerPicker('+s.id+',\''+r+'\','+i+')">'+
+                        (selectedId?(esc((players.find(p=>String(p.id)===selectedId)||{}).name||'Scegli giocatore')):'Scegli giocatore')+
+                      '</button>'+
                     '</div>';
                   }).join('')+
                 '</div>':'')+
