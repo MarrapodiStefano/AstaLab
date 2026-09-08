@@ -797,11 +797,10 @@ function renderBrain(){
                     const slotBudget=Math.round(planned*slotPct/100);
                     return '<div class="brain-slot">'+
                       '<span class="brain-slot-name">Slot '+(i+1)+'</span>'+
-                      '<div class="brain-slot-value"><input type="number" min="0" max="100" value="'+slotPct+'" onchange="updateBrainSlotAllocation('+s.id+',\''+r+'\','+i+',this.value)"><span>%</span></div>'+
-                      '<b>'+slotBudget+' cr</b>'+
+                      '<div class="brain-slot-percent"><input type="number" min="0" max="100" value="'+slotPct+'" aria-label="Percentuale Slot '+(i+1)+'" onchange="updateBrainSlotAllocation('+s.id+',\''+r+'\','+i+',this.value)"><span>%</span></div>'+
+                      '<div class="brain-slot-budget" aria-label="Budget calcolato">'+slotBudget+' cr</div>'+
                     '</div>';
                   }).join('')+
-                  '<div class="brain-slots-total">'+slotPercents.reduce((a,b)=>a+b,0)+'% del budget '+label+'</div>'+
                 '</div>':'')+
               '</div>';
             }).join('')+            '<div class="brain-actions">'+
