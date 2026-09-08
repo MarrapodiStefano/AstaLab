@@ -783,7 +783,7 @@ function renderBrain(){
               const slotsOpen=!!window.brainOpenSlots?.[slotKey];
               return '<div class="brain-role-row brain-role-dynamic role-'+r+'">'+
                 '<div class="brain-role-top">'+
-                  '<div class="brain-role-label"><div class="brain-role-title"><span class="brain-role-dot"></span><span>'+label+'</span></div><span class="brain-role-meta">'+bought+' acquistati · '+needed+' da prendere · '+(needed>0?avg+' cr/media':'reparto completo')+'</span></div>'+
+                  '<div class="brain-role-label"><div class="brain-role-title"><span class="brain-role-dot"></span><span>'+label+'</span></div><span class="brain-role-meta"><b>'+bought+'/'+slots+'</b><span>R.M. '+(needed>0?avg:'—')+'</span></span></div>'+
                   '<div class="brain-percent"><input type="number" min="0" max="100" value="'+pct+'" style="width:'+(String(pct).length===1?'13px':String(pct).length===2?'24px':'35px')+'!important" aria-label="Percentuale '+label+'" onchange="updateBrainAllocation('+s.id+',\''+r+'\',this.value)"><span>%</span></div>'+
                   '<div class="brain-role-symbol" aria-hidden="true">'+symbol+'</div>'+
                 '</div>'+
@@ -792,8 +792,11 @@ function renderBrain(){
                   '<span><small>Spesi</small><b>'+spent+'</b></span>'+
                   '<span class="brain-remaining"><small>Rimasti</small><b>'+available+'</b></span>'+
                 '</div>'+
-                '<button class="brain-slots-toggle" type="button" onclick="toggleBrainSlots('+s.id+',\''+r+'\')">'+(slotsOpen?'Nascondi slot':'Gestisci '+slots+' slot')+' <span>'+ (slotsOpen?'⌃':'⌄') +'</span></button>'+
-                (slotsOpen?'<div class="brain-slots">'+
+                '<button class="brain-slots-toggle" type="button" onclick="toggleBrainSlots('+s.id+',\''+r+'\')" aria-expanded="'+slotsOpen+'">'+
+                  '<span class="brain-slots-toggle-main">'+(slotsOpen?'Nascondi gestione slot':'⚙ Gestisci gli slot')+'</span>'+
+                  '<span class="brain-slots-toggle-count">'+slots+' slot</span>'+
+                  '<span class="brain-slots-toggle-arrow">'+(slotsOpen?'⌃':'⌄')+'</span>'+
+                '</button>'+                (slotsOpen?'<div class="brain-slots">'+
                   slotPercents.map((slotPct,i)=>{
                     const slotBudget=Math.round(planned*slotPct/100);
                     return '<div class="brain-slot">'+
