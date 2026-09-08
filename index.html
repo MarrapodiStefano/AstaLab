@@ -755,39 +755,32 @@ label{
 /* MENU IN BASSO */
 
 .bottom{
-  /*
-     Barra realmente indipendente dal contenuto:
-     deve restare sempre agganciata al viewport, anche su iOS/PWA.
-  */
-  position:fixed !important;
-  left:50% !important;
-  right:auto !important;
-  top:auto !important;
-  bottom:0 !important;
 
-  z-index:9999 !important;
+  position:fixed;
 
-  width:min(430px,100vw) !important;
-  max-width:430px !important;
-  height:calc(58px + env(safe-area-inset-bottom)) !important;
+  left:0;
+  right:0;
+  bottom:0;
 
-  margin:0 !important;
-  padding:0 6px env(safe-area-inset-bottom) !important;
+  z-index:20;
 
-  display:flex !important;
+  max-width:430px;
+
+  height:58px;
+
+  margin:auto;
+
+  display:flex;
+
   align-items:center;
 
   background:rgba(255,255,255,.96);
+
   backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
 
   border-top:1px solid var(--line);
 
-  transform:translate3d(-50%,0,0) !important;
-  -webkit-transform:translate3d(-50%,0,0) !important;
-  will-change:transform;
-  backface-visibility:hidden;
-  -webkit-backface-visibility:hidden;
+  padding:0 6px;
 }
 
 .nav{
@@ -2225,37 +2218,6 @@ body > .bottom{
 </style>
 
 
-<style id="bottom-nav-3422">
-/* 3.4.22 — barra originale: altezza 58px, fissa al viewport */
-html,body{width:100%;min-height:100%;overflow-x:hidden;}
-
-body > .bottom{
-  position:fixed!important;
-  left:0!important;
-  right:0!important;
-  top:auto!important;
-  bottom:0!important;
-
-  width:100%!important;
-  max-width:none!important;
-  height:58px!important;
-  min-height:58px!important;
-
-  margin:0!important;
-  padding:0 6px!important;
-  box-sizing:border-box!important;
-
-  transform:none!important;
-  -webkit-transform:none!important;
-
-  z-index:2147483647!important;
-}
-
-.app{
-  padding-bottom:58px!important;
-}
-</style>
-
 </head>
 
 
@@ -2272,7 +2234,7 @@ body > .bottom{
 
       <div class="title">
         <span>Asta Fantacalcio</span>
-        <span class="app-version">V. 3.4.22</span>
+        <span class="app-version">V. 3.4.23</span>
       </div>
 
       <div class="sub" id="sub">
@@ -2804,25 +2766,6 @@ body > .bottom{
 
 
 
-
-<script>
-/* NAVIGAZIONE INFERIORE: su iOS/PWA la barra deve essere figlia diretta del body.
-   In questo modo position:fixed resta ancorato al viewport e non al contenitore
-   dell'app o alla posizione di scorrimento del contenuto. */
-(function(){
-  function anchorBottomNav(){
-    const nav=document.querySelector('.bottom');
-    if(nav && nav.parentElement!==document.body){
-      document.body.appendChild(nav);
-    }
-  }
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',anchorBottomNav,{once:true});
-  }else{
-    anchorBottomNav();
-  }
-})();
-</script>
 
 <script>
 /* Prova a bloccare l'orientamento dove la PWA/browser lo consente.
