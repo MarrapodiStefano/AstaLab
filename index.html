@@ -1665,11 +1665,100 @@ body.campetti-open{
 .brain-total{margin:12px 0 4px;padding:10px;border-radius:12px;background:#f4f5f7;font-weight:700;text-align:center}
 .brain-total.ok{background:#eaf7ee}
 .brain-total.warn{background:#fff1e8}
-.brain-role-row{display:grid;grid-template-columns:1fr 64px 62px 86px;gap:7px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
-.brain-role-label small,.brain-credits small,.brain-live small{display:block;font-size:10px;color:var(--muted);font-weight:600;margin-top:2px}.brain-live{text-align:right;font-size:13px}.brain-live b{font-size:15px}.brain-live em{display:block;font-style:normal;font-size:10px;font-weight:800;margin-top:2px;color:#16845d}.brain-live-summary{display:flex;justify-content:space-between;gap:8px;margin:8px 0 12px;padding:10px;border-radius:12px;background:#f4f5f7;font-size:13px}.brain-live-summary span{display:flex;flex-direction:column;gap:2px}.brain-live-summary b{font-size:17px}
-.brain-role-label{font-weight:750}
-.brain-role-row input{text-align:center;margin:0;padding:8px 4px;min-height:38px}
-.brain-credits{text-align:right;font-weight:800}
+/* BRAIN — layout mobile compatto: nessuna colonna può uscire dallo schermo */
+.brain-role-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 58px 64px;
+  gap:8px;
+  align-items:center;
+  padding:11px 0 9px;
+  border-top:1px solid var(--line);
+  min-width:0;
+}
+.brain-role-label{
+  min-width:0;
+  font-weight:800;
+  line-height:1.08;
+}
+.brain-role-label small,
+.brain-credits small,
+.brain-live small{
+  display:block;
+  font-size:10px;
+  color:var(--muted);
+  font-weight:650;
+  margin-top:4px;
+}
+.brain-role-row input{
+  width:58px;
+  box-sizing:border-box;
+  text-align:center;
+  margin:0;
+  padding:8px 2px;
+  min-height:42px;
+}
+.brain-credits{
+  min-width:0;
+  text-align:right;
+  font-weight:850;
+}
+.brain-credits b{
+  font-size:18px;
+}
+.brain-live{
+  grid-column:1 / -1;
+  display:flex;
+  align-items:baseline;
+  justify-content:flex-end;
+  gap:5px;
+  padding-top:1px;
+  text-align:right;
+  min-width:0;
+}
+.brain-live b{
+  font-size:16px;
+}
+.brain-live small{
+  display:inline;
+  margin:0 6px 0 0;
+}
+.brain-live em{
+  display:inline;
+  font-style:normal;
+  font-size:12px;
+  font-weight:850;
+  color:#16845d;
+}
+.brain-live-summary{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin:8px 0 12px;
+  padding:12px 14px;
+  border-radius:14px;
+  background:#f4f5f7;
+  font-size:13px;
+}
+.brain-live-summary span{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  min-width:0;
+}
+.brain-live-summary span:last-child{
+  text-align:right;
+  align-items:flex-end;
+}
+.brain-live-summary b{
+  font-size:20px;
+}
+.brain-strategy-details{
+  overflow:hidden;
+}
+.brain-role-dynamic{
+  width:100%;
+  box-sizing:border-box;
+}
 .brain-actions{display:flex;gap:8px;margin-top:10px}
 .brain-actions .btn{flex:1}
 .brain-template-picker{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:12px}
@@ -1699,7 +1788,7 @@ body.campetti-open{
 
       <div class="title">
         <span>Asta Fantacalcio</span>
-        <span class="app-version">V. 3.0</span>
+        <span class="app-version">V. 3.1</span>
       </div>
 
       <div class="sub" id="sub">
