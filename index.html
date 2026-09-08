@@ -1652,41 +1652,42 @@ body.campetti-open{
 /* BRAIN */
 .nav[data-s="brain"]{overflow:visible;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .nav[data-s="brain"] .navicon{font-size:27px;line-height:1;display:block;width:100%;text-align:center;margin:0 0 3px;transform:none}
+
 .brain-budget{font-size:28px;font-weight:800;margin-top:4px}
 .brain-strategy{padding:0;margin-bottom:10px;overflow:hidden}
-.brain-strategy-title{width:100%;border:0;background:transparent;color:var(--ink);padding:18px 16px;text-align:left;font:inherit;font-size:19px;font-weight:850;cursor:pointer;display:flex;align-items:center;gap:10px}.brain-strategy-icon{font-size:24px;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:30px;flex:0 0 30px}
-.brain-strategy-details{padding:0 14px 14px}
+.brain-strategy-title{width:100%;border:0;background:transparent;color:var(--ink);padding:18px 16px;text-align:left;font:inherit;font-size:19px;font-weight:850;cursor:pointer;display:flex;align-items:center;gap:10px}
+.brain-strategy-icon{font-size:24px;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:30px;flex:0 0 30px}
+.brain-strategy-details{padding:0 12px 14px;overflow:hidden}
 .brain-active-choice{display:flex;align-items:center;gap:8px;font-weight:750;font-size:14px}
 .brain-strategy-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .brain-strategy.active{border:2px solid var(--ink)}
 
 .brain-check{width:24px;height:24px;accent-color:#222}
 .brain-name{font-weight:800;font-size:17px;flex:1}
-.brain-total{margin:12px 0 4px;padding:10px;border-radius:12px;background:#f4f5f7;font-weight:700;text-align:center}
+.brain-total{margin:8px 0;padding:9px 12px;border-radius:13px;font-size:16px;line-height:1.2;font-weight:700;text-align:center}
 .brain-total.ok{background:#eaf7ee}
 .brain-total.warn{background:#fff1e8}
-/* BRAIN — v3.4.1: layout compatto orizzontale come riferimento */
-.brain-strategy-details{padding:0 12px 14px;overflow:hidden}
-.brain-total{margin:8px 0;padding:9px 12px;border-radius:13px;font-size:16px;line-height:1.2}
-.brain-live-summary{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:0;padding:10px 14px;border-radius:16px;background:#f4f5f7;font-size:12px}
+
+.brain-live-summary{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:0 0 8px;padding:10px 14px;border-radius:16px;background:#f4f5f7;font-size:12px}
 .brain-live-summary span{display:flex;flex-direction:column;gap:2px;min-width:0}
 .brain-live-summary span:last-child{text-align:right;align-items:flex-end;border-left:1px solid var(--line);padding-left:12px}
 .brain-live-summary b{font-size:19px;line-height:1.05}
 .brain-progress-wrap{display:none!important}
 
-.role-P{--role-color:var(--role-p)}.role-D{--role-color:var(--role-d)}.role-C{--role-color:var(--role-c)}.role-A{--role-color:var(--role-a)}
+.role-P{--role-color:var(--role-p)}
+.role-D{--role-color:var(--role-d)}
+.role-C{--role-color:var(--role-c)}
+.role-A{--role-color:var(--role-a)}
 
 .brain-role-row{
-  display:grid;
-  grid-template-columns:minmax(0,1.28fr) 88px minmax(0,1.45fr) 38px;
-  align-items:center;
-  column-gap:10px;
-  min-height:104px;
-  padding:10px 12px;
+  display:block;
+  min-height:0;
+  padding:0;
   margin:7px 0;
   border:0;
   border-radius:18px;
   min-width:0;
+  overflow:hidden;
   box-sizing:border-box;
 }
 .brain-role-row.role-P{background:linear-gradient(90deg,var(--role-p-soft),#fff9f1)}
@@ -1694,40 +1695,61 @@ body.campetti-open{
 .brain-role-row.role-C{background:linear-gradient(90deg,var(--role-c-soft),#f5f9ff)}
 .brain-role-row.role-A{background:linear-gradient(90deg,var(--role-a-soft),#fff7f6)}
 
+.brain-role-top{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 82px 38px;
+  align-items:center;
+  column-gap:12px;
+  padding:11px 14px 8px;
+}
 .brain-role-label{min-width:0;font-weight:850;font-size:16px;line-height:1.1}
 .brain-role-title{display:flex;align-items:center;gap:10px;white-space:nowrap}
 .brain-role-dot{width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:var(--role-color);box-shadow:0 1px 3px rgba(0,0,0,.16)}
-.brain-role-meta{display:block;margin-top:6px;color:var(--muted);font-size:11px;font-weight:650}
+.brain-role-meta{display:block;margin-top:5px;color:var(--muted);font-size:11px;font-weight:650}
 
 .brain-percent{
-  width:78px;height:78px;
+  width:82px;height:82px;
   border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   background:rgba(255,255,255,.72);
   border:2px solid var(--role-color,#777);
   box-sizing:border-box;
   overflow:hidden;
+  gap:0;
 }
 .brain-percent input{
   width:48px;height:38px;
   border:0!important;background:transparent!important;box-shadow:none!important;
   padding:0!important;margin:0!important;
-  text-align:center!important;
+  text-align:right!important;
   font-size:18px;font-weight:850;color:var(--ink);outline:0;line-height:38px;
 }
-.brain-percent span{width:auto;font-size:15px;font-weight:850;line-height:38px;margin-left:-8px;text-align:left}
+.brain-percent span{
+  width:auto;
+  font-size:15px;
+  font-weight:850;
+  line-height:38px;
+  margin-left:1px;
+  text-align:left;
+}
 
 .brain-role-numbers{
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:0;min-width:0;
+  gap:0;
+  min-width:0;
+  margin:0 14px;
+  padding:9px 0 11px;
+  border-top:1px solid rgba(80,90,100,.15);
 }
 .brain-role-numbers span{
-  min-width:0;text-align:center;padding:0 6px;
+  min-width:0;
+  text-align:center;
+  padding:0 6px;
   border-left:1px solid rgba(80,90,100,.12);
 }
 .brain-role-numbers span:first-child{border-left:0}
-.brain-role-numbers small{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-bottom:5px}
+.brain-role-numbers small{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px}
 .brain-role-numbers b{display:block;font-size:18px;line-height:1.05}
 .brain-role-numbers .brain-remaining b{color:#16845d}
 
@@ -1740,17 +1762,19 @@ body.campetti-open{
 }
 
 .brain-credits,.brain-live{display:contents}
-.brain-role-row input[type=number]::-webkit-inner-spin-button,.brain-role-row input[type=number]::-webkit-outer-spin-button{opacity:0}
+.brain-role-row input[type=number]::-webkit-inner-spin-button,
+.brain-role-row input[type=number]::-webkit-outer-spin-button{opacity:0}
 
 @media(max-width:390px){
-  .brain-role-row{grid-template-columns:minmax(0,1.16fr) 78px minmax(0,1.42fr) 30px;column-gap:7px;padding:12px 9px}
+  .brain-role-top{grid-template-columns:minmax(0,1fr) 78px 32px;column-gap:9px;padding:10px 10px 7px}
   .brain-percent{width:78px;height:78px}
-  .brain-percent input{font-size:17px;width:46px}
+  .brain-percent input{font-size:17px;width:45px}
   .brain-role-title{gap:8px}
   .brain-role-label{font-size:15px}
+  .brain-role-numbers{margin:0 10px;padding:8px 0 10px}
   .brain-role-numbers span{padding:0 3px}
   .brain-role-numbers b{font-size:17px}
-  .brain-role-symbol{font-size:24px;width:30px}
+  .brain-role-symbol{font-size:24px;width:32px}
 }
 
 .brain-actions{display:flex;gap:8px;margin-top:10px}
@@ -1782,7 +1806,7 @@ body.campetti-open{
 
       <div class="title">
         <span>Asta Fantacalcio</span>
-        <span class="app-version">V. 3.4.2</span>
+        <span class="app-version">V. 3.4.3</span>
       </div>
 
       <div class="sub" id="sub">
