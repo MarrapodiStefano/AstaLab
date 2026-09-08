@@ -654,14 +654,27 @@ function activeBrainStrategy(){
   return current?.brainStrategies.find(s=>s.id===current.activeBrainStrategyId);
 }
 
+/* La squadra dell'utente è sempre la prima della lista dell'asta. */
+function brainMyTeam(){
+  if(!current?.teams?.length) return null;
+  current.myTeamId=current.teams[0].id;
+  return current.teams[0];
+}
+
 function brainRoleStats(){
   const stats={P:{spent:0,count:0},D:{spent:0,count:0},C:{spent:0,count:0},A:{spent:0,count:0}};
-  const my=current?.teams?.find(t=>t.id===current.myTeamId);
-  (my?.players||[]).forEach(p=>{ if(stats[p.role]){stats[p.role].spent+=+(p.price||0);stats[p.role].count++;} });
+  const my=brainMyTeam();
+  (my?.players||[]).forEach(p=>{
+    if(stats[p.role]){
+      stats[p.role].spent+=+(p.price||0);
+      stats[p.role].count++;
+    }
+  });
   return stats;
 }
+
 function brainRemainingBudget(){
-  const my=current?.teams?.find(t=>t.id===current.myTeamId);
+  const my=brainMyTeam();
   return Math.max(0,(+current?.initialCredits||0)-(+my?.spent||0));
 }
 
@@ -2495,6 +2508,9 @@ function assignPlayer(id){
 
     persist();
 
+    /* Aggiorna subito Brain con acquisti e crediti della prima squadra. */
+    renderBrain();
+
 
     /* PULIZIA RICERCA */
 
@@ -2711,6 +2727,8 @@ function undoPurchase(timestamp){
 
     persist();
 
+    /* Mantiene Brain sincronizzato anche dopo l'annullamento di un acquisto. */
+    renderBrain();
     renderHistoryList();
 
 }
