@@ -790,7 +790,7 @@ function renderFormation(){
   const title=$('formationTitle'),select=$('formationModule'),pitch=$('pitch'),bench=$('formationBench');
 
   if(!current||formationTeamId===null){
-    title.textContent='⚽ Formazione';
+    title.innerHTML='<svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="2.5" width="18" height="19" rx="1.5"/><path d="M12 2.5v19"/><circle cx="12" cy="12" r="2.7"/><path d="M3 7h3.5v10H3M21 7h-3.5v10H21"/></svg> Formazione';
     pitch.innerHTML='';
     bench.innerHTML='';
     return;
@@ -802,7 +802,7 @@ function renderFormation(){
     return;
   }
 
-  title.textContent='⚽ '+team.name;
+  title.innerHTML='<svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="2.5" width="18" height="19" rx="1.5"/><path d="M12 2.5v19"/><circle cx="12" cy="12" r="2.7"/><path d="M3 7h3.5v10H3M21 7h-3.5v10H21"/></svg> '+esc(team.name);
 
   const saved=team.formationModule||'3-4-3';
   select.innerHTML=Object.keys(FORMATION_MODULES)
@@ -836,9 +836,10 @@ function renderFormation(){
       '</div>'
     ).join('');
 
+  const roleOrder={P:0,D:1,C:2,A:3};
   const remaining=team.players
     .filter(p=>!used.has(p.id))
-    .sort((a,b)=>b.price-a.price);
+    .sort((a,b)=>(roleOrder[a.role]-roleOrder[b.role]) || (b.price-a.price));
 
   bench.innerHTML=remaining.length
     ? '<div class="bench-hint">'+
@@ -1010,7 +1011,7 @@ function render(){
 
                     <div class="teamrow-actions">
                         <div class="budget">${spendableBudget(t)}</div>
-                        <button class="ball-btn" onclick="openFormation(${t.id})" aria-label="Apri formazione">⚽</button>
+                        <button class="ball-btn" onclick="openFormation(${t.id})" aria-label="Apri formazione" title="Apri campetto"><svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="2.5" width="18" height="19" rx="1.5"/><path d="M12 2.5v19"/><circle cx="12" cy="12" r="2.7"/><path d="M3 7h3.5v10H3M21 7h-3.5v10H21"/></svg></button>
                     </div>
 
                 </div>
