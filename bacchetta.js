@@ -1,8 +1,8 @@
-/* Bacchetta Magica v3 - compilazione completa degli slot */
+/* Bacchetta Magica v4 - compilazione completa degli slot */
 (function(){
   'use strict';
 
-  const VERSION='3.4.30';
+  const VERSION='3.4.33';
   const ROLE_WEIGHT={P:1,D:1,C:1.05,A:1.1};
   const PRIORITY_VALUE={max:1,high:.9,base:.78,low:.62,bet:.52};
 
@@ -13,11 +13,7 @@
   function activeStrategy(){return typeof activeBrainStrategy==='function'?activeBrainStrategy():current?.brainStrategies?.find(s=>s.id===current?.activeBrainStrategyId);}
   function strategySlots(s){return typeof brainStrategySlots==='function'?brainStrategySlots(s):limits();}
   function slotPct(s,r){return typeof brainStrategySlotAllocation==='function'?brainStrategySlotAllocation(s,r):Array.from({length:strategySlots(s)[r]||0},()=>100/(strategySlots(s)[r]||1));}
-  function targetFor(s,r,i){
-    const raw=s?.slotTargets?.[r];
-    const t=Array.isArray(raw)&&raw[i]?raw[i]:null;
-    return t?{priority:t.priority||'base',playerId:t.playerId??null}:{priority:'base',playerId:null};
-  }
+  function targetFor(s,r,i){const raw=s?.slotTargets?.[r];const t=Array.isArray(raw)&&raw[i]?raw[i]:null;return t?{priority:t.priority||'base',playerId:t.playerId??null}:{priority:'base',playerId:null};}
 
   let playersCache=null,priceCache=new Map();
   function players(){return playersCache||(playersCache=all());}
@@ -61,45 +57,46 @@
 
   function candidateRows(s,slot,used){
     const sold=soldIds();
-    return players().filter(p=>p.role===slot.r&&!sold.has(String(p.id))&&!used.has(String(p.id))).map(p=>{
+    const rows=players().filter(p=>p.role===slot.r&&!sold.has(String(p.id))&&!used.has(String(p.id))).map(p=>{
       const est=priceEstimate(p),score=playerScore(p,slot.r),target=targetFor(s,slot.r,slot.i);
-      const selected=target.playerId!=null&&String(target.playerId)===String(p.id)?1.15:1;
-      const priority=(PRIORITY_VALUE[target.priority]||PRIORITY_VALUE.base);
+      const selected=target.playerId!=null&&String(target.playerId)===String(p.id)?1.18:1;
+      const priority=PRIORITY_VALUE[target.priority]||PRIORITY_VALUE.base;
       return {p,est,score,priority,preferred:selected,utility:score*selected*(.75+.25*priority)};
-    }).sort((a,b)=>b.utility-a.utility||a.est-b.est);
+    });
+    rows.sort((a,b)=>b.utility-a.utility||a.est-b.est);
+    const cheap=[...rows].sort((a,b)=>a.est-b.est).slice(0,5);
+    const top=rows.slice(0,30);
+    const map=new Map();[...top,...cheap].forEach(x=>map.set(String(x.p.id),x));
+    return [...map.values()];
   }
 
-  function cheapestRemaining(slots,start,used){
+  function cheapestFuture(slots,start,used){
     let total=0;
     for(let j=start;j<slots.length;j++){
       const rows=candidateRows(null,slots[j],used);
-      if(!rows.length)return Infinity;
-      total+=rows.reduce((best,c)=>c.est<best?c.est:best,Infinity);
+      let best=Infinity;
+      for(const c of rows)if(c.est<best)best=c.est;
+      if(!Number.isFinite(best))return Infinity;
+      total+=best;
     }
     return total;
   }
 
-  /*
-    Prima priorità: NON lasciare slot vuoti.
-    Per ogni slot scegliamo il miglior candidato che consenta di conservare
-    abbastanza budget per completare tutti gli slot successivi. Gli obiettivi
-    sono solo una preferenza: non sono mai un filtro obbligatorio.
-  */
   function optimize(s){
     const budget=Math.max(0,(Number(current.initialCredits)||0)-(Number(myTeam()?.spent)||0));
     const slots=makeSlots(s);
-    if(!slots.length)return {budget,slots,best:{chosen:[],spent:0,value:0,roleSpent:{P:0,D:0,C:0,A:0}}};
+    if(!slots.length)return {budget,slots,best:{chosen:[],spent:0,value:0,roleSpent:{P:0,D:0,C:0,A:0}},complete:true};
 
     const ordered=[...slots].sort((a,b)=>b.budget-a.budget||((PRIORITY_VALUE[b.priority]||0)-(PRIORITY_VALUE[a.priority]||0)));
-    let chosen=[],spent=0,value=0,roleSpent={P:0,D:0,C:0,A:0},used=new Set();
+    const chosen=[],used=new Set();
+    let spent=0,value=0,roleSpent={P:0,D:0,C:0,A:0};
 
     for(let i=0;i<ordered.length;i++){
-      const slot=ordered[i],rows=candidateRows(s,slot,used);
-      const feasible=[];
+      const slot=ordered[i],rows=candidateRows(s,slot,used),feasible=[];
       for(const c of rows){
         if(spent+c.est>budget)continue;
         const nextUsed=new Set(used);nextUsed.add(String(c.p.id));
-        const future=cheapestRemaining(ordered,i+1,nextUsed);
+        const future=cheapestFuture(ordered,i+1,nextUsed);
         if(spent+c.est+future>budget)continue;
         const penalty=sameTeamPenalty(c.p,chosen,slot.r);
         const over=Math.max(0,c.est-slot.budget),under=Math.max(0,slot.budget-c.est);
@@ -107,23 +104,15 @@
         feasible.push({...c,adjusted:c.utility+fit-penalty});
       }
       feasible.sort((a,b)=>b.adjusted-a.adjusted||a.est-b.est);
-      const c=feasible[0];
+      let c=feasible[0];
+      if(!c){
+        const fallback=rows.filter(x=>spent+x.est<=budget).sort((a,b)=>a.est-b.est||b.utility-a.utility)[0];
+        c=fallback;
+      }
       if(!c)continue;
       const penalty=sameTeamPenalty(c.p,chosen,slot.r),over=Math.max(0,c.est-slot.budget),under=Math.max(0,slot.budget-c.est);
-      chosen.push({...c,slot});used.add(String(c.p.id));spent+=c.est;
+      chosen.push({...c,slot});used.add(String(c.p.id));spent+=c.est;roleSpent[slot.r]+=c.est;
       value+=c.utility+Math.min(.45,under/Math.max(50,slot.budget)*.45)-Math.min(.65,over/Math.max(50,slot.budget)*.65)-penalty;
-      roleSpent[slot.r]+=c.est;
-    }
-
-    /* Fallback di sicurezza: se una scelta precedente ha impedito il completamento,
-       riempi gli slot rimasti con il giocatore meno costoso disponibile entro budget. */
-    if(chosen.length<ordered.length){
-      for(const slot of ordered){
-        if(chosen.some(x=>x.slot.r===slot.r&&x.slot.i===slot.i))continue;
-        const rows=candidateRows(s,slot,used).filter(c=>spent+c.est<=budget).sort((a,b)=>a.est-b.est||b.utility-a.utility);
-        if(!rows.length)continue;
-        const c=rows[0];chosen.push({...c,slot});used.add(String(c.p.id));spent+=c.est;roleSpent[slot.r]+=c.est;value+=c.utility;
-      }
     }
 
     return {budget,slots,best:{chosen,spent,value,roleSpent},complete:chosen.length===slots.length};
@@ -137,11 +126,11 @@
       const n=Number(counts[r])||0;
       const existing=Array.isArray(s.slotTargets[r])?s.slotTargets[r].slice():[];
       while(existing.length<n)existing.push({priority:'base',playerId:null});
-      for(let i=0;i<n;i++){
-        if(!existing[i])existing[i]={priority:'base',playerId:null};
-        if(existing[i].priority==null)existing[i].priority='base';
-      }
-      result.best.chosen.filter(x=>x.slot.r===r).forEach(x=>{existing[x.slot.i].playerId=x.p.id;});
+      for(let i=0;i<n;i++)if(!existing[i])existing[i]={priority:'base',playerId:null};
+      result.best.chosen.filter(x=>x.slot.r===r).forEach(x=>{
+        const old=existing[x.slot.i]||{priority:'base',playerId:null};
+        existing[x.slot.i]={priority:old.priority||'base',playerId:x.p.id};
+      });
       s.slotTargets[r]=existing;
     }
     if(typeof brainExpandedId!=='undefined')brainExpandedId=s.id;
@@ -150,19 +139,32 @@
     return true;
   }
 
-  function runWand(){
-    const btn=document.querySelector('.magic-wand-btn');
+  function setBusy(btn,busy){
+    if(!btn)return;
+    btn.disabled=busy;
+    btn.classList.toggle('magic-wand-running',busy);
+    btn.setAttribute('aria-busy',busy?'true':'false');
+    btn.textContent=busy?'✨':'🪄';
+  }
+
+  function runWand(sourceButton){
+    const btn=sourceButton||document.getElementById('magicWandFixed')||document.querySelector('.magic-wand-btn');
     if(!current){alert('Apri prima un’asta.');return;}
-    if(btn){btn.disabled=true;btn.textContent='⏳';}
-    try{
-      playersCache=null;priceCache=new Map();
-      const s=activeStrategy();if(!s){alert('Nessuna strategia attiva.');return;}
-      const result=optimize(s);
-      if(!result?.best?.chosen?.length){alert('Non ci sono giocatori disponibili per compilare gli slot rimasti.');return;}
-      if(!applyToActiveStrategy(result))alert('Non è stato possibile scrivere la proposta negli slot della strategia attiva.');
-      else if(!result.complete)console.warn('Bacchetta Magica: completamento parziale per limiti reali di giocatori/budget.',result);
-    }catch(e){console.error('Bacchetta Magica',e);alert('Errore Bacchetta Magica: '+(e?.message||e));}
-    finally{if(btn){btn.disabled=false;btn.textContent='🪄';}}
+    if(btn?.disabled)return;
+    setBusy(btn,true);
+    playersCache=null;priceCache=new Map();
+    /* Lasciamo a iOS un frame per disegnare l'animazione prima del calcolo. */
+    requestAnimationFrame(()=>setTimeout(()=>{
+      try{
+        const s=activeStrategy();
+        if(!s){alert('Nessuna strategia attiva.');return;}
+        const result=optimize(s);
+        if(!result?.best?.chosen?.length){alert('Non ci sono giocatori disponibili per compilare gli slot rimasti.');return;}
+        if(!applyToActiveStrategy(result))alert('Non è stato possibile scrivere la proposta negli slot della strategia attiva.');
+        else if(!result.complete)console.warn('Bacchetta Magica: completamento parziale per limiti reali di giocatori/budget.',result);
+      }catch(e){console.error('Bacchetta Magica',e);alert('Errore Bacchetta Magica: '+(e?.message||e));}
+      finally{setBusy(btn,false);}
+    },20));
   }
 
   window.runMagicWand=runWand;
@@ -171,12 +173,66 @@
     const version=document.querySelector('.app-version');if(version)version.textContent=VERSION;
     const brain=document.getElementById('brain');if(!brain)return;
     const head=brain.querySelector('.h2')?.parentElement;if(!head)return;
-    let btn=head.querySelector('.magic-wand-btn');if(btn)return;
-    btn=document.createElement('button');btn.type='button';btn.className='magic-wand-btn';btn.textContent='🪄';btn.title='Compila automaticamente gli slot';btn.setAttribute('aria-label','Compila automaticamente gli slot');head.appendChild(btn);
+    let btn=head.querySelector('.magic-wand-btn');
+    if(!btn){
+      btn=document.createElement('button');btn.type='button';btn.className='magic-wand-btn';btn.textContent='🪄';btn.title='Compila automaticamente gli slot';btn.setAttribute('aria-label','Compila automaticamente gli slot');
+      btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();runWand(btn);});
+      head.appendChild(btn);
+    }
   }
-  function style(){if(document.getElementById('magicWandStyle'))return;const s=document.createElement('style');s.id='magicWandStyle';s.textContent=`.magic-wand-btn{width:42px;height:42px;flex:0 0 42px;border:1px solid #dfe4e9;border-radius:13px;background:#fff;font-size:23px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(20,30,45,.06);cursor:pointer}.magic-wand-btn:disabled{opacity:.65;cursor:wait}`;document.head.appendChild(s);}
-  function handleClick(e){const btn=e.target?.closest?.('.magic-wand-btn');if(!btn)return;e.preventDefault();e.stopPropagation();runWand();}
-  function start(){style();inject();document.addEventListener('click',handleClick,true);}
+
+  function style(){
+    if(document.getElementById('magicWandStyle'))return;
+    const s=document.createElement('style');s.id='magicWandStyle';
+    s.textContent=`
+      .magic-wand-btn{width:42px;height:42px;flex:0 0 42px;border:1px solid #dfe4e9;border-radius:13px;background:#fff;font-size:23px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(20,30,45,.06);cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,background .18s ease}
+      .magic-wand-btn:active{transform:scale(.92)}
+      .magic-wand-btn.magic-wand-running{animation:magicWandPulse .72s ease-in-out infinite;box-shadow:0 0 0 6px rgba(8,120,79,.10),0 3px 14px rgba(8,120,79,.20);background:#f2fbf7}
+      .magic-wand-btn:disabled{cursor:wait}
+      #magicWandFixed.magic-wand-running{animation:magicWandPulse .72s ease-in-out infinite;box-shadow:0 0 0 7px rgba(8,120,79,.11),0 4px 16px rgba(8,120,79,.22);background:#f2fbf7}
+      @keyframes magicWandPulse{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.10) rotate(8deg)}}
+    `;
+    document.head.appendChild(s);
+  }
+
+  function start(){
+    style();inject();
+    const oldRender=window.renderBrain;
+    if(typeof oldRender==='function'&&!oldRender.__magicWandWrappedV4){
+      window.renderBrain=function(){
+        const original=window.brainSlotPlayers;
+        if(typeof original==='function'){
+          window.brainSlotPlayers=function(role,priority){
+            const base=original(role,priority)||[];
+            const s=activeStrategy();
+            const targets=s?.slotTargets?.[role]||[];
+            const sold=soldIds();
+            const extra=[];
+            for(const t of targets){
+              if((t?.priority||'base')!==priority||t?.playerId==null||sold.has(String(t.playerId)))continue;
+              const p=players().find(x=>String(x.id)===String(t.playerId));
+              if(p&&!base.some(x=>String(x.id)===String(p.id)))extra.push(p);
+            }
+            return [...base,...extra];
+          };
+        }
+        try{return oldRender.apply(this,arguments);}finally{if(original)window.brainSlotPlayers=original;inject();}
+      };
+      window.renderBrain.__magicWandWrappedV4=true;
+    }
+  }
+
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
-  const oldRender=window.renderBrain;if(typeof oldRender==='function')window.renderBrain=function(){const r=oldRender.apply(this,arguments);inject();return r;};
+
+  /*
+    AGGIORNA: il vecchio handler aspettava il Service Worker e su iOS
+    produceva uno sfarfallio ritardando la navigazione. La pagina usa già
+    fetch network-first, quindi qui ricarichiamo subito con cache-buster.
+  */
+  window.refreshApp=function(){
+    const btn=document.getElementById('refreshAppBtn');
+    if(btn){btn.disabled=true;btn.classList.add('loading');btn.setAttribute('aria-label','Aggiornamento in corso');}
+    const url=window.location.pathname+'?update='+Date.now();
+    window.location.replace(url);
+  };
 })();
