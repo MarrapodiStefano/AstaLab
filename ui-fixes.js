@@ -1,7 +1,7 @@
-/* UI fixes 3.4.36 — versione interfaccia */
+/* UI fixes 3.4.37 — versione interfaccia */
 (function(){
   'use strict';
-  const VERSION='3.4.36';
+  const VERSION='3.4.37';
   let longPressTimer=null;
   let longPressFired=false;
   let pressTarget=null;
