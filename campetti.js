@@ -21,13 +21,13 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
 function campettiBoot(){renderCampetti();initCampettiZoom();}
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',campettiBoot,{once:true});}else{campettiBoot();}
 
-/* FIX v3.4.28: carica la Bacchetta con cache-busting e aggiorna la versione visibile. */
+/* FIX v3.4.29: carica la Bacchetta con cache-busting e aggiorna la versione visibile. */
 (function loadMagicWand(){
   const versionEl=document.querySelector('.app-version');
-  if(versionEl)versionEl.textContent='V. 3.4.28';
+  if(versionEl)versionEl.textContent='V. 3.4.29';
   if(document.querySelector('script[data-bacchetta]'))return;
   const script=document.createElement('script');
-  script.src='./bacchetta.js?v=3.4.28';
+  script.src='./bacchetta.js?v=3.4.29';
   script.dataset.bacchetta='1';
   script.async=false;
   script.onload=function(){if(window.runMagicWand)document.documentElement.dataset.bacchettaReady='1';};
