@@ -1,12 +1,6 @@
 /* =========================
    CAMPETTI – SERIE A 2026/27
 ========================= */
-
-/*
-  Stemmi reali della stessa Serie A 2026/27 mostrata nel mockup.
-  Usiamo PNG diretti e trasparenti, evitando le vecchie ricostruzioni
-  geometriche e i collegamenti Wikimedia che in PWA potevano non caricarsi.
-*/
 const CAMPI_SERIE_A = [
   ['atalanta','Atalanta','Atalanta BC.png'],['bologna','Bologna','Bologna FC 1909.png'],['cagliari','Cagliari','Cagliari Calcio.png'],['como','Como','Como 1907.png'],['fiorentina','Fiorentina','ACF Fiorentina.png'],['frosinone','Frosinone','Frosinone Calcio.png'],['genoa','Genoa','Genoa CFC.png'],['inter','Inter','Inter Milan.png'],['juventus','Juventus','Juventus FC.png'],['lazio','Lazio','SS Lazio.png'],['lecce','Lecce','US Lecce.png'],['milan','Milan','AC Milan.png'],['monza','Monza','AC Monza.png'],['napoli','Napoli','SSC Napoli.png'],['parma','Parma','Parma Calcio 1913.png'],['roma','Roma','AS Roma.png'],['sassuolo','Sassuolo','US Sassuolo.png'],['torino','Torino','Torino FC.png'],['udinese','Udinese','Udinese Calcio.png'],['venezia','Venezia','Venezia FC.png']
 ].map(([id,name,file])=>({id,name,crest:'https://raw.githubusercontent.com/luukhopman/football-logos/master/logos/Italy%20-%20Serie%20A/'+encodeURIComponent(file)}));
@@ -18,21 +12,62 @@ function campettiApplyTransform(){const image=document.getElementById('campettiV
 function campettiResetZoom(){campettiScale=1;campettiX=0;campettiY=0;campettiApplyTransform();}
 function campettiDistance(touches){const dx=touches[0].clientX-touches[1].clientX,dy=touches[0].clientY-touches[1].clientY;return Math.hypot(dx,dy);}
 function initCampettiZoom(){const area=document.getElementById('campettiImageStage');if(!area||area.dataset.zoomReady)return;area.dataset.zoomReady='1';area.addEventListener('touchstart',e=>{if(e.touches.length===2){campettiPinching=true;campettiPanning=false;campettiStartDist=campettiDistance(e.touches);campettiStartScale=campettiScale;}else if(e.touches.length===1&&campettiScale>1){campettiPanning=true;campettiStartX=e.touches[0].clientX-campettiX;campettiStartY=e.touches[0].clientY-campettiY;}},{passive:false});area.addEventListener('touchmove',e=>{if(e.touches.length===2&&campettiPinching){e.preventDefault();const ratio=campettiDistance(e.touches)/campettiStartDist;campettiScale=Math.min(4,Math.max(1,campettiStartScale*ratio));campettiApplyTransform();}else if(e.touches.length===1&&campettiPanning){e.preventDefault();campettiX=e.touches[0].clientX-campettiStartX;campettiY=e.touches[0].clientY-campettiStartY;campettiApplyTransform();}},{passive:false});area.addEventListener('touchend',e=>{if(e.touches.length<2)campettiPinching=false;if(!e.touches.length)campettiPanning=false;if(campettiScale<=1.02)campettiResetZoom();});area.addEventListener('dblclick',()=>{if(campettiScale===1){campettiScale=2;}else{campettiResetZoom();return;}campettiApplyTransform();});}
-function campettiBoot(){renderCampetti();initCampettiZoom();}
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',campettiBoot,{once:true});}else{campettiBoot();}
 
-/* FIX v3.4.30: caricamento diretto/cache-busting della Bacchetta. */
+/* =========================
+   BACCHETTA MAGICA
+========================= */
 (function loadMagicWand(){
+  const VERSION='3.4.31';
   const versionEl=document.querySelector('.app-version');
-  if(versionEl)versionEl.textContent='V. 3.4.30';
+  if(versionEl)versionEl.textContent='V. '+VERSION;
   if(document.querySelector('script[data-bacchetta]'))return;
   const script=document.createElement('script');
-  script.src='./bacchetta.js?v=3.4.30';
+  script.src='./bacchetta.js?v='+VERSION;
   script.dataset.bacchetta='1';
   script.async=false;
-  script.onload=function(){if(window.runMagicWand)document.documentElement.dataset.bacchettaReady='1';};
-  script.onerror=function(){console.error('Bacchetta Magica: caricamento fallito');};
+  script.onload=function(){
+    document.documentElement.dataset.bacchettaReady=window.runMagicWand?'1':'0';
+    ensureMagicWandButton();
+  };
+  script.onerror=function(){console.error('Bacchetta Magica: caricamento fallito');ensureMagicWandButton();};
   document.body.appendChild(script);
+
+  function ensureMagicWandButton(){
+    const brain=document.getElementById('brain');
+    if(!brain)return;
+    let btn=document.getElementById('magicWandFixed');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='magicWandFixed';
+      btn.type='button';
+      btn.textContent='🪄';
+      btn.setAttribute('aria-label','Bacchetta Magica');
+      btn.title='Compila automaticamente gli slot della strategia attiva';
+      btn.onclick=function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        if(typeof window.runMagicWand==='function') window.runMagicWand();
+        else alert('Bacchetta Magica non ancora caricata.');
+      };
+      document.body.appendChild(btn);
+    }
+    const active=brain.classList.contains('active');
+    btn.style.display=active?'flex':'none';
+  }
+
+  const css=document.createElement('style');
+  css.id='magicWandFixedStyle';
+  css.textContent=`#magicWandFixed{position:fixed;right:16px;top:calc(78px + env(safe-area-inset-top));z-index:2147483646;width:48px;height:48px;border:1px solid #dfe4e9;border-radius:15px;background:#fff;box-shadow:0 3px 12px rgba(20,30,45,.14);font-size:26px;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}#magicWandFixed:active{transform:scale(.94)}#magicWandFixed:disabled{opacity:.6}`;
+  document.head.appendChild(css);
+
+  ensureMagicWandButton();
+  document.addEventListener('click',()=>setTimeout(ensureMagicWandButton,0),true);
+  const oldGo=window.go;
+  if(typeof oldGo==='function'&&!oldGo.__magicWandWrapped){
+    window.go=function(id){const r=oldGo.apply(this,arguments);setTimeout(ensureMagicWandButton,0);return r;};
+    window.go.__magicWandWrapped=true;
+  }
 })();
 
-/* Cache-bust marker v3.4.30 */
+function campettiBoot(){renderCampetti();initCampettiZoom();}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',campettiBoot,{once:true});}else{campettiBoot();}
