@@ -9,7 +9,6 @@
   const BEAM_WIDTH=90;
   const CANDIDATES_PER_SLOT=14;
 
-  function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
   function all(){return typeof allPlayers==='function'?allPlayers():[];}
   function limits(){return typeof roleLimits==='function'?roleLimits():{P:2,D:9,C:9,A:7};}
   function myTeam(){return typeof brainMyTeam==='function'?brainMyTeam():current?.teams?.[0]||null;}
@@ -107,31 +106,61 @@
     for(const r of ['P','D','C','A']){const delta=best.roleSpent[r]-roleBud[r];if(Math.abs(delta)>=3)shifts.push({role:r,delta});}
     return {budget,slots,best,roleBud,shifts,marketSamples:soldHistory().length};
   }
-  function globalAlternative(){const results=[];for(const s of current?.brainStrategies||[]){const o=optimize(s);if(o)results.push({s,o});}results.sort((a,b)=>b.o.best.value-a.o.best.value);return results;}
   function fmt(n){return Math.round(n).toLocaleString('it-IT');}
-  function roleLabel(r){return ROLE_NAMES[r]||r;}
 
-  function renderWandModal(results){
-    if(!results.length){openModal('<div class="h2">🪄 Bacchetta Magica</div><div class="empty">Non ci sono abbastanza slot o giocatori disponibili per costruire una configurazione.</div><button class="btn secondary" style="width:100%" onclick="closeModal()">Chiudi</button>');return;}
-    const activeId=current.activeBrainStrategyId,best=results[0],active=results.find(x=>x.s.id===activeId)||best,marketCount=soldHistory().length;
-    const rows=best.o.best.chosen.map(x=>`<div class="wand-row"><span><b>${esc(x.p.name)}</b><small>${roleLabel(x.slot.r)} · slot ${x.slot.i+1}</small></span><b>${fmt(x.est)} cr</b></div>`).join('');
-    const shifts=best.o.shifts.map(x=>`<span class="wand-shift">${roleLabel(x.role)} ${x.delta>0?'+':'−'}${fmt(Math.abs(x.delta))}</span>`).join('');
-    let suggestion='';
-    if(best.s.id!==activeId){const diff=best.o.best.value-(active?.o.best.value||0);suggestion=`<div class="wand-alert"><b>🪄 Strategia alternativa consigliata</b><br>«${esc(best.s.name)}» produce una configurazione migliore di circa <b>${diff.toFixed(1)}</b> punti rispetto alla strategia attiva.</div>`;}
-    const marketText=marketCount?`Il calcolo ha usato anche <b>${marketCount}</b> prezzi reali già registrati nell'asta.`:'Nessun prezzo reale disponibile: la stima parte dai valori del listone e si aggiornerà con l’asta.';
-    openModal(`<div class="wand-head"><div><div class="h2">🪄 Bacchetta Magica</div><div class="sub">Ottimizzazione globale della rosa</div></div><button class="brain-picker-close" onclick="closeModal()">×</button></div>${suggestion}<div class="wand-card"><div><b>Strategia analizzata</b><br><span>${esc(best.s.name)}</span></div><div class="wand-kpi"><span>Valore config.</span><b>${best.o.best.value.toFixed(1)}</b></div><div class="wand-kpi"><span>Budget usato</span><b>${fmt(best.o.best.spent)} cr</b></div></div><div class="wand-section"><b>Configurazione proposta</b>${rows||'<div class="muted small">Nessun nuovo slot da riempire.</div>'}</div>${shifts?`<div class="wand-section"><b>Redistribuzione suggerita</b><div class="wand-shifts">${shifts}</div></div>`:''}<div class="wand-note">${marketText}</div><button class="btn primary" style="width:100%;margin-top:10px" onclick="closeModal()">Ok, analizzo questa proposta</button>`);
+  /*
+     La Bacchetta non apre più una lista separata.
+     Il risultato dell'ottimizzazione viene scritto direttamente negli
+     slot della strategia attiva, così Brain diventa il pannello operativo.
+  */
+  function applyToActiveStrategy(result){
+    const s=activeStrategy();
+    if(!s||!result?.best?.chosen?.length)return false;
+    const byRole={P:[],D:[],C:[],A:[]};
+    result.best.chosen.forEach(x=>byRole[x.slot.r].push(x));
+
+    ['P','D','C','A'].forEach(r=>{
+      const targets=typeof brainSlotTargets==='function'
+        ? brainSlotTargets(s,r)
+        : [];
+      byRole[r].forEach(x=>{
+        const i=x.slot.i;
+        if(targets[i]) targets[i].playerId=x.p.id;
+      });
+      if(s.slotTargets) s.slotTargets[r]=targets;
+    });
+
+    if(typeof brainExpandedId!=='undefined') brainExpandedId=s.id;
+    if(typeof persist==='function') persist();
+    if(typeof renderBrain==='function') renderBrain();
+    return true;
   }
-  function runWand(){if(!current){alert('Apri prima un’asta.');return;}try{renderWandModal(globalAlternative());}catch(e){console.error('Bacchetta Magica',e);alert('La Bacchetta Magica non è riuscita a completare il calcolo.');}}
+
+  function runWand(){
+    if(!current){alert('Apri prima un’asta.');return;}
+    try{
+      const s=activeStrategy();
+      if(!s){alert('Nessuna strategia attiva.');return;}
+      const result=optimize(s);
+      if(!result?.best?.chosen?.length){
+        alert('Non ci sono abbastanza giocatori disponibili o budget sufficiente per completare gli slot della strategia attiva.');
+        return;
+      }
+      applyToActiveStrategy(result);
+    }catch(e){
+      console.error('Bacchetta Magica',e);
+      alert('La Bacchetta Magica non è riuscita a completare il calcolo.');
+    }
+  }
   window.runMagicWand=runWand;
 
   function inject(){
     const version=document.querySelector('.app-version');if(version)version.textContent=VERSION;
     const brain=document.getElementById('brain');if(!brain)return;const head=brain.querySelector('.h2')?.parentElement;if(!head)return;
-    if(head.querySelector('.magic-wand-btn'))return;const btn=document.createElement('button');btn.type='button';btn.className='magic-wand-btn';btn.textContent='🪄';btn.title='Bacchetta Magica';btn.setAttribute('aria-label','Bacchetta Magica');btn.onclick=runWand;head.appendChild(btn);
+    if(head.querySelector('.magic-wand-btn'))return;const btn=document.createElement('button');btn.type='button';btn.className='magic-wand-btn';btn.textContent='🪄';btn.title='Compila automaticamente gli slot';btn.setAttribute('aria-label','Compila automaticamente gli slot');btn.onclick=runWand;head.appendChild(btn);
   }
   function style(){if(document.getElementById('magicWandStyle'))return;const s=document.createElement('style');s.id='magicWandStyle';s.textContent=`
     .magic-wand-btn{width:42px;height:42px;flex:0 0 42px;border:1px solid #dfe4e9;border-radius:13px;background:#fff;font-size:23px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(20,30,45,.06);cursor:pointer}.magic-wand-btn:active{transform:scale(.94)}
-    .wand-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.wand-card{display:grid;grid-template-columns:1fr auto;gap:8px;padding:12px;background:#f7f8fa;border-radius:14px;margin:12px 0}.wand-kpi{display:flex;flex-direction:column;text-align:right}.wand-kpi span{font-size:11px;color:#697386}.wand-kpi b{font-size:18px}.wand-section{margin-top:12px}.wand-row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #e3e6eb}.wand-row:last-child{border-bottom:0}.wand-row small{display:block;color:#697386;font-size:11px;margin-top:2px}.wand-alert{padding:11px 12px;border-radius:12px;background:#fff7dc;border:1px solid #f0df9c;margin:10px 0}.wand-shifts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.wand-shift{padding:6px 8px;border-radius:9px;background:#eef5f1;color:#08784f;font-weight:800;font-size:12px}.wand-note{margin-top:12px;padding:10px 12px;border-radius:12px;background:#f4f5f7;color:#697386;font-size:12px;line-height:1.4}
   `;document.head.appendChild(s);}
   function start(){style();inject();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
