@@ -25,10 +25,7 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
     script.src='./bacchetta.js?v='+VERSION;
     script.dataset.bacchetta='1';
     script.async=false;
-    script.onload=function(){
-      document.documentElement.dataset.bacchettaReady=window.runMagicWand?'1':'0';
-      ensureBrainControls();
-    };
+    script.onload=function(){document.documentElement.dataset.bacchettaReady=window.runMagicWand?'1':'0';ensureBrainControls();};
     script.onerror=function(){console.error('Bacchetta Magica: caricamento fallito');ensureBrainControls();};
     document.body.appendChild(script);
   }
@@ -36,14 +33,14 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
   const css=document.createElement('style');
   css.id='magicWandFixedStyle';
   css.textContent=`
-    /* La bacchetta resta nell'header Brain, distinta dal + delle strategie. */
     #brain .head{position:relative}
     #brain .head .magic-wand-btn{width:42px;height:42px;flex:0 0 42px;border:1px solid #dfe4e9;border-radius:14px;background:#fff;font-size:23px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(20,30,45,.10);cursor:pointer;-webkit-tap-highlight-color:transparent;order:2}
-    #brain .head > button.plus{order:3}
+    #brain .head > button[onclick*="addBrainStrategy"]{order:3}
     #brain .head .magic-wand-btn:active{transform:scale(.94)}
     #brain .head .magic-wand-btn.magic-wand-running{animation:magicWandPulse .72s ease-in-out infinite}
     @keyframes magicWandPulse{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.08) rotate(7deg)}}
     .brain-strategy-name{touch-action:manipulation;-webkit-user-select:none;user-select:none}
+    .brain-strategy-name.brain-strategy-long-selected{transform:scale(.98);opacity:.72;transition:transform .12s ease,opacity .12s ease}
   `;
   document.head.appendChild(css);
 
@@ -60,21 +57,20 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
     if(!head)return;
     const wand=head.querySelector('.magic-wand-btn')||brain.querySelector('.magic-wand-btn');
     if(!wand)return;
-    const plus=head.querySelector('button.plus');
-    if(plus)head.insertBefore(wand,plus);
-    else head.appendChild(wand);
+    const plus=head.querySelector('button[onclick*="addBrainStrategy"]')||head.querySelector('.plus')||head.querySelector('button:last-of-type');
+    if(plus)head.insertBefore(wand,plus);else head.appendChild(wand);
   }
 
   function ensureStrategyLongPress(){
     const brain=document.getElementById('brain');
     if(!brain||brain.dataset.strategyLongPress==='1')return;
     brain.dataset.strategyLongPress='1';
-
     brain.addEventListener('pointerdown',e=>{
       const name=e.target.closest('.brain-strategy-name');
       if(!name)return;
-      const id=Number((name.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/)?.[1]);
-      if(!id)return;
+      const match=(name.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/);
+      const id=match?Number(match[1]):NaN;
+      if(!Number.isFinite(id))return;
       strategyPressTarget=name;
       clearTimeout(strategyPressTimer);
       strategyPressTimer=setTimeout(()=>{
@@ -89,7 +85,6 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
         strategyPressTimer=null;
       },650);
     },true);
-
     const cancel=()=>{clearTimeout(strategyPressTimer);strategyPressTimer=null;strategyPressTarget=null;};
     brain.addEventListener('pointerup',cancel,true);
     brain.addEventListener('pointercancel',cancel,true);
@@ -102,10 +97,7 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
     },true);
   }
 
-  function ensureBrainControls(){
-    moveWandIntoBrainHeader();
-    ensureStrategyLongPress();
-  }
+  function ensureBrainControls(){moveWandIntoBrainHeader();ensureStrategyLongPress();}
 
   ensureBrainControls();
   document.addEventListener('click',()=>setTimeout(ensureBrainControls,0),true);
@@ -119,23 +111,11 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
     window.go.__magicWandBrainControls34=true;
   }
 
-  /* =========================
-     AGGIORNAMENTO PWA ROBUSTO
-  ========================= */
   function hardRefresh(){
     const btn=document.getElementById('refreshAppBtn');
     if(btn){btn.classList.add('loading');btn.setAttribute('aria-label','Aggiornamento in corso');btn.disabled=true;}
-    try{
-      if('serviceWorker' in navigator){
-        navigator.serviceWorker.getRegistration().then(reg=>{if(reg)reg.update().catch(()=>{});}).catch(()=>{});
-      }
-    }catch(e){}
-    setTimeout(()=>{
-      const u=new URL(window.location.href);
-      u.searchParams.set('update',Date.now());
-      u.hash='';
-      window.location.replace(u.toString());
-    },180);
+    try{if('serviceWorker' in navigator)navigator.serviceWorker.getRegistration().then(reg=>{if(reg)reg.update().catch(()=>{});}).catch(()=>{});}catch(e){}
+    setTimeout(()=>{const u=new URL(window.location.href);u.searchParams.set('update',Date.now());u.hash='';window.location.replace(u.toString());},180);
   }
 
   document.addEventListener('click',e=>{
@@ -145,7 +125,6 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
     e.stopImmediatePropagation();
     hardRefresh();
   },true);
-
   window.refreshApp=hardRefresh;
 })();
 
