@@ -17,7 +17,7 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
    BACCHETTA MAGICA
 ========================= */
 (function loadMagicWand(){
-  const VERSION='3.4.31';
+  const VERSION='3.4.32';
   const versionEl=document.querySelector('.app-version');
   if(versionEl)versionEl.textContent='V. '+VERSION;
   if(document.querySelector('script[data-bacchetta]'))return;
@@ -67,6 +67,43 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
     window.go=function(id){const r=oldGo.apply(this,arguments);setTimeout(ensureMagicWandButton,0);return r;};
     window.go.__magicWandWrapped=true;
   }
+
+  /* =========================
+     AGGIORNAMENTO PWA RAPIDO
+  ========================= */
+  const installFastRefresh=()=>{
+    const currentRefresh=window.refreshApp;
+    if(typeof currentRefresh!=='function' || currentRefresh.__fastRefresh32)return;
+    const fastRefresh=()=>{
+      const btn=document.getElementById('refreshAppBtn');
+      if(btn){
+        btn.classList.add('loading');
+        btn.setAttribute('aria-label','Aggiornamento in corso');
+      }
+      try{
+        if('serviceWorker' in navigator){
+          navigator.serviceWorker.getRegistration().then(reg=>{
+            if(!reg)return;
+            reg.update().catch(()=>{});
+            if(reg.waiting){
+              try{reg.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){}
+            }
+          }).catch(()=>{});
+        }
+      }catch(e){}
+      /*
+         Non aspettiamo controllerchange/reg.update(): su iOS questo può
+         trattenere la UI per diversi secondi. Il SW attuale è network-first,
+         quindi il documento con query unica viene richiesto subito alla rete.
+      */
+      setTimeout(()=>{
+        window.location.replace(window.location.pathname+'?update='+Date.now());
+      },80);
+    };
+    fastRefresh.__fastRefresh32=true;
+    window.refreshApp=fastRefresh;
+  };
+  installFastRefresh();
 })();
 
 function campettiBoot(){renderCampetti();initCampettiZoom();}
