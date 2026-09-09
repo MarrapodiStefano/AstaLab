@@ -1,4 +1,4 @@
-const CACHE = "asta-fantacalcio-v90";
+const CACHE = "asta-fantacalcio-v91";
 
 const ASSETS = [
     "./",
@@ -33,8 +33,6 @@ self.addEventListener("activate", event => {
     );
 });
 
-/* Network-first: con connessione riceviamo sempre l'ultima versione;
-   offline usiamo la cache. */
 self.addEventListener("fetch", event => {
     if(event.request.method !== "GET") return;
     const request = event.request;
@@ -53,7 +51,6 @@ self.addEventListener("fetch", event => {
     );
 });
 
-/* Permette al pulsante Aggiorna di attivare subito il nuovo SW. */
 self.addEventListener("message", event => {
     if(event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
