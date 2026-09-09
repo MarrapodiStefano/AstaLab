@@ -1,7 +1,7 @@
-/* UI fixes 3.4.37 — versione interfaccia */
+/* UI fixes 3.4.38 — versione interfaccia */
 (function(){
   'use strict';
-  const VERSION='3.4.37';
+  const VERSION='3.4.38';
   let longPressTimer=null;
   let longPressFired=false;
   let pressTarget=null;
@@ -53,9 +53,23 @@
     },true);
   }
 
+  function setupRefresh(){
+    window.refreshApp=function(){
+      const btn=document.getElementById('refreshAppBtn');
+      if(btn){
+        btn.classList.add('loading');
+        btn.disabled=true;
+      }
+      setTimeout(function(){
+        window.location.replace(window.location.pathname+'?update='+Date.now());
+      },80);
+    };
+  }
+
   function boot(){
     setVersion();
     setupLongPress();
+    setupRefresh();
 
     /* Il nome della strategia e tutta la sua intestazione non devono
        diventare selezionabili durante il tap prolungato su iOS. */
