@@ -1,0 +1,43 @@
+name: Costruisci dati storici Fantacalcio
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/build_historical_data.py'
+      - 'historical-analysis.js'
+      - '.github/workflows/build-historical-data.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Installa dipendenze
+        run: pip install openpyxl
+
+      - name: Scarica e normalizza le tre stagioni
+        run: python scripts/build_historical_data.py
+
+      - name: Salva dataset generato
+        run: |
+          if git diff --quiet -- historical-data.js; then
+            echo "Dataset storico invariato"
+          else
+            git config user.name "Asta Fantacalcio Bot"
+            git config user.email "actions@github.com"
+            git add historical-data.js
+            git commit -m "Aggiorna dataset storico 2023-2026"
+            git push
+          fi
