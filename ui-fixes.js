@@ -1,7 +1,7 @@
-/* UI fixes 3.4.35 — Bacchetta unica + posizione originale */
+/* UI fixes 3.4.36 — Bacchetta unica + posizione lato sinistro */
 (function(){
   'use strict';
-  const VERSION='3.4.35';
+  const VERSION='3.4.36';
   let observer=null;
 
   function setVersion(){
@@ -43,12 +43,12 @@
   function boot(){
     setVersion();
     const css=document.createElement('style');
-    css.id='uiFixes35Style';
+    css.id='uiFixes36Style';
     css.textContent=`
-      #magicWandFixed{position:fixed;right:16px;z-index:2147483646;width:58px;height:58px;min-width:58px;min-height:58px;border:1px solid #dfe4e9;border-radius:17px;background:#fff;color:var(--ink);font-size:30px;line-height:1;display:none;align-items:center;justify-content:center;box-shadow:0 5px 18px rgba(20,30,45,.14);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+      #magicWandFixed{position:fixed;left:16px;right:auto;z-index:2147483646;width:58px;height:58px;min-width:58px;min-height:58px;border:1px solid #dfe4e9;border-radius:17px;background:#fff;color:var(--ink);font-size:30px;line-height:1;display:none;align-items:center;justify-content:center;box-shadow:0 5px 18px rgba(20,30,45,.14);cursor:pointer;-webkit-tap-highlight-color:transparent;}
       #magicWandFixed:active{transform:scale(.94)}
-      #magicWandFixed.magic-wand-running{animation:magicWandPulse35 .72s ease-in-out infinite;box-shadow:0 0 0 7px rgba(8,120,79,.11),0 4px 16px rgba(8,120,79,.22);background:#f2fbf7}
-      @keyframes magicWandPulse35{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.10) rotate(8deg)}}
+      #magicWandFixed.magic-wand-running{animation:magicWandPulse36 .72s ease-in-out infinite;box-shadow:0 0 0 7px rgba(8,120,79,.11),0 4px 16px rgba(8,120,79,.22);background:#f2fbf7}
+      @keyframes magicWandPulse36{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.10) rotate(8deg)}}
     `;
     document.head.appendChild(css);
     ensureWand();
