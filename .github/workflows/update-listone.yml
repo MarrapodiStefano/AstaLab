@@ -7,6 +7,7 @@ on:
       - 'Listone.xlsx'
       - 'scripts/convert_listone.py'
       - '.github/workflows/update-listone.yml'
+      - 'campetti.js'
 
 permissions:
   contents: write
