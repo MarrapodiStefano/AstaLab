@@ -6,6 +6,7 @@ on:
     paths:
       - 'Listone.xlsx'
       - 'scripts/convert_listone.py'
+      - '.github/workflows/update-listone.yml'
 
 permissions:
   contents: write
@@ -33,10 +34,33 @@ jobs:
         run: |
           if git diff --quiet -- players.js; then
             echo "Nessuna modifica a players.js"
-            exit 0
+          else
+            git config user.name "Asta Fantacalcio Bot"
+            git config user.email "actions@github.com"
+            git add players.js
+            git commit -m "Aggiorna automaticamente il Listone"
+            git push
           fi
-          git config user.name "Asta Fantacalcio Bot"
-          git config user.email "actions@github.com"
-          git add players.js
-          git commit -m "Aggiorna automaticamente il Listone"
-          git push
+
+      - name: Correggi caricamento Bacchetta Magica
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('<span class="app-version">V. 3.4.25</span>', '<span class="app-version">V. 3.4.30</span>', 1)
+          marker = '<script src="campetti.js"></script>'
+          direct = marker + '\n<script src="./bacchetta.js?v=3.4.30" data-bacchetta></script>'
+          if 'data-bacchetta' not in s:
+              s = s.replace(marker, direct, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+          if git diff --quiet -- index.html; then
+            echo "Nessuna modifica necessaria a index.html"
+          else
+            git config user.name "Asta Fantacalcio Bot"
+            git config user.email "actions@github.com"
+            git add index.html
+            git commit -m "Fix caricamento diretto Bacchetta Magica"
+            git push
+          fi
