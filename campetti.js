@@ -30,3 +30,19 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
   script.async=false;
   document.body.appendChild(script);
 })();
+
+/* Centrale Asta: carica il dataset storico e il motore di analisi dopo i file principali. */
+(function loadHistoricalEngine(){
+  function add(src, marker, done){
+    if(document.querySelector('script['+marker+']')){ if(done) done(); return; }
+    const s=document.createElement('script');
+    s.src=src;
+    s.async=false;
+    s.setAttribute(marker,'1');
+    (document.body||document.head).appendChild(s);
+    if(done)s.onload=done;
+  }
+  add('./historical-data.js?v=1.0.0','data-historical',function(){
+    add('./historical-analysis.js?v=1.0.0','engine-historical');
+  });
+})();
