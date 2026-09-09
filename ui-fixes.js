@@ -57,12 +57,12 @@
     setVersion();
     setupLongPress();
 
-    /* Il nome della strategia serve come controllo touch: durante il tap
-       prolungato iOS non deve trasformarlo in una selezione di testo. */
+    /* Il nome della strategia e tutta la sua intestazione non devono
+       diventare selezionabili durante il tap prolungato su iOS. */
     if(!document.getElementById('brainLongPressStyle')){
       const css=document.createElement('style');
       css.id='brainLongPressStyle';
-      css.textContent='.brain-strategy-name{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}';
+      css.textContent='.brain-strategy-title,.brain-strategy-title *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none;}';
       document.head.appendChild(css);
     }
 
