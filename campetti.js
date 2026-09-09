@@ -21,7 +21,7 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
 function campettiBoot(){renderCampetti();initCampettiZoom();}
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',campettiBoot,{once:true});}else{campettiBoot();}
 
-/* FIX v3.4.30: carica la Bacchetta con cache-busting e aggiorna la versione visibile. */
+/* FIX v3.4.30: caricamento diretto/cache-busting della Bacchetta. */
 (function loadMagicWand(){
   const versionEl=document.querySelector('.app-version');
   if(versionEl)versionEl.textContent='V. 3.4.30';
@@ -34,3 +34,5 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
   script.onerror=function(){console.error('Bacchetta Magica: caricamento fallito');};
   document.body.appendChild(script);
 })();
+
+/* Cache-bust marker v3.4.30 */
