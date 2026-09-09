@@ -59,6 +59,16 @@
     }
     window.addEventListener('resize',()=>{const b=document.getElementById('magicWandFixed');if(b)position(b);},{passive:true});
     document.addEventListener('click',()=>setTimeout(ensureWand,0),true);
+
+    /* Bacchetta v4 può riscrivere la versione durante renderBrain().
+       La versione ufficiale dell'interfaccia resta quella di ui-fixes. */
+    const oldRender=window.renderBrain;
+    if(typeof oldRender==='function'&&!oldRender.__uiFixesVersionWrap){
+      window.renderBrain=function(){
+        try{return oldRender.apply(this,arguments);}finally{setVersion();ensureWand();}
+      };
+      window.renderBrain.__uiFixesVersionWrap=true;
+    }
   }
 
   function load(){
