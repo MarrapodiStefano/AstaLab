@@ -17,93 +17,136 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
    BACCHETTA MAGICA
 ========================= */
 (function loadMagicWand(){
-  const VERSION='3.4.32';
+  const VERSION='3.4.34';
   const versionEl=document.querySelector('.app-version');
   if(versionEl)versionEl.textContent='V. '+VERSION;
-  if(document.querySelector('script[data-bacchetta]'))return;
-  const script=document.createElement('script');
-  script.src='./bacchetta.js?v='+VERSION;
-  script.dataset.bacchetta='1';
-  script.async=false;
-  script.onload=function(){
-    document.documentElement.dataset.bacchettaReady=window.runMagicWand?'1':'0';
-    ensureMagicWandButton();
-  };
-  script.onerror=function(){console.error('Bacchetta Magica: caricamento fallito');ensureMagicWandButton();};
-  document.body.appendChild(script);
-
-  function ensureMagicWandButton(){
-    const brain=document.getElementById('brain');
-    if(!brain)return;
-    let btn=document.getElementById('magicWandFixed');
-    if(!btn){
-      btn=document.createElement('button');
-      btn.id='magicWandFixed';
-      btn.type='button';
-      btn.textContent='🪄';
-      btn.setAttribute('aria-label','Bacchetta Magica');
-      btn.title='Compila automaticamente gli slot della strategia attiva';
-      btn.onclick=function(e){
-        e.preventDefault();
-        e.stopPropagation();
-        if(typeof window.runMagicWand==='function') window.runMagicWand();
-        else alert('Bacchetta Magica non ancora caricata.');
-      };
-      document.body.appendChild(btn);
-    }
-    const active=brain.classList.contains('active');
-    btn.style.display=active?'flex':'none';
+  if(!document.querySelector('script[data-bacchetta]')){
+    const script=document.createElement('script');
+    script.src='./bacchetta.js?v='+VERSION;
+    script.dataset.bacchetta='1';
+    script.async=false;
+    script.onload=function(){
+      document.documentElement.dataset.bacchettaReady=window.runMagicWand?'1':'0';
+      ensureBrainControls();
+    };
+    script.onerror=function(){console.error('Bacchetta Magica: caricamento fallito');ensureBrainControls();};
+    document.body.appendChild(script);
   }
 
   const css=document.createElement('style');
   css.id='magicWandFixedStyle';
-  css.textContent=`#magicWandFixed{position:fixed;right:16px;top:calc(78px + env(safe-area-inset-top));z-index:2147483646;width:48px;height:48px;border:1px solid #dfe4e9;border-radius:15px;background:#fff;box-shadow:0 3px 12px rgba(20,30,45,.14);font-size:26px;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}#magicWandFixed:active{transform:scale(.94)}#magicWandFixed:disabled{opacity:.6}`;
+  css.textContent=`
+    /* La bacchetta resta nell'header Brain, distinta dal + delle strategie. */
+    #brain .head{position:relative}
+    #brain .head .magic-wand-btn{width:42px;height:42px;flex:0 0 42px;border:1px solid #dfe4e9;border-radius:14px;background:#fff;font-size:23px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(20,30,45,.10);cursor:pointer;-webkit-tap-highlight-color:transparent;order:2}
+    #brain .head > button.plus{order:3}
+    #brain .head .magic-wand-btn:active{transform:scale(.94)}
+    #brain .head .magic-wand-btn.magic-wand-running{animation:magicWandPulse .72s ease-in-out infinite}
+    @keyframes magicWandPulse{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.08) rotate(7deg)}}
+    .brain-strategy-name{touch-action:manipulation;-webkit-user-select:none;user-select:none}
+  `;
   document.head.appendChild(css);
 
-  ensureMagicWandButton();
-  document.addEventListener('click',()=>setTimeout(ensureMagicWandButton,0),true);
+  let strategyPressTimer=null;
+  let suppressStrategyClickUntil=0;
+  let strategyPressTarget=null;
+
+  function moveWandIntoBrainHeader(){
+    const fixed=document.getElementById('magicWandFixed');
+    if(fixed)fixed.remove();
+    const brain=document.getElementById('brain');
+    if(!brain)return;
+    const head=brain.querySelector('.head');
+    if(!head)return;
+    const wand=head.querySelector('.magic-wand-btn')||brain.querySelector('.magic-wand-btn');
+    if(!wand)return;
+    const plus=head.querySelector('button.plus');
+    if(plus)head.insertBefore(wand,plus);
+    else head.appendChild(wand);
+  }
+
+  function ensureStrategyLongPress(){
+    const brain=document.getElementById('brain');
+    if(!brain||brain.dataset.strategyLongPress==='1')return;
+    brain.dataset.strategyLongPress='1';
+
+    brain.addEventListener('pointerdown',e=>{
+      const name=e.target.closest('.brain-strategy-name');
+      if(!name)return;
+      const id=Number((name.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/)?.[1]);
+      if(!id)return;
+      strategyPressTarget=name;
+      clearTimeout(strategyPressTimer);
+      strategyPressTimer=setTimeout(()=>{
+        if(strategyPressTarget!==name)return;
+        suppressStrategyClickUntil=Date.now()+900;
+        if(typeof selectBrainStrategy==='function'){
+          selectBrainStrategy(id);
+          renderBrain();
+        }
+        name.classList.add('brain-strategy-long-selected');
+        setTimeout(()=>name.classList.remove('brain-strategy-long-selected'),300);
+        strategyPressTimer=null;
+      },650);
+    },true);
+
+    const cancel=()=>{clearTimeout(strategyPressTimer);strategyPressTimer=null;strategyPressTarget=null;};
+    brain.addEventListener('pointerup',cancel,true);
+    brain.addEventListener('pointercancel',cancel,true);
+    brain.addEventListener('pointerleave',cancel,true);
+    brain.addEventListener('pointermove',e=>{if(strategyPressTarget&&Math.abs(e.movementX||0)+Math.abs(e.movementY||0)>10)cancel();},true);
+    brain.addEventListener('contextmenu',e=>{if(e.target.closest('.brain-strategy-name'))e.preventDefault();},true);
+    brain.addEventListener('click',e=>{
+      const name=e.target.closest('.brain-strategy-name');
+      if(name&&Date.now()<suppressStrategyClickUntil){e.preventDefault();e.stopImmediatePropagation();suppressStrategyClickUntil=0;}
+    },true);
+  }
+
+  function ensureBrainControls(){
+    moveWandIntoBrainHeader();
+    ensureStrategyLongPress();
+  }
+
+  ensureBrainControls();
+  document.addEventListener('click',()=>setTimeout(ensureBrainControls,0),true);
+  const observer=new MutationObserver(()=>setTimeout(ensureBrainControls,0));
+  const brain=document.getElementById('brain');
+  if(brain)observer.observe(brain,{childList:true,subtree:true});
+
   const oldGo=window.go;
-  if(typeof oldGo==='function'&&!oldGo.__magicWandWrapped){
-    window.go=function(id){const r=oldGo.apply(this,arguments);setTimeout(ensureMagicWandButton,0);return r;};
-    window.go.__magicWandWrapped=true;
+  if(typeof oldGo==='function'&&!oldGo.__magicWandBrainControls34){
+    window.go=function(id){const r=oldGo.apply(this,arguments);setTimeout(ensureBrainControls,0);return r;};
+    window.go.__magicWandBrainControls34=true;
   }
 
   /* =========================
-     AGGIORNAMENTO PWA RAPIDO
+     AGGIORNAMENTO PWA ROBUSTO
   ========================= */
-  const installFastRefresh=()=>{
-    const currentRefresh=window.refreshApp;
-    if(typeof currentRefresh!=='function' || currentRefresh.__fastRefresh32)return;
-    const fastRefresh=()=>{
-      const btn=document.getElementById('refreshAppBtn');
-      if(btn){
-        btn.classList.add('loading');
-        btn.setAttribute('aria-label','Aggiornamento in corso');
+  function hardRefresh(){
+    const btn=document.getElementById('refreshAppBtn');
+    if(btn){btn.classList.add('loading');btn.setAttribute('aria-label','Aggiornamento in corso');btn.disabled=true;}
+    try{
+      if('serviceWorker' in navigator){
+        navigator.serviceWorker.getRegistration().then(reg=>{if(reg)reg.update().catch(()=>{});}).catch(()=>{});
       }
-      try{
-        if('serviceWorker' in navigator){
-          navigator.serviceWorker.getRegistration().then(reg=>{
-            if(!reg)return;
-            reg.update().catch(()=>{});
-            if(reg.waiting){
-              try{reg.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){}
-            }
-          }).catch(()=>{});
-        }
-      }catch(e){}
-      /*
-         Non aspettiamo controllerchange/reg.update(): su iOS questo può
-         trattenere la UI per diversi secondi. Il SW attuale è network-first,
-         quindi il documento con query unica viene richiesto subito alla rete.
-      */
-      setTimeout(()=>{
-        window.location.replace(window.location.pathname+'?update='+Date.now());
-      },80);
-    };
-    fastRefresh.__fastRefresh32=true;
-    window.refreshApp=fastRefresh;
-  };
-  installFastRefresh();
+    }catch(e){}
+    setTimeout(()=>{
+      const u=new URL(window.location.href);
+      u.searchParams.set('update',Date.now());
+      u.hash='';
+      window.location.replace(u.toString());
+    },180);
+  }
+
+  document.addEventListener('click',e=>{
+    const btn=e.target.closest?.('#refreshAppBtn');
+    if(!btn)return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    hardRefresh();
+  },true);
+
+  window.refreshApp=hardRefresh;
 })();
 
 function campettiBoot(){renderCampetti();initCampettiZoom();}
