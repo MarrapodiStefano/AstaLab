@@ -1,12 +1,10 @@
-/* Bacchetta Magica v2 - compilazione globale degli slot */
+/* Bacchetta Magica v3 - compilazione completa degli slot */
 (function(){
   'use strict';
 
-  const VERSION='3.4.29';
+  const VERSION='3.4.30';
   const ROLE_WEIGHT={P:1,D:1,C:1.05,A:1.1};
   const PRIORITY_VALUE={max:1,high:.9,base:.78,low:.62,bet:.52};
-  const BEAM_WIDTH=70;
-  const CANDIDATES_PER_SLOT=28;
 
   function all(){return typeof allPlayers==='function'?allPlayers():[];}
   function limits(){return typeof roleLimits==='function'?roleLimits():{P:2,D:9,C:9,A:7};}
@@ -16,15 +14,12 @@
   function strategySlots(s){return typeof brainStrategySlots==='function'?brainStrategySlots(s):limits();}
   function slotPct(s,r){return typeof brainStrategySlotAllocation==='function'?brainStrategySlotAllocation(s,r):Array.from({length:strategySlots(s)[r]||0},()=>100/(strategySlots(s)[r]||1));}
   function targetFor(s,r,i){
-    const n=strategySlots(s)[r]||0;
     const raw=s?.slotTargets?.[r];
     const t=Array.isArray(raw)&&raw[i]?raw[i]:null;
-    if(t)return {priority:t.priority||'base',playerId:t.playerId??null};
-    return {priority:'base',playerId:null};
+    return t?{priority:t.priority||'base',playerId:t.playerId??null}:{priority:'base',playerId:null};
   }
 
-  let playersCache=null;
-  let priceCache=new Map();
+  let playersCache=null,priceCache=new Map();
   function players(){return playersCache||(playersCache=all());}
   function refPrice(p){const x=Number(p?.pmv);if(Number.isFinite(x)&&x>0)return x;const y=Number(p?.credits);return Number.isFinite(y)&&y>0?y:Math.max(1,Number(p?.price)||1);}
   function soldHistory(){return Array.isArray(current?.history)?current.history:[];}
@@ -40,7 +35,7 @@
     }
     const med=a=>{if(!a.length)return 1;const b=[...a].sort((x,y)=>x-y),m=Math.floor(b.length/2);return b.length%2?b[m]:(b[m-1]+b[m])/2;};
     const roleMed=med(roleRows),nearMed=med(near),q=near.length>=3?.7:near.length?.35:0;
-    return {mult:Math.max(.55,Math.min(1.6,roleMed*(1-q)+nearMed*q)),samples:roleRows.length};
+    return {mult:Math.max(.55,Math.min(1.6,roleMed*(1-q)+nearMed*q))};
   }
   function priceEstimate(p){const key=String(p.id);if(priceCache.has(key))return priceCache.get(key);const ms=marketStats(p.role,Number(p.appeal)||0);const v=Math.max(1,Math.round(refPrice(p)*ms.mult));priceCache.set(key,v);return v;}
   function teamContext(p){const team=String(p.team||'');const comp=(team==='Como'||team==='Inter'||team==='Napoli'||team==='Roma')?'Champions':(team==='Milan'||team==='Juventus')?'Europa League':team==='Atalanta'?'Conference':'';const rotation=comp==='Champions'?.10:comp==='Europa League'?.07:comp==='Conference'?.035:0;return {rotation,comp};}
@@ -48,124 +43,107 @@
   function playerScore(p,role){const appeal=Math.max(0,Math.min(10,Number(p.appeal)||0));const ctx=teamContext(p);let score=appeal*(1-(role==='P'?ctx.rotation*.65:ctx.rotation));score+=targetPriorityBonus(p);return Math.max(0,score*ROLE_WEIGHT[role]);}
   function sameTeamPenalty(p,chosen,role){const n=chosen.filter(x=>x.p.role===role&&String(x.p.team||'')===String(p.team||'')).length;return n?Math.min(.8,n*.32):0;}
 
-  function candidatesForSlot(s,r,i){
-    const sold=soldIds(),target=targetFor(s,r,i),selected=target.playerId;
-    const rows=players().filter(p=>p.role===r&&!sold.has(String(p.id))).map(p=>{
-      const est=priceEstimate(p),score=playerScore(p,r),efficiency=score/Math.sqrt(Math.max(1,est));
-      const preferred=selected!=null&&String(selected)===String(p.id)?1.15:1;
-      return {p,est,score,efficiency,preferred};
-    });
-    rows.sort((a,b)=>(b.score*b.preferred-a.score*a.preferred)||(b.efficiency-a.efficiency)||(a.est-b.est));
-    const best=rows.slice(0,CANDIDATES_PER_SLOT),seen=new Set(best.map(x=>String(x.p.id)));
-    [...rows].sort((a,b)=>a.est-b.est||b.score-a.score).slice(0,8).forEach(x=>{if(!seen.has(String(x.p.id))){best.push(x);seen.add(String(x.p.id));}});
-    return best;
-  }
-
-  function currentRoleStats(){
-    const out={P:{count:0,spent:0},D:{count:0,spent:0},C:{count:0,spent:0},A:{count:0,spent:0}},t=myTeam();
-    (t?.players||[]).forEach(p=>{if(out[p.role]){out[p.role].count++;out[p.role].spent+=Number(p.price)||0;}});
-    return out;
-  }
-  function roleBaseBudgets(s,totalBudget){
-    const a=s?.allocation||{},sum=['P','D','C','A'].reduce((n,r)=>n+Math.max(0,Number(a[r])||0),0)||100,out={};
-    ['P','D','C','A'].forEach(r=>out[r]=totalBudget*Math.max(0,Number(a[r])||0)/sum);
-    return out;
-  }
   function makeSlots(s){
-    const stats=currentRoleStats(),slots=[],roleBudget=roleBaseBudgets(s,Math.max(0,(Number(current.initialCredits)||0)-(Number(myTeam()?.spent)||0)));
+    const t=myTeam(),counts={P:0,D:0,C:0,A:0};
+    (t?.players||[]).forEach(p=>{if(counts[p.role]!=null)counts[p.role]++;});
+    const budget=Math.max(0,(Number(current.initialCredits)||0)-(Number(t?.spent)||0));
+    const alloc=s?.allocation||{},sum=['P','D','C','A'].reduce((n,r)=>n+Math.max(0,Number(alloc[r])||0),0)||100;
+    const slots=[];
     for(const r of ['P','D','C','A']){
-      const totalSlots=strategySlots(s)[r]||limits()[r],need=Math.max(0,totalSlots-stats[r].count),pcts=slotPct(s,r);let added=0;
-      for(let i=0;i<totalSlots&&added<need;i++){
-        if(i<stats[r].count)continue;
-        const target=targetFor(s,r,i);
-        slots.push({r,i,pct:Number(pcts[i])||0,budget:roleBudget[r]*(Number(pcts[i])||0)/100,priority:target.priority||'base'});
-        added++;
+      const total=Number(strategySlots(s)[r])||limits()[r],pcts=slotPct(s,r),roleBudget=budget*Math.max(0,Number(alloc[r])||0)/sum;
+      for(let i=counts[r];i<total;i++){
+        const pct=Number(pcts[i])||0;
+        slots.push({r,i,pct,budget:roleBudget*pct/100,priority:targetFor(s,r,i).priority||'base'});
       }
     }
-    slots.sort((a,b)=>b.budget-a.budget||(PRIORITY_VALUE[b.priority]||0)-(PRIORITY_VALUE[a.priority]||0));
     return slots;
   }
 
-  function cheapestCost(item,used){
-    for(const c of item.cands){if(!used.has(String(c.p.id)))return c.est;}
-    return Infinity;
+  function candidateRows(s,slot,used){
+    const sold=soldIds();
+    return players().filter(p=>p.role===slot.r&&!sold.has(String(p.id))&&!used.has(String(p.id))).map(p=>{
+      const est=priceEstimate(p),score=playerScore(p,slot.r),target=targetFor(s,slot.r,slot.i);
+      const selected=target.playerId!=null&&String(target.playerId)===String(p.id)?1.15:1;
+      const priority=(PRIORITY_VALUE[target.priority]||PRIORITY_VALUE.base);
+      return {p,est,score,priority,preferred:selected,utility:score*selected*(.75+.25*priority)};
+    }).sort((a,b)=>b.utility-a.utility||a.est-b.est);
   }
 
+  function cheapestRemaining(slots,start,used){
+    let total=0;
+    for(let j=start;j<slots.length;j++){
+      const rows=candidateRows(null,slots[j],used);
+      if(!rows.length)return Infinity;
+      total+=rows.reduce((best,c)=>c.est<best?c.est:best,Infinity);
+    }
+    return total;
+  }
+
+  /*
+    Prima priorità: NON lasciare slot vuoti.
+    Per ogni slot scegliamo il miglior candidato che consenta di conservare
+    abbastanza budget per completare tutti gli slot successivi. Gli obiettivi
+    sono solo una preferenza: non sono mai un filtro obbligatorio.
+  */
   function optimize(s){
-    const budget=Math.max(0,(Number(current.initialCredits)||0)-(Number(myTeam()?.spent)||0)),slots=makeSlots(s);
+    const budget=Math.max(0,(Number(current.initialCredits)||0)-(Number(myTeam()?.spent)||0));
+    const slots=makeSlots(s);
     if(!slots.length)return {budget,slots,best:{chosen:[],spent:0,value:0,roleSpent:{P:0,D:0,C:0,A:0}}};
-    const pool=slots.map(sl=>({slot:sl,cands:candidatesForSlot(s,sl.r,sl.i)}));
-    let beam=[{chosen:[],spent:0,value:0,roleSpent:{P:0,D:0,C:0,A:0}}];
 
-    for(let idx=0;idx<pool.length;idx++){
-      const item=pool[idx],next=[];
-      for(const state of beam){
-        const used=new Set(state.chosen.map(x=>String(x.p.id)));
-        for(const c of item.cands){
-          const id=String(c.p.id);if(used.has(id))continue;
-          const spent=state.spent+c.est;if(spent>budget)continue;
-          const usedNext=new Set(used);usedNext.add(id);
-          let minFuture=0,possible=true;
-          for(let j=idx+1;j<pool.length;j++){
-            const mc=cheapestCost(pool[j],usedNext);
-            if(!Number.isFinite(mc)){possible=false;break;}
-            minFuture+=mc;
-          }
-          if(!possible||spent+minFuture>budget)continue;
+    const ordered=[...slots].sort((a,b)=>b.budget-a.budget||((PRIORITY_VALUE[b.priority]||0)-(PRIORITY_VALUE[a.priority]||0)));
+    let chosen=[],spent=0,value=0,roleSpent={P:0,D:0,C:0,A:0},used=new Set();
 
-          const penalty=sameTeamPenalty(c.p,state.chosen,item.slot.r);
-          const over=Math.max(0,c.est-item.slot.budget),under=Math.max(0,item.slot.budget-c.est);
-          const value=c.score+Math.min(.45,under/Math.max(50,item.slot.budget)*.45)-Math.min(.65,over/Math.max(50,item.slot.budget)*.65)-penalty;
-          next.push({chosen:[...state.chosen,{...c,slot:item.slot}],spent,value:state.value+value,roleSpent:{...state.roleSpent,[item.slot.r]:state.roleSpent[item.slot.r]+c.est}});
-        }
+    for(let i=0;i<ordered.length;i++){
+      const slot=ordered[i],rows=candidateRows(s,slot,used);
+      const feasible=[];
+      for(const c of rows){
+        if(spent+c.est>budget)continue;
+        const nextUsed=new Set(used);nextUsed.add(String(c.p.id));
+        const future=cheapestRemaining(ordered,i+1,nextUsed);
+        if(spent+c.est+future>budget)continue;
+        const penalty=sameTeamPenalty(c.p,chosen,slot.r);
+        const over=Math.max(0,c.est-slot.budget),under=Math.max(0,slot.budget-c.est);
+        const fit=Math.min(.45,under/Math.max(50,slot.budget)*.45)-Math.min(.65,over/Math.max(50,slot.budget)*.65);
+        feasible.push({...c,adjusted:c.utility+fit-penalty});
       }
-      if(!next.length)break;
-      next.sort((a,b)=>b.value-a.value||a.spent-b.spent);
-      const seen=new Set(),ded=[];
-      for(const st of next){const key=st.chosen.map(x=>x.p.id).sort().join(',');if(seen.has(key))continue;seen.add(key);ded.push(st);if(ded.length>=BEAM_WIDTH)break;}
-      beam=ded;
+      feasible.sort((a,b)=>b.adjusted-a.adjusted||a.est-b.est);
+      const c=feasible[0];
+      if(!c)continue;
+      const penalty=sameTeamPenalty(c.p,chosen,slot.r),over=Math.max(0,c.est-slot.budget),under=Math.max(0,slot.budget-c.est);
+      chosen.push({...c,slot});used.add(String(c.p.id));spent+=c.est;
+      value+=c.utility+Math.min(.45,under/Math.max(50,slot.budget)*.45)-Math.min(.65,over/Math.max(50,slot.budget)*.65)-penalty;
+      roleSpent[slot.r]+=c.est;
     }
 
-    // Se la ricerca a fascio viene interrotta, completa comunque tutti gli slot
-    // con la migliore scelta ancora compatibile col budget residuo.
-    let best=beam.slice().sort((a,b)=>b.chosen.length-a.chosen.length||b.value-a.value||a.spent-b.spent)[0];
-    if(best&&best.chosen.length<pool.length){
-      let chosen=[...best.chosen],spent=best.spent,value=best.value,roleSpent={...best.roleSpent};
-      for(const item of pool){
-        if(chosen.some(x=>x.slot.r===item.slot.r&&x.slot.i===item.slot.i))continue;
-        const used=new Set(chosen.map(x=>String(x.p.id)));
-        const feasible=item.cands.filter(c=>!used.has(String(c.p.id))&&spent+c.est<=budget);
-        if(!feasible.length)continue;
-        feasible.sort((a,b)=>b.score-a.score||a.est-b.est);
-        const c=feasible[0],penalty=sameTeamPenalty(c.p,chosen,item.slot.r),over=Math.max(0,c.est-item.slot.budget);
-        chosen.push({...c,slot:item.slot});spent+=c.est;value+=c.score-Math.min(.65,over/Math.max(50,item.slot.budget)*.65)-penalty;roleSpent[item.slot.r]+=c.est;
+    /* Fallback di sicurezza: se una scelta precedente ha impedito il completamento,
+       riempi gli slot rimasti con il giocatore meno costoso disponibile entro budget. */
+    if(chosen.length<ordered.length){
+      for(const slot of ordered){
+        if(chosen.some(x=>x.slot.r===slot.r&&x.slot.i===slot.i))continue;
+        const rows=candidateRows(s,slot,used).filter(c=>spent+c.est<=budget).sort((a,b)=>a.est-b.est||b.utility-a.utility);
+        if(!rows.length)continue;
+        const c=rows[0];chosen.push({...c,slot});used.add(String(c.p.id));spent+=c.est;roleSpent[slot.r]+=c.est;value+=c.utility;
       }
-      best={chosen,spent,value,roleSpent};
     }
 
-    beam=[best||beam[0]];
-    const roleBud=roleBaseBudgets(s,budget),shifts=[];
-    for(const r of ['P','D','C','A']){const delta=beam[0].roleSpent[r]-roleBud[r];if(Math.abs(delta)>=3)shifts.push({role:r,delta});}
-    return {budget,slots,best:beam[0],roleBud,shifts,marketSamples:soldHistory().length};
+    return {budget,slots,best:{chosen,spent,value,roleSpent},complete:chosen.length===slots.length};
   }
 
   function applyToActiveStrategy(result){
-    const s=activeStrategy();if(!s||!result?.best?.chosen?.length)return false;
+    const s=activeStrategy();if(!s||!result?.best)return false;
     if(!s.slotTargets||typeof s.slotTargets!=='object')s.slotTargets={};
-    const counts=strategySlots(s),byRole={P:[],D:[],C:[],A:[]};
-    result.best.chosen.forEach(x=>{if(byRole[x.slot.r])byRole[x.slot.r].push(x);});
-    ['P','D','C','A'].forEach(r=>{
+    const counts=strategySlots(s);
+    for(const r of ['P','D','C','A']){
       const n=Number(counts[r])||0;
       const existing=Array.isArray(s.slotTargets[r])?s.slotTargets[r].slice():[];
       while(existing.length<n)existing.push({priority:'base',playerId:null});
       for(let i=0;i<n;i++){
         if(!existing[i])existing[i]={priority:'base',playerId:null};
         if(existing[i].priority==null)existing[i].priority='base';
-        existing[i].playerId=null;
       }
-      byRole[r].forEach(x=>{existing[x.slot.i].playerId=x.p.id;});
+      result.best.chosen.filter(x=>x.slot.r===r).forEach(x=>{existing[x.slot.i].playerId=x.p.id;});
       s.slotTargets[r]=existing;
-    });
+    }
     if(typeof brainExpandedId!=='undefined')brainExpandedId=s.id;
     if(typeof persist==='function')persist();
     if(typeof renderBrain==='function')renderBrain();
@@ -180,11 +158,13 @@
       playersCache=null;priceCache=new Map();
       const s=activeStrategy();if(!s){alert('Nessuna strategia attiva.');return;}
       const result=optimize(s);
-      if(!result?.best?.chosen?.length){alert('Non ci sono giocatori disponibili o budget sufficiente per compilare gli slot rimasti.');return;}
+      if(!result?.best?.chosen?.length){alert('Non ci sono giocatori disponibili per compilare gli slot rimasti.');return;}
       if(!applyToActiveStrategy(result))alert('Non è stato possibile scrivere la proposta negli slot della strategia attiva.');
+      else if(!result.complete)console.warn('Bacchetta Magica: completamento parziale per limiti reali di giocatori/budget.',result);
     }catch(e){console.error('Bacchetta Magica',e);alert('Errore Bacchetta Magica: '+(e?.message||e));}
     finally{if(btn){btn.disabled=false;btn.textContent='🪄';}}
   }
+
   window.runMagicWand=runWand;
 
   function inject(){
