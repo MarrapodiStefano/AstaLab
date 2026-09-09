@@ -1,7 +1,7 @@
-/* UI fixes 3.4.38 — versione interfaccia */
+/* UI fixes 3.4.39 — versione interfaccia */
 (function(){
   'use strict';
-  const VERSION='3.4.38';
+  const VERSION='3.4.39';
   let longPressTimer=null;
   let longPressFired=false;
   let pressTarget=null;
@@ -77,6 +77,24 @@
       const css=document.createElement('style');
       css.id='brainLongPressStyle';
       css.textContent='.brain-strategy-title,.brain-strategy-title *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none;}';
+      document.head.appendChild(css);
+    }
+
+    /* NUOVA STRATEGIA — pannello più compatto su iPhone */
+    if(!document.getElementById('brainTemplateCompact39')){
+      const css=document.createElement('style');
+      css.id='brainTemplateCompact39';
+      css.textContent=`
+        .brain-template-picker{padding:8px!important;}
+        .brain-template-sheet{padding:12px!important;max-height:86vh!important;border-radius:20px 20px 12px 12px!important;}
+        .brain-template-title{font-size:19px!important;margin-bottom:2px!important;}
+        .brain-template-sub{font-size:14px!important;line-height:1.25!important;margin-bottom:8px!important;}
+        .brain-template{margin:5px 0!important;padding:10px!important;border-radius:13px!important;}
+        .brain-template-name{font-size:15px!important;margin-bottom:2px!important;}
+        .brain-template-desc{font-size:12px!important;line-height:1.2!important;}
+        .brain-template-values{font-size:11px!important;margin-top:4px!important;line-height:1.15!important;}
+        .brain-template-close{margin-top:7px!important;}
+      `;
       document.head.appendChild(css);
     }
 
