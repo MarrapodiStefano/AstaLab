@@ -57,6 +57,15 @@
     setVersion();
     setupLongPress();
 
+    /* Il nome della strategia serve come controllo touch: durante il tap
+       prolungato iOS non deve trasformarlo in una selezione di testo. */
+    if(!document.getElementById('brainLongPressStyle')){
+      const css=document.createElement('style');
+      css.id='brainLongPressStyle';
+      css.textContent='.brain-strategy-name{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}';
+      document.head.appendChild(css);
+    }
+
     /* Bacchetta.js gestisce direttamente il pulsante .magic-wand-btn,
        nella stessa posizione originale dentro l'intestazione di Brain.
        Qui non lo spostiamo e non lo sostituiamo. */
