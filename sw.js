@@ -1,4 +1,4 @@
-const CACHE = "asta-fantacalcio-v97";
+const CACHE = "asta-fantacalcio-v98";
 
 const ASSETS = [
     "./",
@@ -14,11 +14,7 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", event => {
-    event.waitUntil(
-        caches.open(CACHE)
-            .then(cache => cache.addAll(ASSETS))
-            .then(() => self.skipWaiting())
-    );
+    event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", event => {
@@ -36,10 +32,18 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
     if(event.request.method !== "GET") return;
     const request = event.request;
+    const url = new URL(request.url);
+    const sameOrigin = url.origin === self.location.origin;
+    const freshResource = sameOrigin && (
+        request.mode === "navigate" ||
+        request.destination === "script" ||
+        request.destination === "style"
+    );
+
     event.respondWith(
-        fetch(request)
+        fetch(request, {cache:freshResource ? "no-store" : "default"})
             .then(response => {
-                if(response && response.status === 200 && request.url.startsWith(self.location.origin)){
+                if(response && response.status === 200 && sameOrigin){
                     const copy = response.clone();
                     caches.open(CACHE).then(cache => cache.put(request, copy));
                 }
