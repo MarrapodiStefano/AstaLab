@@ -25,7 +25,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 (function loadUIFixes(){
   if(document.querySelector('script[data-ui-fixes]'))return;
   const script=document.createElement('script');
-  script.src='./ui-fixes.js?v=3.4.38';
+  script.src='./ui-fixes.js?v=3.4.39';
   script.dataset.uiFixes='1';
   script.async=false;
   document.body.appendChild(script);
