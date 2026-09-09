@@ -202,3 +202,22 @@ if(document.readyState==='loading'){
 }else{
   campettiBoot();
 }
+
+/*
+  FIX v3.4.26:
+  bacchetta.js è presente nel Service Worker ma non era incluso nell'HTML.
+  Lo carichiamo qui, dopo app.js, così tutte le funzioni Brain necessarie
+  sono già disponibili. Aggiorniamo anche la versione visibile nell'header.
+*/
+(function loadMagicWand(){
+  const versionEl=document.querySelector('.app-version');
+  if(versionEl) versionEl.textContent='V. 3.4.26';
+
+  if(document.querySelector('script[data-bacchetta]')) return;
+
+  const script=document.createElement('script');
+  script.src='./bacchetta.js?v=3.4.26';
+  script.dataset.bacchetta='1';
+  script.async=false;
+  document.body.appendChild(script);
+})();
