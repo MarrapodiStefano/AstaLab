@@ -22,7 +22,7 @@ ALIASES = {
     "name": {"nome", "giocatore", "name"},
     "team": {"squadra", "team", "club"},
     "pv": {"pv", "presenze", "presenzaconvoto", "pres"},
-    "mv": {"mv", "mediavoto", "mediavoto"},
+    "mv": {"mv", "mediavoto"},
     "fm": {"fm", "fantamedia", "fantavotomedio"},
     "gf": {"gf", "gol", "golfatti", "g"},
     "gs": {"gs", "golsubiti"},
@@ -70,18 +70,38 @@ def find_col(headers, aliases):
     return None
 
 
+def find_header(rows, max_scan=40):
+    """Find the real table header even when the workbook starts with title rows."""
+    required = ["role", "name", "pv", "gf", "ass"]
+    best = None
+    best_score = -1
+    for idx, row in enumerate(rows):
+        if idx >= max_scan:
+            break
+        headers = [norm(x) for x in row]
+        cols = {k: find_col(headers, a) for k, a in ALIASES.items()}
+        score = sum(cols[k] is not None for k in required)
+        if score > best_score:
+            best = (idx, row, headers, cols)
+            best_score = score
+        if score == len(required):
+            return best
+    if best is None or best_score < len(required):
+        header = best[1] if best else ()
+        raise RuntimeError(
+            f"Impossibile trovare l'intestazione dati entro le prime {max_scan} righe; "
+            f"miglior corrispondenza {best_score}/{len(required)}; trovate: {header}"
+        )
+    return best
+
+
 def parse_xlsx(path):
     wb = load_workbook(path, data_only=True, read_only=True)
     ws = wb.active
-    rows = ws.iter_rows(values_only=True)
-    header = next(rows)
-    headers = [norm(x) for x in header]
-    cols = {k: find_col(headers, a) for k, a in ALIASES.items()}
+    all_rows = ws.iter_rows(values_only=True)
 
-    required = ["role", "name", "pv", "gf", "ass"]
-    missing = [k for k in required if cols[k] is None]
-    if missing:
-        raise RuntimeError(f"{path.name}: colonne mancanti: {missing}; trovate: {header}")
+    header_idx, header, headers, cols = find_header(all_rows)
+    rows = all_rows
 
     out = []
     for row in rows:
@@ -113,7 +133,13 @@ def parse_xlsx(path):
             "esp": number(get("esp")),
             "au": number(get("au")),
         })
+
+    if not out:
+        raise RuntimeError(f"{path.name}: intestazione trovata alla riga {header_idx + 1}, ma nessun giocatore valido è stato estratto")
+
+    print(f"  {path.name}: intestazione dati alla riga {header_idx + 1}; {len(out)} giocatori")
     return out
+
 
 seasons = {}
 for season, url in SOURCES.items():
