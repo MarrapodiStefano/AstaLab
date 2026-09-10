@@ -1,25 +1,12 @@
-/* Brain budget fix v3.4.53
-   Completa gli slot vuoti quando il budget residuo lo consente.
-   Vincolo assoluto: la somma delle prenotazioni non supera mai il budget del ruolo.
+/* Brain budget fix v3.4.54
+   La Bacchetta v3.4.54 (market-sync-v50.js) è l'unico motore che modifica i giocatori degli slot.
+   Questo file mantiene solo la sincronizzazione visiva delle percentuali e la versione.
 */
 (function(){
 'use strict';
-const VERSION='3.4.53';
-const PRIORITY_RANK={max:5,high:4,base:3,low:2,bet:1};
-function players(){return typeof allPlayers==='function'?allPlayers():[];}
-function active(){return typeof activeBrainStrategy==='function'?activeBrainStrategy():current?.brainStrategies?.find(s=>s.id===current?.activeBrainStrategyId);}
-function roleLimits(s){return s&&typeof brainStrategySlots==='function'?brainStrategySlots(s):{P:2,D:9,C:9,A:7};}
-function maxBid(p){const n=Number(p?.credits);return Number.isFinite(n)&&n>0?Math.round(n):1;}
-function priorityOf(p){try{return typeof objectivePriority==='function'?objectivePriority(p.id):'base';}catch(e){return 'base';}}
-function isObjective(id){return !Array.isArray(current?.objectives)||current.objectives.some(x=>String(x)===String(id));}
-function soldIds(){const s=new Set();(current?.teams||[]).forEach(t=>(t.players||[]).forEach(p=>s.add(String(p.id))));return s;}
-function playerCost(p){for(const team of current?.teams||[]){const bought=(team.players||[]).find(x=>String(x.id)===String(p.id));if(bought)return Math.max(1,Number(bought.price)||0);}return maxBid(p);}
-function quality(p){const appeal=Math.max(0,Math.min(10,Number(p?.appeal)||0));let hist=null;try{hist=window.ASTA_HISTORICAL?.profile?.(p)||null;}catch(e){}const hs=hist?.found&&hist.pv>0?Number(hist.historicalScore)||0:null;return hs==null?appeal:appeal*.6+hs*.4;}
-function candidatePool(role,priority,used){const sold=soldIds();return players().filter(p=>p?.role===role&&isObjective(p.id)&&priorityOf(p)===priority&&!sold.has(String(p.id))&&!used.has(String(p.id))).map(p=>({p,cost:maxBid(p),quality:quality(p)})).sort((a,b)=>b.quality-a.quality||a.cost-b.cost||String(a.p.name||'').localeCompare(String(b.p.name||''),'it'));}
-function completeRole(s,role){const initial=Number(current?.initialCredits)||0,alloc=s?.allocation||{},planned=Math.max(1,initial*(Number(alloc[role])||0)/100),limit=Number(roleLimits(s)[role]||0);if(!s.slotTargets||typeof s.slotTargets!=='object')s.slotTargets={};if(!Array.isArray(s.slotTargets[role]))s.slotTargets[role]=[];const targets=Array.from({length:limit},(_,i)=>s.slotTargets[role][i]||{priority:'base',playerId:null});let fixedCost=0;const used=new Set();targets.forEach(t=>{if(t?.playerId==null)return;const p=players().find(x=>String(x.id)===String(t.playerId));if(!p)return;fixedCost+=playerCost(p);used.add(String(p.id));});const remaining=Math.max(0,Math.round(planned-fixedCost));const empty=targets.map((t,i)=>({t,i})).filter(x=>x.t?.playerId==null);if(!empty.length)return false;const groups=empty.map(x=>candidatePool(role,x.t.priority||'base',used));let beam=[{chosen:[],used:new Set(used),cost:0,filled:0,value:0}],WIDTH=250;for(let i=0;i<groups.length;i++){const next=[],slot=empty[i];for(const state of beam){next.push(state);for(const c of groups[i]){if(state.used.has(String(c.p.id))||c.cost>remaining-state.cost)continue;const nextUsed=new Set(state.used);nextUsed.add(String(c.p.id));const rank=PRIORITY_RANK[slot.t.priority||'base']||1;const nextCost=state.cost+c.cost;next.push({chosen:state.chosen.concat({slot,c}),used:nextUsed,cost:nextCost,filled:state.filled+1,value:state.value+rank*1000+c.quality*10-c.cost*.01});}}next.sort((a,b)=>b.filled-a.filled||b.value-a.value||a.cost-b.cost);beam=next.slice(0,WIDTH);}beam.sort((a,b)=>b.filled-a.filled||b.value-a.value||a.cost-b.cost);const best=beam[0];if(!best||!best.filled)return false;best.chosen.forEach(x=>{targets[x.slot.i]={priority:x.slot.t.priority||'base',playerId:x.c.p.id};});s.slotTargets[role]=targets;if(!s.slotAllocation||typeof s.slotAllocation!=='object')s.slotAllocation={};const arr=Array.isArray(s.slotAllocation[role])?s.slotAllocation[role].slice():Array(limit).fill(0);s.slotTargets[role].forEach((t,i)=>{if(t?.playerId==null){arr[i]=0;return;}const p=players().find(x=>String(x.id)===String(t.playerId));if(!p){arr[i]=0;return;}arr[i]=Math.round((playerCost(p)/planned)*1000)/10;});s.slotAllocation[role]=arr;return true;}
-let persistQueued=false;
-function sync(){const s=active();if(!s)return;let changed=false;['P','D','C','A'].forEach(r=>{if(completeRole(s,r))changed=true;});if(changed&&!persistQueued&&typeof persist==='function'){persistQueued=true;setTimeout(()=>{persistQueued=false;try{persist();}catch(e){console.warn('Brain budget persist',e);}},0);}}
-function install(){const v=document.querySelector('.app-version');if(v)v.textContent='V. '+VERSION;if(typeof window.renderBrain!=='function')return false;if(window.renderBrain.__brainBudgetFix53)return true;const original=window.renderBrain;window.renderBrain=function(){sync();return original.apply(this,arguments)};window.renderBrain.__brainBudgetFix53=true;return true;}
-function boot(){if(install())return;let n=0;const timer=setInterval(()=>{if(install()||++n>60)clearInterval(timer)},50);}
+const VERSION='3.4.54';
+function setVersion(){const v=document.querySelector('.app-version');if(v)v.textContent='V. '+VERSION}
+function install(){setVersion();if(typeof window.renderBrain!=='function')return false;if(window.renderBrain.__brainBudgetFix54)return true;const original=window.renderBrain;window.renderBrain=function(){const result=original.apply(this,arguments);setVersion();return result};window.renderBrain.__brainBudgetFix54=true;return true}
+function boot(){if(install())return;let n=0;const timer=setInterval(()=>{if(install()||++n>60)clearInterval(timer)},50)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
