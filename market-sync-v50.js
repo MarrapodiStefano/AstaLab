@@ -16,6 +16,13 @@ function activeStrategy(){return typeof activeBrainStrategy==='function'?activeB
 function roleLimits(){const s=activeStrategy();return s&&typeof brainStrategySlots==='function'?brainStrategySlots(s):{P:2,D:9,C:9,A:7}}
 function hasObjective(id){const list=current?.objectives;if(!Array.isArray(list))return false;return list.some(x=>{if(x&&typeof x==='object')return String(x.id??x.playerId)===String(id);return String(x)===String(id)})}
 function normalizePriority(value){
+  if(typeof value==='number'){
+    if(value>=5)return 'max';
+    if(value===4)return 'high';
+    if(value===3)return 'base';
+    if(value===2)return 'low';
+    if(value<=1)return 'bet';
+  }
   const v=String(value??'').trim().toLowerCase();
   if(v==='max'||v==='high'||v==='🔥'||v==='fire'||v==='top'||v==='elite')return v==='max'||v==='🔥'||v==='fire'||v==='top'||v==='elite'?'max':'high';
   if(v==='base'||v==='low'||v==='⭐'||v==='star'||v==='medium')return v==='base'||v==='⭐'||v==='star'||v==='medium'?'base':'low';
