@@ -1,7 +1,7 @@
-/* Asta Fantacalcio — Bacchetta v10 / 3.4.50 */
+/* Asta Fantacalcio — Bacchetta v11 / 3.4.51 */
 (function(){
 'use strict';
-const VERSION='3.4.50';
+const VERSION='3.4.51';
 const PRIORITY_RANK={max:5,high:4,base:3,low:2,bet:1};
 function all(){return typeof allPlayers==='function'?allPlayers():[];}
 function activeStrategy(){return typeof activeBrainStrategy==='function'?activeBrainStrategy():current?.brainStrategies?.find(s=>s.id===current?.activeBrainStrategyId);}
@@ -14,15 +14,102 @@ function maxBid(p){const c=Number(p?.credits);return Number.isFinite(c)&&c>0?Mat
 function median(a){if(!a.length)return 1;const b=[...a].sort((x,y)=>x-y),m=Math.floor(b.length/2);return b.length%2?b[m]:(b[m-1]+b[m])/2;}
 function marketMultiplier(p){const rows=[],near=[],ps=all(),byId=new Map(ps.map(x=>[String(x.id),x]));(Array.isArray(current?.history)?current.history:[]).forEach(h=>{if(h?.role!==p?.role||!(Number(h?.price)>0))return;const ref=byId.get(String(h.playerId));if(!ref)return;const base=refPrice(ref),ratio=Number(h.price)/base;if(Number.isFinite(ratio)&&ratio>0){rows.push(ratio);if(Math.abs((Number(ref.appeal)||0)-(Number(p.appeal)||0))<=1.25)near.push(ratio);}});const rm=median(rows),nm=median(near),q=near.length>=3?.7:near.length?.35:0;return Math.max(.55,Math.min(1.6,rm*(1-q)+nm*q));}
 function marketEstimate(p){return Math.max(1,Math.round(refPrice(p)*marketMultiplier(p)));}
-function quality(p,r){const appeal=Math.max(0,Math.min(10,Number(p?.appeal)||0));let hist=null;try{hist=window.ASTA_HISTORICAL?.profile?.(p)||null;}catch(e){}const hs=hist?.found&&hist.pv>0?Number(hist.historicalScore)||0:null;let q=hs==null?appeal:appeal*.6+hs*.4;const pri=priorityOf(p);if(pri==='max')q+=.8;else if(pri==='high')q+=.5;else if(pri==='base')q+=.25;return q;}
-function candidates(r,priority,sold){return all().filter(p=>p?.role===r&&hasObjective(p.id)&&priorityOf(p)===priority&&!sold.has(String(p.id))).map(p=>({p,cost:maxBid(p),market:marketEstimate(p),quality:quality(p,r)})).sort((a,b)=>b.quality-a.quality||a.cost-b.cost||b.market-a.market);}
+function quality(p){const appeal=Math.max(0,Math.min(10,Number(p?.appeal)||0));let hist=null;try{hist=window.ASTA_HISTORICAL?.profile?.(p)||null;}catch(e){}const hs=hist?.found&&hist.pv>0?Number(hist.historicalScore)||0:null;let q=hs==null?appeal:appeal*.6+hs*.4;const pri=priorityOf(p);if(pri==='max')q+=.8;else if(pri==='high')q+=.5;else if(pri==='base')q+=.25;return q;}
+function candidates(r,priority,sold){return all().filter(p=>p?.role===r&&hasObjective(p.id)&&priorityOf(p)===priority&&!sold.has(String(p.id))).map(p=>({p,cost:maxBid(p),market:marketEstimate(p),quality:quality(p)})).sort((a,b)=>b.quality-a.quality||a.cost-b.cost||b.market-a.market);}
 function futureMin(groups,start,used){let n=0;for(let i=start;i<groups.length;i++){let best=Infinity;for(const c of groups[i])if(!used.has(String(c.p.id))&&c.cost<best)best=c.cost;if(!Number.isFinite(best))return Infinity;n+=best;}return n;}
-function slotValue(c,priority,budget){const rank=PRIORITY_RANK[priority]||1;const ratio=c.cost/Math.max(1,budget);if(rank>=5)return c.quality*100-ratio*.01;if(rank===4)return c.quality*15-ratio*.08;if(rank===3)return c.quality*5-ratio*.35;if(rank===2)return c.quality*2.5-ratio*.75;return c.quality-ratio*1.2;}
-function solveRole(r,slotDefs,budget){const ordered=[...slotDefs].sort((a,b)=>(PRIORITY_RANK[b.priority]||1)-(PRIORITY_RANK[a.priority]||1)||a.index-b.index);const groups=ordered.map(d=>candidates(r,d.priority,new Set()));for(let i=0;i<groups.length;i++)if(!groups[i].length)return{ok:false,reason:'nessun giocatore disponibile per l\'appetibilità '+ordered[i].priority+' nello slot '+(ordered[i].index+1)};let beam=[{chosen:[],used:new Set(),cost:0,value:0}],WIDTH=120;for(let i=0;i<groups.length;i++){const next=[];for(const st of beam){const rows=groups[i].filter(c=>!st.used.has(String(c.p.id)));for(const c of rows){const total=st.cost+c.cost;if(total>budget)continue;const used=new Set(st.used);used.add(String(c.p.id));if(total+futureMin(groups,i+1,used)>budget)continue;next.push({chosen:st.chosen.concat({...c,slot:ordered[i]}),used,cost:total,value:st.value+slotValue(c,ordered[i].priority,budget)});}}if(!next.length)return{ok:false,reason:'budget insufficiente per rispettare tutte le appetibilità del ruolo'};next.sort((a,b)=>b.value-a.value||a.cost-b.cost);beam=next.slice(0,WIDTH);}const best=beam[0];return{ok:true,chosen:best.chosen,cost:best.cost,budget};}
-function buildPlan(s){const initial=Number(current?.initialCredits)||0,alloc=s?.allocation||{},team=typeof brainMyTeam==='function'?brainMyTeam():current?.teams?.[0],spentBy={P:0,D:0,C:0,A:0},countBy={P:0,D:0,C:0,A:0};(team?.players||[]).forEach(p=>{if(spentBy[p.role]!=null){spentBy[p.role]+=Number(p.price)||0;countBy[p.role]++;}});const plan={roles:{},errors:[]};['P','D','C','A'].forEach(r=>{const total=Number(roleLimits()[r]||0),targets=targetsFor(s,r),defs=[];for(let i=countBy[r];i<total;i++)defs.push({index:i,priority:targets[i]?.priority||'base'});const roleBudget=Math.max(0,Math.round(initial*(Number(alloc[r])||0)/100)-spentBy[r]);const solved=solveRole(r,defs,roleBudget);plan.roles[r]={total,targets,defs,roleBudget,spent:spentBy[r],count:countBy[r],solved};if(!solved.ok)plan.errors.push(r+': '+solved.reason+' (budget disponibile '+roleBudget+')');});return plan;}
-function applyPlan(s,plan){const initial=Number(current?.initialCredits)||0,alloc=s?.allocation||{};if(!s.slotTargets||typeof s.slotTargets!=='object')s.slotTargets={};if(!s.slotAllocation||typeof s.slotAllocation!=='object')s.slotAllocation={};const myPlayers=(typeof brainMyTeam==='function'?brainMyTeam():current?.teams?.[0])?.players||[];['P','D','C','A'].forEach(r=>{const x=plan.roles[r],n=x.total,old=Array.isArray(s.slotTargets[r])?s.slotTargets[r]:[],planned=Math.max(1,initial*(Number(alloc[r])||0)/100),next=Array.from({length:n},(_,i)=>({priority:old[i]?.priority||'base',playerId:null})),pcts=Array.from({length:n},()=>0),bought=myPlayers.filter(p=>p.role===r);for(let i=0;i<x.count;i++){const p=bought[i];if(p){const bid=Math.max(1,Number(p.price)||0);next[i]={priority:old[i]?.priority||priorityOf(p),playerId:p.id};pcts[i]=Math.round(bid/planned*1000)/10;}}(x.solved?.chosen||[]).forEach(c=>{const bid=Math.max(1,Number(c.cost)||maxBid(c.p));next[c.slot.index]={priority:c.slot.priority,playerId:c.p.id};pcts[c.slot.index]=Math.round(bid/planned*1000)/10;});s.slotTargets[r]=next;s.slotAllocation[r]=pcts;});if(typeof persist==='function')persist();if(typeof renderBrain==='function')renderBrain();}
+function slotValue(c,priority,budget){const rank=PRIORITY_RANK[priority]||1,ratio=c.cost/Math.max(1,budget);if(rank>=5)return c.quality*100-ratio*.01;if(rank===4)return c.quality*15-ratio*.08;if(rank===3)return c.quality*5-ratio*.35;if(rank===2)return c.quality*2.5-ratio*.75;return c.quality-ratio*1.2;}
+function solveRole(r,slotDefs,budget){
+  const ordered=[...slotDefs].sort((a,b)=>(PRIORITY_RANK[b.priority]||1)-(PRIORITY_RANK[a.priority]||1)||a.index-b.index);
+  const groups=ordered.map(d=>candidates(r,d.priority,new Set()));
+  for(let i=0;i<groups.length;i++)if(!groups[i].length)return{ok:false,reason:'nessun giocatore disponibile per l\'appetibilità '+ordered[i].priority+' nello slot '+(ordered[i].index+1)};
+  let beam=[{chosen:[],used:new Set(),cost:0,value:0}],WIDTH=180;
+  for(let i=0;i<groups.length;i++){
+    const next=[];
+    for(const st of beam){
+      const rows=groups[i].filter(c=>!st.used.has(String(c.p.id)));
+      for(const c of rows){
+        const total=st.cost+c.cost;
+        if(total>budget)continue;
+        const used=new Set(st.used);used.add(String(c.p.id));
+        if(total+futureMin(groups,i+1,used)>budget)continue;
+        next.push({chosen:st.chosen.concat({...c,slot:ordered[i]}),used,cost:total,value:st.value+slotValue(c,ordered[i].priority,budget)});
+      }
+    }
+    if(!next.length)return{ok:false,reason:'budget insufficiente per rispettare tutte le appetibilità del ruolo'};
+    next.sort((a,b)=>b.value-a.value||a.cost-b.cost);beam=next.slice(0,WIDTH);
+  }
+  const best=beam[0];
+  return{ok:true,chosen:best.chosen,cost:best.cost,budget};
+}
+function roleState(s,r){
+  const initial=Number(current?.initialCredits)||0,alloc=s?.allocation||{},team=typeof brainMyTeam==='function'?brainMyTeam():current?.teams?.[0];
+  const spent=Number((team?.players||[]).filter(p=>p.role===r).reduce((n,p)=>n+(Number(p.price)||0),0));
+  const bought=(team?.players||[]).filter(p=>p.role===r);
+  const total=Number(roleLimits()[r]||0),targets=targetsFor(s,r),budget=Math.max(0,Math.round(initial*(Number(alloc[r])||0)/100)-spent);
+  return{initial,plannedTotal:Math.max(1,initial*(Number(alloc[r])||0)/100),spent,bought,total,targets,budget};
+}
+function buildPlan(s){
+  const plan={roles:{},errors:[]};
+  ['P','D','C','A'].forEach(r=>{
+    const st=roleState(s,r),defs=[];
+    for(let i=st.bought.length;i<st.total;i++)defs.push({index:i,priority:st.targets[i]?.priority||'base'});
+    const solved=solveRole(r,defs,st.budget);
+    plan.roles[r]={...st,defs,solved};
+    if(!solved.ok)plan.errors.push(r+': '+solved.reason+' (budget disponibile '+st.budget+')');
+  });
+  return plan;
+}
+function applyPlan(s,plan){
+  if(!s.slotTargets||typeof s.slotTargets!=='object')s.slotTargets={};
+  if(!s.slotAllocation||typeof s.slotAllocation!=='object')s.slotAllocation={};
+  ['P','D','C','A'].forEach(r=>{
+    const x=plan.roles[r],n=x.total,old=Array.isArray(s.slotTargets[r])?s.slotTargets[r]:[],next=Array.from({length:n},(_,i)=>({priority:old[i]?.priority||'base',playerId:null})),pcts=Array.from({length:n},()=>0);
+    for(let i=0;i<x.bought.length;i++){const p=x.bought[i],bid=Math.max(1,Number(p.price)||0);next[i]={priority:old[i]?.priority||priorityOf(p),playerId:p.id};pcts[i]=Math.round(bid/x.plannedTotal*1000)/10;}
+    (x.solved?.chosen||[]).forEach(c=>{const bid=Math.max(1,Number(c.cost)||maxBid(c.p));next[c.slot.index]={priority:c.slot.priority,playerId:c.p.id};pcts[c.slot.index]=Math.round(bid/x.plannedTotal*1000)/10;});
+    s.slotTargets[r]=next;s.slotAllocation[r]=pcts;
+  });
+  if(typeof persist==='function')persist();
+  if(typeof renderBrain==='function')renderBrain();
+}
 function syncMarket(){if(!current||!Array.isArray(current.teams))return null;const base=Array.isArray(current.history)?current.history:[],existing=new Set(base.map(h=>String(h?.playerId??'')+'|'+String(h?.price??''))),extra=[];current.teams.forEach(t=>(t.players||[]).forEach(p=>{const price=Number(p?.price);if(!(price>0)||p?.id==null)return;const key=String(p.id)+'|'+String(price);if(existing.has(key))return;extra.push({playerId:p.id,price,role:p.role,team:t.name,teamId:t.id,source:'team-sync'});}));current.history=base.concat(extra);return{base,extra};}
-function install(){const version=document.querySelector('.app-version');if(version)version.textContent='V. '+VERSION;if(window.__ASTA_BACCHETTA_V10)return true;document.addEventListener('click',function(e){const btn=e.target?.closest?.('.magic-wand-btn');if(!btn)return;e.preventDefault();e.stopImmediatePropagation();const ctx=syncMarket();const originalPersist=typeof persist==='function'?persist:null;if(ctx&&originalPersist){persist=function(){const h=current.history;current.history=ctx.base;try{return originalPersist.apply(this,arguments)}finally{current.history=h}};}try{runNewWand(btn)}finally{if(originalPersist)persist=originalPersist;if(ctx)setTimeout(()=>{current.history=ctx.base},100)}},true);window.runMagicWand=runNewWand;if(typeof window.renderBrain==='function'&&!window.renderBrain.__marketSyncV10Wrapped){const originalRenderBrain=window.renderBrain;window.renderBrain=function(){const s=activeStrategy();if(s)syncTargetAllocations(s);return originalRenderBrain.apply(this,arguments)};window.renderBrain.__marketSyncV10Wrapped=true;}if(typeof window.renderBrain==='function'&&!window.renderBrain.__marketBudgetV10Wrapped){const originalRender=window.renderBrain;window.renderBrain=function(){const s=activeStrategy();if(s)syncTargetAllocations(s);return originalRender.apply(this,arguments)};window.renderBrain.__marketBudgetV10Wrapped=true;}window.__ASTA_BACCHETTA_V10=true;return true;}
-function syncTargetAllocations(s){if(!s||!s.slotTargets)return;const initial=Number(current?.initialCredits)||0,alloc=s.allocation||{};['P','D','C','A'].forEach(r=>{const planned=Math.max(1,initial*(Number(alloc[r])||0)/100),targets=Array.isArray(s.slotTargets[r])?s.slotTargets[r]:[],arr=Array.isArray(s.slotAllocation?.[r])?s.slotAllocation[r].slice():[];targets.forEach((t,i)=>{if(t?.playerId==null)return;const p=all().find(x=>String(x.id)===String(t.playerId));if(!p)return;let bid=maxBid(p);for(const team of current?.teams||[]){const bought=(team.players||[]).find(x=>String(x.id)===String(p.id));if(bought){bid=Math.max(1,Number(bought.price)||0);break;}}arr[i]=Math.round(bid/planned*1000)/10;});if(!s.slotAllocation)s.slotAllocation={};s.slotAllocation[r]=arr;});}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>install(),{once:true});else install();
+function assignedCost(s,r){const st=roleState(s,r),sold=new Set((st.bought||[]).map(p=>String(p.id)));let sum=0;for(const t of st.targets||[]){if(t?.playerId==null)continue;const p=all().find(x=>String(x.id)===String(t.playerId));if(!p)continue;if(sold.has(String(p.id))){const b=st.bought.find(x=>String(x.id)===String(p.id));sum+=Math.max(1,Number(b?.price)||0);}else sum+=maxBid(p);}return sum;}
+function syncTargetAllocations(s){
+  if(!s)return;
+  ['P','D','C','A'].forEach(r=>{
+    const st=roleState(s,r);
+    const defs=[];
+    for(let i=st.bought.length;i<st.total;i++)defs.push({index:i,priority:st.targets[i]?.priority||'base'});
+    const reserved=assignedCost(s,r);
+    /* HARD RULE: the sum of all reserved max bids can never exceed the role budget. */
+    if(reserved>st.budget){
+      const solved=solveRole(r,defs,st.budget);
+      if(solved.ok){
+        const next=Array.from({length:st.total},(_,i)=>({priority:st.targets[i]?.priority||'base',playerId:null}));
+        for(let i=0;i<st.bought.length;i++){const p=st.bought[i];next[i]={priority:st.targets[i]?.priority||priorityOf(p),playerId:p.id};}
+        solved.chosen.forEach(c=>{next[c.slot.index]={priority:c.slot.priority,playerId:c.p.id};});
+        s.slotTargets[r]=next;
+      }else{
+        /* Se una combinazione preesistente è impossibile, non lasciamo mai un piano sopra budget: svuotiamo gli slot non acquistati dal meno prioritario in su finché il totale rientra. */
+        const next=(st.targets||[]).map(t=>({...t}));
+        const rows=[];
+        for(let i=st.bought.length;i<st.total;i++){const t=next[i];if(t?.playerId==null)continue;const p=all().find(x=>String(x.id)===String(t.playerId));if(p)rows.push({i,p,cost:maxBid(p),rank:PRIORITY_RANK[t.priority]||1});}
+        rows.sort((a,b)=>a.rank-b.rank||b.cost-a.cost);
+        let total=reserved;
+        for(const row of rows){if(total<=st.budget)break;next[row.i]={priority:next[row.i]?.priority||'base',playerId:null};total-=row.cost;}
+        s.slotTargets[r]=next;
+      }
+    }
+    const planned=st.plannedTotal,targets=Array.isArray(s.slotTargets[r])?s.slotTargets[r]:[],arr=Array.isArray(s.slotAllocation?.[r])?s.slotAllocation[r].slice():[];
+    targets.forEach((t,i)=>{if(t?.playerId==null){arr[i]=0;return;}const p=all().find(x=>String(x.id)===String(t.playerId));if(!p){arr[i]=0;return;}let bid=maxBid(p);for(const team of current?.teams||[]){const bought=(team.players||[]).find(x=>String(x.id)===String(p.id));if(bought){bid=Math.max(1,Number(bought.price)||0);break;}}arr[i]=Math.round(bid/planned*1000)/10;});
+    s.slotAllocation[r]=arr;
+  });
+}
+function runNewWand(btn){
+  if(!current){alert('Apri prima un’asta.');return;}
+  const s=activeStrategy();if(!s){alert('Nessuna strategia attiva.');return;}
+  if(btn){btn.disabled=true;btn.classList.add('magic-wand-running');btn.setAttribute('aria-busy','true');}
+  try{const plan=buildPlan(s);if(plan.errors.length){console.warn('Bacchetta v11',plan.errors);syncTargetAllocations(s);if(typeof persist==='function')persist();alert('La Bacchetta non può rispettare tutte le appetibilità con il budget attuale. Ho mantenuto solo una combinazione che non supera il budget.\n\n'+plan.errors.join('\n'));return;}applyPlan(s,plan);console.info('Bacchetta v11: strategia ricalcolata con massimali vincolanti.',plan);}catch(e){console.error('Bacchetta v11',e);alert('Errore Bacchetta Magica: '+(e?.message||e));}finally{if(btn){btn.disabled=false;btn.classList.remove('magic-wand-running');btn.setAttribute('aria-busy','false');}}
+}
+function install(){const version=document.querySelector('.app-version');if(version)version.textContent='V. '+VERSION;if(window.__ASTA_BACCHETTA_V11)return true;document.addEventListener('click',function(e){const btn=e.target?.closest?.('.magic-wand-btn');if(!btn)return;e.preventDefault();e.stopImmediatePropagation();const ctx=syncMarket(),originalPersist=typeof persist==='function'?persist:null;if(ctx&&originalPersist){persist=function(){const h=current.history;current.history=ctx.base;try{return originalPersist.apply(this,arguments)}finally{current.history=h;}};}try{runNewWand(btn);}finally{if(originalPersist)persist=originalPersist;if(ctx)setTimeout(()=>{current.history=ctx.base},100);}},true);window.runMagicWand=runNewWand;if(typeof window.renderBrain==='function'&&!window.renderBrain.__marketSyncV11Wrapped){const original=window.renderBrain;window.renderBrain=function(){const s=activeStrategy();if(s)syncTargetAllocations(s);return original.apply(this,arguments)};window.renderBrain.__marketSyncV11Wrapped=true;}window.__ASTA_BACCHETTA_V11=true;return true;}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
