@@ -31,7 +31,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
   document.body.appendChild(script);
 })();
 
-/* Centrale Asta: carica il dataset storico e il motore di analisi dopo i file principali. */
+/* Centrale Asta: carica il dataset storico e i motori dopo i file principali. */
 (function loadHistoricalEngine(){
   function add(src, marker, done){
     if(document.querySelector('script['+marker+']')){ if(done) done(); return; }
@@ -44,8 +44,8 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
   }
   add('./historical-data.js?v=1.0.0','data-historical',function(){
     add('./historical-analysis.js?v=1.1.0','engine-historical',function(){
-      add('./market-sync.js?v=3.4.44','market-sync',function(){
-        add('./brain-picker-fix.js?v=3.4.47','brain-picker-fix');
+      add('./market-sync.js?v=3.4.49','market-sync',function(){
+        add('./brain-picker-fix.js?v=3.4.48','brain-picker-fix');
       });
     });
   });
