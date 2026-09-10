@@ -4,26 +4,2806 @@
 <head>
 
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+<meta name="viewport"
+content="width=device-width,initial-scale=1,viewport-fit=cover">
+
 <meta name="theme-color" content="#111827">
+
+<!-- Richiesta di orientamento verticale per i browser/PWA che supportano Screen Orientation -->
 <meta name="screen-orientation" content="portrait">
+
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
+
 <title>Asta Fantacalcio</title>
+
 
 <style>
 
-/* PATCH 3.4.57: il contenuto CSS originale dell'app resta invariato. */
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+:root{
+  --bg:#f4f5f7;
+  --card:#fff;
+  --ink:#151b26;
+  --muted:#697386;
+  --line:#e3e6eb;
+  --green:#08784f;
+  --greenbg:#e8f6ef;
+  --gold:#b97900;
+  --red:#b53a31;
+}
+
+html,
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "SF Pro Text",
+    Arial,
+    sans-serif;
+}
+
+body{
+  min-height:100vh;
+}
+
+/* ORIENTAMENTO
+   Su iPhone/iOS il blocco fisico dell'orientamento non è garantito.
+   In landscape nascondiamo l'app e mostriamo un avviso, mantenendo
+   l'esperienza esclusivamente progettata per l'uso verticale. */
+@media screen and (orientation:landscape) and (max-width:932px){
+  body::before{
+    content:"↻\A Ruota l’iPhone in verticale";
+    white-space:pre-line;
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    box-sizing:border-box;
+    background:var(--bg);
+    color:var(--ink);
+    font-size:22px;
+    font-weight:850;
+    line-height:1.45;
+    text-align:center;
+  }
+
+  .app{
+    visibility:hidden;
+  }
+}
+.app{
+  width:100%;
+  max-width:430px;
+  margin:auto;
+  min-height:100vh;
+  padding-bottom:58px;
+}
+
+
+/* HEADER */
+
+.header{
+  position:sticky;
+  top:0;
+  z-index:10;
+
+  padding:
+    calc(8px + env(safe-area-inset-top))
+  16px
+  8px;
+
+  background:rgba(244,245,247,.95);
+
+  backdrop-filter:blur(18px);
+
+  border-bottom:1px solid var(--line);
+}
+
+.head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:52px;
+}
+
+.head > div:first-child{
+  min-width:0;
+  flex:1 1 auto;
+}
+
+.title{
+  font-size:24px;
+  font-weight:850;
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+}
+
+.app-version{
+  font-size:12px;
+  font-weight:650;
+  color:#8a919b;
+  white-space:nowrap;
+}
+
+/* SCHEDA CALCIATORE: TITOLO, OBIETTIVO E CHIUSURA */
+.sheet{
+  position:relative;
+}
+
+.player-modal-head{
+  align-items:flex-start;
+  padding-right:54px;
+}
+
+.player-title-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.player-goal{
+  margin:0;
+  align-self:center;
+  min-width:0;
+  min-height:0;
+  width:auto;
+  height:auto;
+  padding:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  border-radius:0;
+  font-size:48px !important;
+  line-height:1;
+}
+
+/* SIMBOLO OBIETTIVO NELLA LISTA FREE */
+/* LISTA FREE PIÙ COMPATTA */
+.free-result{
+  padding:8px 2px;
+}
+
+.free-result .meta{
+  margin-top:2px;
+}
+
+.free-result .tag{
+  padding:3px 6px;
+  margin-top:1px;
+}
+
+.free-result .small{
+  line-height:1.1;
+}
+
+.free-player-name{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.free-player-goal{
+  display:inline-block;
+  font-size:28px;
+  line-height:1;
+  flex:0 0 auto;
+}
+
+/* MODALITÀ PRIVACY SCHEDA CALCIATORE */
+.player-privacy{
+  position:absolute;
+  top:16px;
+  right:66px;
+  z-index:3;
+  width:42px;
+  height:42px;
+  border:1px solid var(--line);
+  border-radius:50%;
+  background:#f5f6f8;
+  color:#29313d;
+  font-size:21px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.player-privacy:active{
+  transform:scale(.94);
+}
+
+.sheet.privacy-mode .player-private{
+  display:none;
+}
+
+.player-close{
+  position:absolute;
+  top:16px;
+  right:16px;
+  z-index:3;
+  width:42px;
+  height:42px;
+  border:1px solid var(--line);
+  border-radius:50%;
+  background:#f5f6f8;
+  color:#29313d;
+  font-size:30px;
+  line-height:1;
+  font-weight:400;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.sub{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:3px;
+}
+
+.plus{
+  width:42px;
+  height:42px;
+
+  border:0;
+  border-radius:14px;
+
+  background:var(--ink);
+  color:#fff;
+
+  font-size:26px;
+}
+
+
+/* CONTENUTO */
+
+main{
+  padding:6px 14px 14px;
+}
+
+.screen{
+  display:none;
+}
+
+.screen.active{
+  display:block;
+}
+
+.card{
+
+  background:var(--card);
+
+  border:1px solid var(--line);
+
+  border-radius:18px;
+
+  padding:15px;
+
+  margin-bottom:12px;
+
+  box-shadow:
+    0 2px 10px
+    rgba(20,30,45,.035);
+}
+
+/* ASTA: avvicina al massimo il blocco Cerca a quello Squadre */
+#auction > .card:first-child{
+  padding:8px 15px;
+  margin-bottom:2px;
+}
+
+/* ASTA: compatta la sezione di ricerca senza ridurre i font */
+#auction > .card:first-child .search input,
+#auction > .card:first-child .search .btn{
+  min-height:42px;
+}
+
+#auction > .card:first-child .search .btn{
+  padding:8px 14px;
+}
+
+/* ASTA: porta più in alto l'intestazione del blocco Squadre */
+#auction > .card:nth-child(2){
+  padding-top:10px;
+}
+
+
+.h2{
+  font-size:18px;
+  font-weight:850;
+  margin:0 0 12px;
+}
+
+.small{
+  font-size:12px;
+}
+
+.muted{
+  color:var(--muted);
+}
+
+
+/* BOTTONI */
+
+.grid2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
+
+.btn{
+
+  min-height:46px;
+
+  border:0;
+  border-radius:13px;
+
+  padding:10px 14px;
+
+  font-size:15px;
+  font-weight:800;
+}
+
+.primary{
+  background:var(--green);
+  color:#fff;
+}
+
+.secondary{
+  background:#eceff2;
+  color:var(--ink);
+}
+
+.danger{
+  background:#fff0ee;
+  color:var(--red);
+}
+
+
+/* INPUT */
+
+input,
+select{
+
+  width:100%;
+
+  min-height:46px;
+
+  border:1px solid var(--line);
+
+  border-radius:12px;
+
+  background:#fff;
+
+  padding:10px 12px;
+
+  font-size:16px;
+
+  color:var(--ink);
+}
+
+label{
+
+  display:block;
+
+  font-size:12px;
+
+  font-weight:750;
+
+  color:var(--muted);
+
+  margin:10px 0 6px;
+}
+
+
+/* RICERCA */
+
+.search{
+  display:flex;
+  gap:8px;
+}
+
+.search input{
+  flex:1;
+  min-width:0;
+}
+
+
+/* RISULTATI */
+
+.result{
+
+  padding:12px 2px;
+
+  border-bottom:1px solid var(--line);
+
+  cursor:pointer;
+}
+
+.result:last-child{
+  border-bottom:0;
+}
+
+.name{
+  font-size:16px;
+  font-weight:850;
+}
+
+.meta{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:4px;
+}
+
+
+/* ETICHETTE */
+
+.tag{
+
+  display:inline-flex;
+
+  padding:4px 7px;
+
+  border-radius:8px;
+
+  background:#eef0f3;
+
+  font-size:11px;
+
+  font-weight:800;
+
+  margin:2px 3px 0 0;
+}
+
+.goal{
+  background:#fff2c7;
+  color:#765300;
+}
+
+.avail{
+  background:var(--greenbg);
+  color:var(--green);
+}
+
+
+/* =========================
+   SQUADRE
+========================= */
+
+.teamrow{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  padding:4px 0;
+
+  border-bottom:1px solid var(--line);
+
+  min-height:45px;
+}
+
+.teamrow:last-child{
+  border-bottom:0;
+}
+
+.teamname{
+
+  font-weight:850;
+
+  font-size:16px;
+
+  line-height:18px;
+}
+
+.teamname-open{
+  cursor:pointer;
+}
+
+.teamname-open:active{
+  opacity:.6;
+}
+
+
+.counts{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:4px;
+
+  margin-top:3px;
+
+  color:var(--muted);
+}
+
+.countpill{
+
+  display:inline-flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  min-width:34px;
+
+  height:26px;
+
+  padding:0 5px;
+
+  border-radius:7px;
+
+  background:#f0f2f4;
+
+  font-size:13px;
+
+  line-height:15px;
+
+  font-weight:800;
+}
+
+.countpill b{
+
+  color:var(--green);
+
+  margin-right:2px;
+}
+
+.totalcount{
+
+  font-size:14px;
+
+  font-weight:800;
+
+  margin-left:4px;
+}
+
+.budget{
+
+  font-weight:900;
+
+  font-size:20px;
+
+  white-space:nowrap;
+
+  margin-left:8px;
+}
+
+
+/* CALCIATORE */
+
+.playername{
+
+  font-size:25px;
+
+  font-weight:900;
+}
+
+.kv{
+
+  display:grid;
+
+  grid-template-columns:1fr 1fr;
+
+  gap:8px;
+
+  margin:15px 0;
+}
+
+.kvbox{
+
+  background:#f7f8fa;
+
+  border-radius:12px;
+
+  padding:10px;
+}
+
+.kvbox small{
+
+  display:block;
+
+  color:var(--muted);
+
+  font-size:11px;
+
+  margin-bottom:3px;
+}
+
+.kvbox b{
+  font-size:16px;
+}
+
+
+/* OBIETTIVI */
+
+.chips{
+
+  display:grid;
+
+  grid-template-columns:repeat(4,minmax(0,1fr));
+
+  gap:8px;
+
+  width:100%;
+
+  overflow:visible;
+
+  padding-bottom:4px;
+}
+
+.chip{
+
+  width:100%;
+
+  min-width:0;
+
+  height:42px;
+
+  border:0;
+
+  border-radius:12px;
+
+  background:#e9edf1;
+
+  font-weight:850;
+}
+
+.chip.active{
+
+  background:var(--ink);
+
+  color:#fff;
+}
+
+.free-chips{
+  grid-template-columns:1.35fr repeat(4,1fr);
+}
+
+.free-chips .chip.active{
+  background:var(--ink);
+  color:#fff;
+}
+
+/* FILTRO DISPONIBILITÀ OBIETTIVI */
+
+.objective-tabs{
+
+  display:grid;
+
+  grid-template-columns:1fr 1fr;
+
+  gap:8px;
+
+  margin-top:8px;
+}
+
+.objective-tab{
+
+  min-height:38px;
+
+  border:1px solid var(--line);
+
+  border-radius:11px;
+
+  background:#fff;
+
+  color:var(--muted);
+
+  font-size:13px;
+
+  font-weight:850;
+}
+
+.objective-tab.active{
+
+  background:var(--greenbg);
+
+  border-color:#ccebdd;
+
+  color:var(--green);
+}
+
+.objective-tab.unavailable.active{
+
+  background:#fff0ee;
+
+  border-color:#f0d3cf;
+
+  color:var(--red);
+}
+
+
+/* VUOTO */
+
+.empty{
+
+  text-align:center;
+
+  padding:26px 8px;
+
+  color:var(--muted);
+
+  font-size:14px;
+}
+
+
+/* MENU IN BASSO */
+
+.bottom{
+
+  position:fixed;
+
+  left:0;
+  right:0;
+  bottom:0;
+
+  z-index:20;
+
+  max-width:430px;
+
+  height:58px;
+
+  margin:auto;
+
+  display:flex;
+
+  align-items:center;
+
+  background:rgba(255,255,255,.96);
+
+  backdrop-filter:blur(18px);
+
+  border-top:1px solid var(--line);
+
+  padding:0 6px;
+}
+
+.nav{
+
+  flex:1;
+
+  height:58px;
+
+  min-height:0;
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  justify-content:center;
+
+  border:0;
+
+  background:none;
+
+  color:#788190;
+
+  font-size:10px;
+
+  font-weight:800;
+
+  padding:0 2px;
+}
+
+.nav.active{
+  color:var(--green);
+}
+
+.navicon{
+  display:block;
+  width:24px;
+  height:24px;
+  margin-bottom:2px;
+}
+
+.nav-svg{
+  width:24px;
+  height:24px;
+  display:block;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2.4;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.field-icon{width:32px;height:26px;vertical-align:-5px;margin-right:5px;fill:none;stroke:#2f9e5b;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.ball-btn .field-icon{width:24px;height:24px;margin:0;vertical-align:middle}
+.nav-svg.fill{
+  fill:currentColor;
+  stroke:none;
+}
+
+.free-search-wrap{
+  position:relative;
+  z-index:20;
+}
+
+.free-suggestions{
+  display:none;
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  right:0;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 12px 30px rgba(0,0,0,.14);
+}
+
+.free-suggestion{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px 14px;
+  border:0;
+  border-bottom:1px solid var(--line);
+  background:#fff;
+  color:var(--ink);
+  text-align:left;
+  font:inherit;
+}
+
+.free-suggestion:last-child{
+  border-bottom:0;
+}
+
+.free-suggestion-name{
+  font-weight:850;
+}
+
+.free-suggestion-meta{
+  font-size:13px;
+  color:var(--muted);
+  margin-top:2px;
+}
+
+
+/* MODALE */
+
+.modal{
+
+  display:none;
+
+  position:fixed;
+
+  inset:0;
+
+  z-index:50;
+
+  background:rgba(0,0,0,.44);
+
+  align-items:flex-end;
+}
+
+.modal.show{
+  display:flex;
+}
+
+.sheet{
+
+  width:100%;
+
+  max-width:430px;
+
+  margin:auto auto 0;
+
+  background:#fff;
+
+  border-radius:22px 22px 0 0;
+
+  padding:
+    18px
+    16px
+    calc(18px + env(safe-area-inset-bottom));
+
+  max-height:92vh;
+
+  overflow:auto;
+}
+
+/* STORICO ASTA A TUTTA PAGINA */
+.sheet.history-fullscreen{
+  max-width:none;
+  width:100%;
+  height:100%;
+  max-height:none;
+  margin:0;
+  border-radius:0;
+  padding:
+    max(28px, calc(18px + env(safe-area-inset-top)))
+    16px
+    max(18px, calc(18px + env(safe-area-inset-bottom)));
+  box-sizing:border-box;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+
+.sheet.history-fullscreen .handle{
+  margin-top:0;
+}
+
+.handle{
+
+  width:38px;
+
+  height:4px;
+
+  background:#d5d9df;
+
+  border-radius:5px;
+
+  margin:-4px auto 14px;
+}
+
+
+.auction-actions{
+  display:flex;
+  gap:7px;
+  align-items:center;
+}
+
+/* =========================
+   OBIETTIVI ANCORA DISPONIBILI
+========================= */
+
+.objective-remaining{
+  margin-top:14px;
+  padding:11px 14px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:#fff;
+}
+
+.objective-remaining-main{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  font-weight:800;
+}
+
+.objective-remaining-main strong{
+  font-size:24px;
+  line-height:1;
+}
+
+.objective-remaining small{
+  display:block;
+  margin-top:5px;
+  color:var(--muted);
+  line-height:1.3;
+}
+
+/* =========================
+   CONSIGLIO OFFERTA
+========================= */
+
+.offer-advice{
+  margin-top:14px;
+  padding:12px 14px;
+  border-radius:14px;
+  background:var(--greenbg);
+  border:1px solid var(--line);
+}
+
+.offer-advice-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  font-weight:800;
+}
+
+.offer-advice-row strong{
+  font-size:22px;
+}
+
+.offer-advice small{
+  display:block;
+  margin-top:4px;
+  color:var(--muted);
+  line-height:1.3;
+}
+
+/* =========================
+   NOTE CALCIATORE
+========================= */
+
+.player-notes{
+  margin-top:14px;
+}
+
+.player-notes label{
+  display:block;
+  font-weight:800;
+  margin-bottom:6px;
+}
+
+.player-notes textarea{
+  width:100%;
+  min-height:76px;
+  resize:vertical;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px 12px;
+  font:inherit;
+  color:var(--ink);
+  background:#fff;
+}
+
+.note-actions{
+  width:100%;
+  display:grid;
+  place-items:center;
+  margin-top:7px;
+  position:relative;
+}
+
+.note-actions .btn{
+  min-height:38px;
+  padding:7px 12px;
+}
+
+.note-actions #noteStatus{
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  top:100%;
+  margin-top:4px;
+  white-space:nowrap;
+}
+
+/* =========================
+   PRIORITÀ OBIETTIVI
+========================= */
+
+.objective-priority{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:1px;
+  min-width:88px;
+  padding:4px 6px;
+  border-radius:10px;
+  background:rgba(0,0,0,.04);
+  cursor:pointer;
+  user-select:none;
+}
+
+.objective-priority span{
+  font-size:21px;
+  line-height:22px;
+}
+
+.objective-priority small{
+  font-size:10px;
+  line-height:12px;
+  color:var(--muted);
+  text-align:center;
+  font-weight:700;
+}
+
+/* =========================
+   ASTA LIVE
+========================= */
+
+.live-title{
+  font-size:18px;
+  font-weight:900;
+  margin-top:4px;
+}
+
+.live-player-note{
+  color:var(--muted);
+  font-size:13px;
+  margin:4px 0 12px;
+}
+
+.live-teams{
+  display:grid;
+  gap:7px;
+  margin-bottom:8px;
+}
+
+.live-team{
+  width:100%;
+  min-height:54px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:#fff;
+  color:var(--ink);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  text-align:left;
+  padding:8px 12px;
+}
+
+.live-team span{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.live-team b{
+  font-size:15px;
+}
+
+.live-team small{
+  color:var(--muted);
+  font-size:11px;
+}
+
+.live-team strong{
+  font-size:20px;
+  color:var(--green);
+}
+
+.live-team.selected{
+  background:var(--greenbg);
+  border-color:var(--green);
+  box-shadow:0 0 0 2px rgba(8,120,79,.12);
+}
+
+.live-team.blocked{
+  opacity:.42;
+}
+
+.live-team.blocked strong{
+  color:var(--muted);
+}
+
+/* FORMAZIONI */
+.teamrow-actions{display:flex;align-items:center;gap:8px}
+.ball-btn{width:42px;height:42px;min-width:42px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:20px;display:flex;align-items:center;justify-content:center}
+.formation-controls{display:flex;align-items:center;gap:10px;margin:10px 0 14px}
+.formation-controls label{font-weight:800}.formation-controls select{flex:1;margin:0}
+.pitch{
+  position:relative;
+  min-height:680px;
+  border-radius:0;
+  overflow:hidden;
+  background:#0f6230;
+  box-shadow:0 8px 22px rgba(0,0,0,.18);
+}
+
+.pitch-art{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:0;
+}
+
+.formation-line{position:absolute;left:6px;right:6px;display:flex;justify-content:space-around;z-index:2}
+.formation-player{
+  width:92px;
+  max-width:24vw;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+}
+.formation-shirt{
+  width:46px;
+  height:46px;
+  margin:0;
+  border-radius:50% 50% 42% 42%;
+  background:#fff;
+  color:#126b3e;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:16px;
+  font-weight:900;
+  box-shadow:0 3px 8px rgba(0,0,0,.32);
+  text-shadow:none;
+}
+.formation-player-name{
+  width:100%;
+  padding:3px 5px;
+  border-radius:8px;
+  background:rgba(8,24,18,.82);
+  color:#fff;
+  font-size:13px;
+  line-height:15px;
+  font-weight:900;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  box-shadow:0 2px 5px rgba(0,0,0,.28);
+}
+.formation-player-price{
+  width:34px;
+  height:34px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  background:rgba(255,255,255,.96);
+  color:#111827;
+  font-size:13px;
+  line-height:1;
+  font-weight:900;
+  box-shadow:0 2px 5px rgba(0,0,0,.24);
+}
+.formation-bench-card{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:16px;background:#fff}
+.bench-hint{
+  margin:0 0 10px;
+  padding:9px 10px;
+  border-radius:10px;
+  background:#f4f6f7;
+  color:var(--muted);
+  font-size:13px;
+  line-height:18px;
+}
+.bench-list{display:flex;flex-wrap:wrap;gap:9px}
+.bench-player{
+  border:1px solid transparent;
+  padding:10px 12px;
+  border-radius:12px;
+  background:var(--greenbg);
+  color:var(--ink);
+  font-size:16px;
+  line-height:20px;
+  font-weight:800;
+  cursor:pointer;
+}
+.bench-player.selected{
+  background:var(--ink);
+  color:#fff;
+  border-color:var(--ink);
+  box-shadow:0 0 0 3px rgba(20,30,45,.12);
+}
+.bench-player small{
+  color:var(--muted);
+  margin-left:5px;
+  font-size:14px;
+  font-weight:750;
+}
+.bench-player.selected small{color:rgba(255,255,255,.78)}
+.formation-player{
+  border:0;
+  padding:0;
+  background:none;
+  color:inherit;
+  cursor:pointer;
+}
+.formation-player.swap-target .formation-shirt{
+  box-shadow:0 0 0 3px rgba(255,214,10,.95),0 3px 8px rgba(0,0,0,.32);
+}
+
+
+/* =========================
+   COLORI GLOBALI PER RUOLO
+========================= */
+
+:root{
+  --role-p:#ff8a00;
+  --role-p-soft:#fff0dc;
+  --role-d:#2fa80f;
+  --role-d-soft:#e7f6df;
+  --role-c:#1677ff;
+  --role-c-soft:#e5f0ff;
+  --role-a:#ef2b23;
+  --role-a-soft:#ffe8e6;
+}
+
+.role-tag{color:#fff;border:0}
+.role-tag.role-P{background:var(--role-p)}
+.role-tag.role-D{background:var(--role-d)}
+.role-tag.role-C{background:var(--role-c)}
+.role-tag.role-A{background:var(--role-a)}
+
+.countpill.role-P{background:var(--role-p-soft);color:#8d4b00}
+.countpill.role-D{background:var(--role-d-soft);color:#176b08}
+.countpill.role-C{background:var(--role-c-soft);color:#0756bd}
+.countpill.role-A{background:var(--role-a-soft);color:#b41b15}
+.countpill.role-P b{color:var(--role-p)}
+.countpill.role-D b{color:var(--role-d)}
+.countpill.role-C b{color:var(--role-c)}
+.countpill.role-A b{color:var(--role-a)}
+
+.chip.role-P.active{background:var(--role-p);color:#fff}
+.chip.role-D.active{background:var(--role-d);color:#fff}
+.chip.role-C.active{background:var(--role-c);color:#fff}
+.chip.role-A.active{background:var(--role-a);color:#fff}
+.chip.role-P:not(.active){color:#b15d00;background:var(--role-p-soft)}
+.chip.role-D:not(.active){color:#176b08;background:var(--role-d-soft)}
+.chip.role-C:not(.active){color:#0756bd;background:var(--role-c-soft)}
+.chip.role-A:not(.active){color:#b41b15;background:var(--role-a-soft)}
+
+.formation-player.role-P .formation-shirt{background:var(--role-p);color:#fff}
+.formation-player.role-D .formation-shirt{background:var(--role-d);color:#fff}
+.formation-player.role-C .formation-shirt{background:var(--role-c);color:#fff}
+.formation-player.role-A .formation-shirt{background:var(--role-a);color:#fff}
+
+.bench-player.role-P{background:var(--role-p-soft);border-color:rgba(255,138,0,.18)}
+.bench-player.role-D{background:var(--role-d-soft);border-color:rgba(47,168,15,.18)}
+.bench-player.role-C{background:var(--role-c-soft);border-color:rgba(22,119,255,.18)}
+.bench-player.role-A{background:var(--role-a-soft);border-color:rgba(239,43,35,.18)}
+
+.bench-player.role-P.selected{background:var(--role-p);border-color:var(--role-p)}
+.bench-player.role-D.selected{background:var(--role-d);border-color:var(--role-d)}
+.bench-player.role-C.selected{background:var(--role-c);border-color:var(--role-c)}
+.bench-player.role-A.selected{background:var(--role-a);border-color:var(--role-a)}
+/* PULSANTE AGGIORNA PWA */
+.refresh-app-btn{
+  width:52px;
+  min-width:52px;
+  height:52px;
+  min-height:52px;
+  border:0;
+  border-radius:16px;
+  background:var(--dark);
+  color:#fff;
+  font-size:34px;
+  line-height:1;
+  display:flex !important;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  flex:0 0 52px;
+  opacity:1 !important;
+  visibility:visible !important;
+  position:relative;
+  z-index:30;
+  box-shadow:0 6px 18px rgba(20,30,45,.12);
+}
+
+.refresh-app-btn:active{
+  transform:scale(.96);
+}
+
+.refresh-app-btn.loading{
+  pointer-events:none;
+  animation:refresh-spin .8s linear infinite;
+}
+
+@keyframes refresh-spin{
+  from{transform:rotate(0)}
+  to{transform:rotate(360deg)}
+}
+
+
+/* =========================
+   CAMPETTI
+========================= */
+
+#campetti{
+  min-height:calc(100vh - 190px);
+  padding:10px 16px 24px;
+  background:transparent;
+}
+
+.campetti-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:2px 0 12px;
+}
+
+.campetti-title .h2{
+  margin:0;
+}
+
+.campetti-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-auto-rows:92px;
+  gap:8px;
+}
+
+.campetti-team{
+  width:100%;
+  height:92px;
+  min-height:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  color:var(--ink);
+  box-shadow:none;
+  cursor:pointer;
+  appearance:none;
+  -webkit-appearance:none;
+}
+
+.campetti-team:active{
+  transform:scale(.94);
+}
+
+.campetti-crest{
+  width:72px;
+  height:72px;
+  flex:0 0 72px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:visible;
+  background:transparent !important;
+}
+
+.campetti-crest img{
+  width:72px;
+  height:72px;
+  max-width:72px;
+  max-height:72px;
+  object-fit:contain;
+  display:block;
+  background:transparent;
+}
+
+.campetti-viewer{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:120;
+  background:var(--bg);
+  flex-direction:column;
+}
+
+.campetti-viewer.show{
+  display:flex;
+}
+
+.campetti-viewer-head{
+  min-height:calc(58px + env(safe-area-inset-top));
+  padding:calc(8px + env(safe-area-inset-top)) 16px 8px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:12px;
+  background:rgba(244,245,247,.97);
+  border-bottom:1px solid var(--line);
+}
+
+.campetti-viewer-title{
+  font-size:20px;
+  font-weight:900;
+}
+
+.campetti-close{
+  width:44px;
+  height:44px;
+  border:1px solid var(--line);
+  border-radius:50%;
+  background:#fff;
+  color:var(--ink);
+  font-size:31px;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  flex:0 0 auto;
+}
+
+.campetti-image-stage{
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  background:#111827;
+  touch-action:none;
+}
+
+.campetti-image-stage img{
+  width:100%;
+  max-width:845px;
+  height:auto;
+  transform-origin:center center;
+  transition:transform .08s linear;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+
+.campetti-viewer-empty{
+  flex:1;
+  padding:32px 24px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  gap:9px;
+  color:var(--muted);
+}
+
+.campetti-viewer-empty b{
+  color:var(--ink);
+  font-size:20px;
+}
+
+.campetti-viewer-empty span{
+  font-size:14px;
+  line-height:1.45;
+}
+
+.campetti-empty-icon{
+  font-size:42px;
+}
+
+body.campetti-open{
+  overflow:hidden;
+}
+
+/* DESKTOP */
+
+@media(min-width:431px) and (pointer:fine){
+
+  body{
+    padding:15px 0;
+  }
+
+  .app{
+
+    border-radius:22px;
+
+    overflow:hidden;
+
+    box-shadow:
+      0 10px 45px
+      rgba(0,0,0,.08);
+  }
+}
+
+
+/* OBIETTIVI COMPATTI */
+.objective-result{padding:8px 2px}
+.objective-result .head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.objective-result .name{font-size:15px;line-height:18px}
+.objective-result .meta{margin-top:2px;line-height:16px}
+.objective-result .tag{padding:2px 5px;border-radius:7px;font-size:10px;margin-top:1px}
+.objective-result .objective-priority{flex-direction:row;gap:4px;min-width:64px;padding:4px 5px;flex-shrink:0}
+.objective-result .objective-priority span{font-size:17px;line-height:18px}
+.objective-result .objective-priority small{font-size:9px;line-height:11px;white-space:nowrap}
+
+/* RIGHE SQUADRE PIÙ COMPATTE */
+.teamrow{
+  padding:2px 0;
+  min-height:38px;
+}
+.teamname{
+  font-size:15px;
+  line-height:17px;
+}
+.counts{
+  margin-top:1px;
+}
+.countpill{
+  min-width:32px;
+  height:23px;
+  padding:0 4px;
+  font-size:12px;
+  line-height:14px;
+}
+.totalcount{
+  font-size:13px;
+  margin-left:3px;
+}
+.budget{
+  font-size:19px;
+}
+
+
+/* VERSIONE 1.0 — OBIETTIVI */
+.objective-search-wrap .searchbox input{min-height:42px}
+.setup-objectives-close{position:absolute;top:12px;right:12px;z-index:4;width:42px;height:42px;border:1px solid var(--line);border-radius:50%;background:#f5f6f8;color:var(--ink);font-size:30px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.setup-objectives-title{padding-right:52px}
+#setupList .result{padding:6px 0}
+#setupList .result .head{min-height:42px}
+#setupList .name{font-size:15px;line-height:17px}
+#setupList .meta{margin-top:1px;font-size:11px;line-height:14px}
+#setupList .tag{padding:2px 5px;font-size:10px;margin-top:1px}
+#setupList button[title]{width:38px!important;height:38px!important;font-size:23px!important;flex:0 0 38px}
+
+/* MENU ICONS VIVACI */
+.nav[data-s="home"] .navicon{color:#16845d}
+.nav[data-s="auction"] .navicon{color:#e67e22}
+.nav[data-s="objectives"] .navicon{color:#e0a300}
+.nav[data-s="free"] .navicon{color:#2f9eaa}
+.nav[data-s="campetti"] .navicon{color:#2f9e5b}
+
+.nav.active[data-s="home"]{color:#16845d}
+.nav.active[data-s="auction"]{color:#e67e22}
+.nav.active[data-s="objectives"]{color:#e0a300}
+.nav.active[data-s="free"]{color:#2f9eaa}
+.nav.active[data-s="campetti"]{color:#2f9e5b}
+
+/* BRAIN */
+.nav[data-s="brain"]{overflow:visible;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.nav[data-s="brain"] .navicon{font-size:27px;line-height:1;display:block;width:100%;text-align:center;margin:0 0 3px;transform:none}
+
+.brain-budget{font-size:28px;font-weight:800;margin-top:1px;line-height:1.05}
+.brain-auction-budget{padding:12px 16px !important;margin-bottom:8px !important;}
+.brain-auction-budget .muted.small{margin-bottom:2px !important;line-height:1.1}
+.brain-strategy{padding:0;margin-bottom:10px;overflow:hidden}
+.brain-strategy-title{width:100%;border:0;background:transparent;color:var(--ink);padding:18px 56px;text-align:center;font:inherit;font-size:19px;font-weight:850;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;position:relative}
+.brain-strategy-edit{position:absolute;left:16px;top:50%;transform:translateY(-50%)}
+.brain-strategy-status{position:absolute;right:18px;top:50%;transform:translateY(-50%)}
+.brain-strategy-edit{width:34px;height:34px;min-width:34px;border:0;border-radius:10px;background:#eef1f4;color:var(--ink);font-size:19px;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.brain-strategy-edit:active{transform:scale(.94)}
+.brain-strategy-name{min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:0;background:transparent;color:var(--ink);padding:0;text-align:center;font:inherit;font-size:inherit;font-weight:inherit;line-height:1.1;cursor:pointer}
+.brain-strategy-status{width:14px;height:14px;min-width:14px;border-radius:50%;background:var(--green);display:inline-flex;align-items:center;justify-content:center}
+.brain-strategy-status.inactive{visibility:hidden}
+.brain-strategy-icon{font-size:24px;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:30px;flex:0 0 30px}
+.brain-strategy-details{padding:0 12px 14px;overflow:hidden}
+.brain-active-choice{display:flex;align-items:center;gap:8px;font-weight:750;font-size:14px}
+.brain-strategy-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brain-strategy.active{border:2px solid var(--ink)}
+
+.brain-check{width:24px;height:24px;accent-color:#222}
+.brain-name{font-weight:800;font-size:17px;flex:1}
+.brain-total{margin:8px 0;padding:9px 12px;border-radius:13px;font-size:16px;line-height:1.2;font-weight:700;text-align:center}
+.brain-total.ok{background:#eaf7ee}
+.brain-total.warn{background:#fff1e8}
+
+.brain-live-summary{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:0 0 8px;padding:10px 14px;border-radius:16px;background:#f4f5f7;font-size:12px}
+.brain-live-summary span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.brain-live-summary span:last-child{text-align:right;align-items:flex-end;border-left:1px solid var(--line);padding-left:12px}
+.brain-live-summary b{font-size:19px;line-height:1.05}
+.brain-progress-wrap{display:none!important}
+
+.role-P{--role-color:var(--role-p)}
+.role-D{--role-color:var(--role-d)}
+.role-C{--role-color:var(--role-c)}
+.role-A{--role-color:var(--role-a)}
+
+.brain-role-row{
+  display:block;
+  min-height:0;
+  padding:0;
+  margin:7px 0;
+  border:0;
+  border-radius:18px;
+  min-width:0;
+  overflow:hidden;
+  box-sizing:border-box;
+}
+.brain-role-row.role-P{background:linear-gradient(90deg,var(--role-p-soft),#fff9f1)}
+.brain-role-row.role-D{background:linear-gradient(90deg,var(--role-d-soft),#f7fcf4)}
+.brain-role-row.role-C{background:linear-gradient(90deg,var(--role-c-soft),#f5f9ff)}
+.brain-role-row.role-A{background:linear-gradient(90deg,var(--role-a-soft),#fff7f6)}
+
+.brain-role-top{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 82px 38px;
+  align-items:center;
+  column-gap:12px;
+  padding:11px 14px 8px;
+}
+.brain-role-label{min-width:0;font-weight:850;font-size:16px;line-height:1.1}
+.brain-role-title{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.brain-role-dot{width:20px;height:20px;flex:0 0 20px;border-radius:50%;background:var(--role-color);box-shadow:0 1px 3px rgba(0,0,0,.16)}
+.brain-role-meta{display:block;margin-top:5px;color:var(--muted);font-size:11px;font-weight:650}
+
+.brain-percent{
+  width:82px;height:82px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.72);
+  border:2px solid var(--role-color,#777);
+  box-sizing:border-box;
+  overflow:hidden;
+  gap:0;
+}
+.brain-percent input{
+  width:48px;height:38px;
+  border:0!important;background:transparent!important;box-shadow:none!important;
+  padding:0!important;margin:0!important;
+  text-align:right!important;
+  font-size:18px;font-weight:850;color:var(--ink);outline:0;line-height:38px;
+}
+.brain-percent span{
+  width:auto;
+  font-size:15px;
+  font-weight:850;
+  line-height:38px;
+  margin-left:1px;
+  text-align:left;
+}
+
+.brain-role-numbers{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:0;
+  min-width:0;
+  margin:0 14px;
+  padding:9px 0 11px;
+  border-top:1px solid rgba(80,90,100,.15);
+}
+.brain-role-numbers span{
+  min-width:0;
+  text-align:center;
+  padding:0 6px;
+  border-left:1px solid rgba(80,90,100,.12);
+}
+.brain-role-numbers span:first-child{border-left:0}
+.brain-role-numbers small{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px}
+.brain-role-numbers b{display:block;font-size:18px;line-height:1.05}
+.brain-role-numbers .brain-remaining b{color:#16845d}
+
+.brain-role-symbol{
+  width:38px;
+  text-align:center;
+  font-size:28px;
+  line-height:1;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.08));
+}
+
+.brain-credits,.brain-live{display:contents}
+.brain-role-row input[type=number]::-webkit-inner-spin-button,
+.brain-role-row input[type=number]::-webkit-outer-spin-button{opacity:0}
+
+@media(max-width:390px){
+  .brain-role-top{grid-template-columns:minmax(0,1fr) 78px 32px;column-gap:9px;padding:10px 10px 7px}
+  .brain-percent{width:78px;height:78px}
+  .brain-percent input{font-size:17px;width:45px}
+  .brain-role-title{gap:8px}
+  .brain-role-label{font-size:15px}
+  .brain-role-numbers{margin:0 10px;padding:8px 0 10px}
+  .brain-role-numbers span{padding:0 3px}
+  .brain-role-numbers b{font-size:17px}
+  .brain-role-symbol{font-size:24px;width:32px}
+}
+
+.brain-actions{display:flex;gap:8px;margin-top:10px}
+.brain-actions .btn{flex:1}
+.brain-template-picker{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:12px}
+.brain-template-sheet{width:min(100%,560px);background:#fff;border-radius:22px 22px 14px 14px;padding:18px;max-height:82vh;overflow:auto}
+.brain-template-title{font-size:21px;font-weight:850;margin-bottom:4px}
+.brain-template-sub{margin-bottom:14px}
+.brain-template{width:100%;text-align:left;margin:8px 0;padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.brain-template-name{font-size:16px;font-weight:800;margin-bottom:3px}
+.brain-template-desc{font-size:13px;color:var(--muted)}
+.brain-template-values{font-size:12px;font-weight:750;margin-top:6px;color:#555}
+.brain-template-close{width:100%;margin-top:10px}
+
+/* BRAIN 3.4.5 — percentuale più compatta e titoli sempre leggibili */
+.brain-role-row{
+  display:grid !important;
+  grid-template-columns:minmax(118px,1fr) 64px repeat(3,minmax(46px,.62fr)) !important;
+  align-items:center !important;
+  column-gap:7px !important;
+  min-height:0 !important;
+  margin:7px 0 !important;
+  padding:10px 12px !important;
+  border-radius:18px !important;
+  overflow:hidden !important;
+}
+
+.brain-role-top,
+.brain-role-numbers{
+  display:contents !important;
+}
+
+.brain-role-label{
+  grid-column:1 !important;
+  min-width:0 !important;
+  font-size:16px !important;
+  line-height:1.05 !important;
+}
+
+.brain-role-title{
+  gap:8px !important;
+  min-width:0 !important;
+}
+
+.brain-role-row.role-C .brain-role-label{
+  font-size:16px !important;
+}
+
+.brain-role-row.role-C .brain-role-title{
+  gap:6px !important;
+}
+
+.brain-role-dot{
+  width:18px !important;
+  height:18px !important;
+  flex:0 0 18px !important;
+}
+
+.brain-role-meta{
+  margin-top:4px !important;
+  font-size:13px !important;
+  line-height:1.05 !important;
+  font-weight:650 !important;
+}
+
+.brain-percent{
+  grid-column:2 !important;
+  width:64px !important;
+  height:64px !important;
+  justify-self:center !important;
+  align-self:center !important;
+}
+
+.brain-percent input{
+  width:auto !important;
+  min-width:0 !important;
+  height:32px !important;
+  padding:0 !important;
+  margin:0 !important;
+  font-size:18px !important;
+  line-height:32px !important;
+  text-align:center !important;
+  flex:0 0 auto !important;
+}
+
+.brain-percent span{
+  margin-left:-1px !important;
+  font-size:15px !important;
+  line-height:32px !important;
+}
+
+.brain-role-numbers span{
+  align-self:center !important;
+  min-width:0 !important;
+  text-align:center !important;
+  padding:0 5px !important;
+  border-left:1px solid rgba(80,90,100,.12) !important;
+}
+
+.brain-role-numbers span:nth-child(1){grid-column:3 !important;}
+.brain-role-numbers span:nth-child(2){grid-column:4 !important;}
+.brain-role-numbers span:nth-child(3){grid-column:5 !important;}
+
+.brain-role-numbers small{
+  font-size:10px !important;
+  line-height:1 !important;
+  margin:0 0 5px !important;
+}
+
+.brain-role-numbers b{
+  font-size:18px !important;
+  line-height:1 !important;
+}
+
+.brain-role-symbol{
+  display:none !important;
+}
+
+@media(max-width:390px){
+  .brain-role-row{
+    grid-template-columns:minmax(104px,1fr) 58px repeat(3,minmax(41px,.62fr)) !important;
+    column-gap:5px !important;
+    padding:9px 9px !important;
+  }
+  .brain-role-label{font-size:15px !important;}
+  .brain-role-row.role-C .brain-role-label{font-size:15px !important;}
+  .brain-role-dot{width:17px !important;height:17px !important;flex-basis:17px !important;}
+  .brain-percent{width:58px !important;height:58px !important;}
+  .brain-percent input{width:auto !important;min-width:0 !important;font-size:17px !important;}
+  .brain-percent span{font-size:14px !important;}
+  .brain-role-numbers span{padding:0 3px !important;}
+  .brain-role-numbers b{font-size:17px !important;}
+  .brain-role-symbol{display:none !important;}
+}
+
+
+/* NAVIGAZIONE INFERIORE: ripristinata la gestione originale del repository Asta-Fantacalcio.
+   Nessun transform o inset alternativo: .bottom usa la definizione base position:fixed; left/right:0; bottom:0. */
+
+/* BLOCCO NAV INFERIORE — workaround rendering PWA iOS 26/WebKit.
+   La barra resta un layer compositato separato dal contenuto durante lo scroll. */
+.bottom{
+  position:fixed !important;
+  left:0 !important;
+  right:0 !important;
+  top:auto !important;
+  bottom:0 !important;
+  z-index:2147483647 !important;
+  transform:translate3d(0,0,0) !important;
+  -webkit-transform:translate3d(0,0,0) !important;
+  will-change:transform;
+  -webkit-backface-visibility:hidden;
+  backface-visibility:hidden;
+}
 
 </style>
 
+
+<style id="brain-3415">
+/* BRAIN 3.4.15 — R.M. in linea e gestione slot direttamente dalla rotella */
+.brain-role-title{gap:8px!important;}
+.brain-role-gear{
+  width:18px;height:18px;flex:0 0 18px;
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:0;margin:0;border:0;background:transparent;
+  color:var(--role-color);font-family:inherit;font-size:21px;line-height:1;font-weight:700;
+  cursor:pointer;-webkit-appearance:none;
+}
+.brain-role-gear:active{transform:scale(.9);}
+.brain-role-meta{
+  display:flex!important;flex-direction:row!important;align-items:baseline!important;
+  gap:7px!important;margin-top:5px!important;white-space:nowrap;
+}
+.brain-role-meta b{color:var(--ink);font-size:15px;line-height:1;}
+.brain-role-meta span{font-size:12px;line-height:1;font-weight:750;}
+.brain-role-dot{display:none!important;}
+.brain-slots-toggle{display:none!important;}
+.brain-slots{
+  grid-column:1 / -1!important;margin-top:8px;
+  padding:7px 10px 10px!important;border-top:1px solid rgba(80,90,100,.12);
+}
+@media(max-width:390px){
+  .brain-role-gear{width:17px;height:17px;flex-basis:17px;font-size:19px;}
+  .brain-role-meta{gap:6px!important;}
+  .brain-role-meta b{font-size:14px;}
+  .brain-role-meta span{font-size:11px;}
+}
+</style>
+
+<style id="brain-3416">
+/* BRAIN 3.4.16 — Slot essenziali: percentuale modificabile + budget automatico */
+.brain-role-meta span{
+  font-size:14px!important;
+  line-height:1.05!important;
+  font-weight:850!important;
+  letter-spacing:.01em;
+}
+.brain-slots{
+  padding:8px 10px 10px!important;
+}
+.brain-slot{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 92px 112px!important;
+  align-items:center!important;
+  gap:8px!important;
+  min-height:50px!important;
+  padding:5px 0!important;
+  border-bottom:0!important;
+}
+.brain-slot-name{
+  font-size:16px!important;
+  font-weight:800!important;
+  white-space:nowrap;
+}
+.brain-slot-percent{
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  padding:0 10px;
+  border:1px solid rgba(80,90,100,.22);
+  border-radius:12px;
+  background:rgba(255,255,255,.58);
+  box-sizing:border-box;
+  font-size:16px;
+  font-weight:850;
+}
+.brain-slot-percent input{
+  width:44px!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  text-align:right!important;
+  font:inherit!important;
+  font-weight:850!important;
+  outline:0!important;
+}
+.brain-slot-budget{
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 10px;
+  border:1px solid rgba(80,90,100,.18);
+  border-radius:12px;
+  background:rgba(255,255,255,.42);
+  box-sizing:border-box;
+  color:var(--ink);
+  font-size:16px;
+  font-weight:850;
+  white-space:nowrap;
+}
+.brain-slots-total{display:none!important;}
+@media(max-width:390px){
+  .brain-role-meta span{font-size:13px!important;}
+  .brain-slot{grid-template-columns:minmax(0,1fr) 82px 98px!important;gap:6px!important;}
+  .brain-slot-name{font-size:15px!important;}
+  .brain-slot-percent,.brain-slot-budget{height:40px;font-size:15px;padding:0 7px;}
+  .brain-slot-percent input{width:38px!important;}
+}
+</style>
+<style id="brain-3417">
+/* BRAIN 3.4.17 — Slot compatti con percentuale, budget, appetibilità e obiettivo */
+.brain-slots{
+  padding:8px 10px 10px!important;
+}
+.brain-slot{
+  display:grid!important;
+  grid-template-columns:24px 62px 68px 42px minmax(0,1fr)!important;
+  align-items:center!important;
+  gap:5px!important;
+  min-height:46px!important;
+  padding:5px 0!important;
+}
+.brain-slot-name{
+  font-size:17px!important;
+  font-weight:850!important;
+  text-align:center!important;
+}
+.brain-slot-percent,
+.brain-slot-budget,
+.brain-slot-priority,
+.brain-slot-player{
+  height:38px!important;
+  min-height:38px!important;
+  box-sizing:border-box!important;
+  border:1px solid rgba(80,90,100,.20)!important;
+  border-radius:10px!important;
+  background:rgba(255,255,255,.52)!important;
+  color:var(--ink)!important;
+  font-family:inherit!important;
+  font-size:15px!important;
+  font-weight:850!important;
+}
+.brain-slot-percent{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:1px!important;
+  padding:0 5px!important;
+}
+.brain-slot-percent input{
+  width:31px!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  text-align:right!important;
+  font:inherit!important;
+  font-weight:850!important;
+  outline:0!important;
+}
+.brain-slot-budget{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:0 4px!important;
+  white-space:nowrap!important;
+}
+.brain-slot-priority{
+  width:42px!important;
+  padding:0 3px!important;
+  text-align:center!important;
+  appearance:auto!important;
+}
+.brain-slot-player{
+  width:100%!important;
+  min-width:0!important;
+  padding:0 7px!important;
+  text-overflow:ellipsis!important;
+}
+@media(max-width:390px){
+  .brain-slot{
+    grid-template-columns:22px 58px 62px 38px minmax(0,1fr)!important;
+    gap:4px!important;
+  }
+  .brain-slot-name{font-size:16px!important;}
+  .brain-slot-percent,
+  .brain-slot-budget,
+  .brain-slot-priority,
+  .brain-slot-player{
+    height:36px!important;
+    min-height:36px!important;
+    font-size:14px!important;
+  }
+  .brain-slot-percent input{width:28px!important;}
+  .brain-slot-priority{width:38px!important;}
+  .brain-slot-player{padding:0 5px!important;}
+}
+</style>
+
+
+<style id="brain-3418">
+/* BRAIN 3.4.18 — slot più compatti e scelta giocatore con elenco leggibile */
+.brain-slots{
+  padding:7px 8px 10px!important;
+}
+.brain-slot{
+  grid-template-columns:20px 58px 58px 38px minmax(0,1fr)!important;
+  gap:4px!important;
+  min-height:44px!important;
+  padding:4px 0!important;
+}
+.brain-slot-name{
+  font-size:16px!important;
+  text-align:left!important;
+}
+.brain-slot-percent,
+.brain-slot-budget,
+.brain-slot-priority,
+.brain-slot-player{
+  height:36px!important;
+  min-height:36px!important;
+  font-size:14px!important;
+}
+.brain-slot-percent{padding:0 4px!important;}
+.brain-slot-percent input{width:28px!important;}
+.brain-slot-budget{padding:0 3px!important;}
+.brain-slot-priority{width:38px!important;padding:0!important;}
+.brain-slot-player{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  padding:0 8px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  text-align:left!important;
+  cursor:pointer!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+}
+.brain-slot-player.has-player{font-weight:850!important;}
+
+.brain-player-picker{padding:4px 0 12px;}
+.brain-picker-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:2px 4px 14px;border-bottom:1px solid rgba(80,90,100,.12);
+}
+.brain-picker-head .h2{margin:0!important;}
+.brain-picker-head .sub{margin-top:3px;}
+.brain-picker-close{
+  width:40px;height:40px;border:0;border-radius:12px;
+  background:rgba(80,90,100,.10);color:var(--ink);
+  font:inherit;font-size:28px;line-height:1;cursor:pointer;
+}
+.brain-player-list{padding-top:8px;}
+.brain-player-option{
+  width:100%;min-height:54px;border:0;border-bottom:1px solid rgba(80,90,100,.10);
+  background:transparent;color:var(--ink);font-family:inherit;
+  display:grid;grid-template-columns:minmax(0,1fr) auto 24px;
+  align-items:center;gap:10px;padding:9px 8px;text-align:left;cursor:pointer;
+}
+.brain-player-option-name,
+.brain-player-option>span:first-child{font-size:18px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.brain-player-option-team{font-size:14px;color:var(--muted);font-weight:700;}
+.brain-player-option b{font-size:18px;color:#14745f;text-align:center;}
+.brain-player-option.selected{background:rgba(20,116,95,.08);border-radius:10px;}
+.brain-player-empty{padding:18px 8px;color:var(--muted);font-weight:700;text-align:center;}
+
+@media(max-width:390px){
+  .brain-slots{padding-left:7px!important;padding-right:7px!important;}
+  .brain-slot{grid-template-columns:18px 54px 54px 36px minmax(0,1fr)!important;gap:3px!important;}
+  .brain-slot-name{font-size:15px!important;}
+  .brain-slot-percent,.brain-slot-budget,.brain-slot-priority,.brain-slot-player{height:35px!important;min-height:35px!important;font-size:13px!important;}
+  .brain-slot-percent input{width:25px!important;}
+  .brain-slot-priority{width:36px!important;}
+  .brain-slot-player{padding:0 6px!important;}
+}
+</style>
+
+
 </head>
+
+
 <body>
 
-<!-- PATCH 3.4.57: questo file viene sostituito in modo completo dal contenuto
-     corrente dell'index precedente, con la sola rimozione del vecchio loader
-     bacchetta.js e della vecchia refreshApp inline. -->
+<div class="app">
+
+
+<header class="header">
+
+  <div class="head">
+
+    <div>
+
+      <div class="title">
+        <span>Asta Fantacalcio</span>
+        <span class="app-version">V. 3.4.30</span>
+      </div>
+
+      <div class="sub" id="sub">
+        Nessuna asta aperta
+      </div>
+
+    </div>
+
+    <button
+      id="refreshAppBtn"
+      class="refresh-app-btn"
+      type="button"
+      onclick="refreshApp()"
+      aria-label="Aggiorna l'app"
+      title="Aggiorna l'app">
+      ↻
+    </button>
+
+  </div>
+
+</header>
+
+
+
+<main>
+
+
+<!-- HOME -->
+
+<section id="home" class="screen active">
+
+  <div class="card">
+
+    <div
+      class="h2"
+      id="welcome">
+
+      Benvenuto
+
+    </div>
+
+    <div class="muted small">
+
+      Crea una nuova asta oppure continua un'asta salvata.
+
+    </div>
+
+
+    <div
+      class="grid2"
+      style="margin-top:14px">
+
+      <button
+        class="btn primary"
+        onclick="newAuction()">
+
+        ＋ Nuova asta
+
+      </button>
+
+
+      <button
+        class="btn secondary"
+        onclick="go('archive')">
+
+        📂 Archivio
+
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <div id="homeDash"></div>
+
+</section>
+
+
+
+<!-- =========================
+     ASTA
+========================= -->
+
+<section id="auction" class="screen">
+
+
+  <!-- RICERCA -->
+
+  <div class="card">
+
+    <div class="search">
+
+      <input
+        id="q"
+        autocomplete="off"
+        placeholder="Cerca giocatore o parte del nome…"
+        oninput="searchPlayers()">
+
+
+      <button
+        class="btn primary"
+        style="min-width:92px"
+        onclick="searchPlayers()">
+
+        Cerca
+
+      </button>
+
+    </div>
+
+
+    <!-- Suggerimenti ricerca -->
+
+    <div id="results"></div>
+
+  </div>
+
+
+
+  <!-- SQUADRE -->
+
+  <div class="card">
+
+    <div class="head">
+
+      <div
+        class="h2"
+        style="margin:0">
+
+        Squadre
+
+      </div>
+
+
+      <div class="auction-actions">
+
+        <button
+          class="btn secondary"
+          style="min-height:40px;padding:7px 11px"
+          onclick="openHistory()">
+
+          📜 Storico
+
+        </button>
+
+        <button
+          class="btn secondary"
+          style="min-height:40px;padding:7px 11px"
+          onclick="editAuctionSettings()">
+
+          ⚙️
+
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <div id="miniTeams"></div>
+
+  </div>
+
+
+
+</section>
+
+
+
+
+
+<!-- BRAIN -->
+<section id="brain" class="screen">
+  <div class="head">
+    <div>
+      <div class="h2" style="margin:0">🧠 Brain</div>
+      <div class="muted small">Il tuo piano per l'asta</div>
+    </div>
+    <button class="btn secondary" style="min-height:40px;padding:7px 11px" onclick="addBrainStrategy()">＋</button>
+  </div>
+  <div id="brainContent"></div>
+</section>
+
+<!-- SQUADRE DETTAGLIO -->
+
+<section id="teams" class="screen">
+
+  <div class="head">
+
+    <div class="h2">
+      👥 Squadre
+    </div>
+
+
+    <button
+      class="btn secondary"
+      style="min-height:40px"
+      onclick="go('auction')">
+
+      ← Asta
+
+    </button>
+
+  </div>
+
+
+  <div id="teamsList"></div>
+
+</section>
+
+
+
+<!-- FORMAZIONE -->
+<section id="formation" class="screen">
+  <div class="head">
+    <div class="h2" id="formationTitle"><svg class="field-icon" viewBox="0 0 28 24" aria-hidden="true"><rect x="2" y="4" width="24" height="16" rx="1.4"/><path d="M14 4v16"/><circle cx="14" cy="12" r="2.7"/><path d="M2 7.5h4.5v9H2M26 7.5h-4.5v9H26"/></svg> Formazione</div>
+    <button class="btn secondary" style="min-height:40px" onclick="go('teams')">← Rose</button>
+  </div>
+  <div class="formation-controls">
+    <label for="formationModule">Modulo</label>
+    <select id="formationModule" onchange="setFormationModule(this.value)"></select>
+  </div>
+  <div id="pitch"></div>
+  <div class="formation-bench-card">
+    <div class="h2" style="margin:0 0 10px">🪑 Panchina</div>
+    <div id="formationBench"></div>
+  </div>
+</section>
+
+<!-- OBIETTIVI -->
+
+<section id="objectives" class="screen">
+
+  <div class="head">
+
+    <div class="h2">
+      🎯 Obiettivi
+    </div>
+
+
+    <button
+      class="btn secondary"
+      style="min-height:40px"
+      onclick="editObjectives()">
+
+      ✏️ Modifica
+
+    </button>
+
+  </div>
+
+
+
+  <div class="chips">
+
+    <button
+      class="chip role-P active"
+      onclick="setRole('P',this)">
+      P
+    </button>
+
+
+    <button
+      class="chip role-D"
+      onclick="setRole('D',this)">
+      D
+    </button>
+
+
+    <button
+      class="chip role-C"
+      onclick="setRole('C',this)">
+      C
+    </button>
+
+
+    <button
+      class="chip role-A"
+      onclick="setRole('A',this)">
+      A
+    </button>
+
+  </div>
+
+
+  <div class="objective-search-wrap" style="margin-top:12px">
+    <div class="searchbox">
+      <input id="objQ" type="search" placeholder="Cerca nei tuoi obiettivi..." autocomplete="off" oninput="renderObjectives()">
+    </div>
+  </div>
+
+  <div class="objective-tabs">
+
+    <button
+      class="objective-tab active"
+      data-obj-status="available"
+      onclick="setObjectiveStatus('available',this)">
+
+      Disponibili
+
+    </button>
+
+
+    <button
+      class="objective-tab unavailable"
+      data-obj-status="unavailable"
+      onclick="setObjectiveStatus('unavailable',this)">
+
+      Non disponibili
+
+    </button>
+
+  </div>
+
+
+  <div
+    class="card"
+    id="objList"
+    style="margin-top:12px">
+
+  </div>
+
+</section>
+
+
+
+<!-- FREE -->
+
+<section id="free" class="screen">
+
+  <div class="head">
+
+    <div class="h2">
+      <span style="color:var(--green)">♟</span> Free
+    </div>
+
+    <button class="btn" style="padding:8px 12px;white-space:nowrap" onclick="openAddPlayer()">
+      ➕ Aggiungi
+    </button>
+
+  </div>
+
+  <div class="meta" style="margin-top:-4px">
+    Calciatori ancora liberi
+  </div>
+
+  <div class="free-search-wrap" style="margin-top:14px">
+
+    <div class="searchbox">
+
+      <input
+        id="freeQ"
+        type="search"
+        placeholder="Cerca un calciatore libero..."
+        autocomplete="off"
+        oninput="searchFreePlayers()"
+        onfocus="searchFreePlayers()">
+
+    </div>
+
+    <div id="freeSuggestions" class="free-suggestions"></div>
+
+  </div>
+
+  <div class="chips free-chips" style="margin-top:12px">
+
+    <button class="chip active" onclick="setFreeRole('ALL',this)">
+      Tutti
+    </button>
+
+    <button class="chip role-P" onclick="setFreeRole('P',this)">
+      P
+    </button>
+
+    <button class="chip role-D" onclick="setFreeRole('D',this)">
+      D
+    </button>
+
+    <button class="chip role-C" onclick="setFreeRole('C',this)">
+      C
+    </button>
+
+    <button class="chip role-A" onclick="setFreeRole('A',this)">
+      A
+    </button>
+
+  </div>
+
+  <div class="card" style="margin-top:12px">
+
+    <div class="meta" style="margin-bottom:10px">
+      Ordinati per appetibilità, dal più alto al più basso
+    </div>
+
+    <div id="freeList"></div>
+
+  </div>
+
+</section>
+
+
+
+<!-- CAMPETTI -->
+<section id="campetti" class="screen">
+
+  <div class="campetti-title">
+    <div class="h2">⚽ Campetti</div>
+  </div>
+
+  <div class="meta" style="margin-top:-4px;margin-bottom:14px">
+    Seleziona una squadra per aprire la sua disposizione in campo.
+  </div>
+
+  <div id="campettiGrid" class="campetti-grid"></div>
+
+</section>
+
+<!-- ARCHIVIO -->
+
+<section id="archive" class="screen">
+
+  <div class="head">
+
+    <div class="h2">
+      📂 Archivio aste
+    </div>
+
+
+    <button
+      class="btn primary"
+      style="min-height:40px"
+      onclick="newAuction()">
+
+      ＋ Nuova
+
+    </button>
+
+  </div>
+
+
+  <div id="archiveList"></div>
+
+</section>
+
+
+</main>
+
+
+
+
+
+
+
+<!-- VISUALIZZATORE CAMPETTI -->
+<div id="campettiViewer" class="campetti-viewer" aria-hidden="true">
+  <div class="campetti-viewer-head">
+    <button class="campetti-close" type="button" onclick="closeCampetto()" aria-label="Chiudi">×</button>
+  </div>
+  <div id="campettiImageStage" class="campetti-image-stage">
+    <img id="campettiViewerImage" alt="">
+    <div id="campettiViewerEmpty" class="campetti-viewer-empty"></div>
+  </div>
+</div>
+
+</div>
+
+
+
+<!-- MENU -->
+
+<nav class="bottom">
+
+  <button class="nav active" data-s="home" onclick="go('home')">
+    <span class="navicon"><svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M10 21v-6h4v6"/></svg></span>
+    Home
+  </button>
+
+  <button class="nav" data-s="auction" onclick="go('auction')">
+    <span class="navicon"><svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 4.2 5.3 5.3"/><path d="m13 5.7 5.3 5.3"/><path d="m12.2 6.5 5.3 5.3"/><path d="m7.2 11.5 5.3 5.3"/><path d="m4.2 14.5 5.3 5.3"/><path d="m3.2 20.8 6.2-1.6-4.6-4.6z"/><path d="m10.5 10.5 2.3 2.3"/></svg></span>
+    Asta
+  </button>
+
+  <button class="nav" data-s="objectives" onclick="go('objectives')">
+    <span class="navicon"><svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></span>
+    Obiettivi
+  </button>
+
+  <button class="nav" data-s="free" onclick="go('free')" aria-label="Free">
+    <span class="navicon"><svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><path d="M12 12 19.5 6.2"/><path d="M16.5 5.5h3v3"/></svg></span>
+    Free
+  </button>
+
+  <button class="nav" data-s="brain" onclick="go('brain')" aria-label="Brain">
+    <span class="navicon">🧠</span>
+    Brain
+  </button>
+
+  <button class="nav" data-s="campetti" onclick="go('campetti')">
+    <span class="navicon"><svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="2.5" width="18" height="19" rx="1.5"/><path d="M12 2.5v19"/><circle cx="12" cy="12" r="2.7"/><path d="M3 7h3.5v10H3M21 7h-3.5v10H21"/></svg></span>
+    Campetti
+  </button>
+
+</nav>
+
+
+<!-- FINESTRA MODALE -->
+
+<div
+  class="modal"
+  id="modal">
+
+  <div class="sheet">
+
+    <div class="handle"></div>
+
+    <div id="sheet"></div>
+
+  </div>
+
+</div>
+
+
+
+<script src="players.js"></script>
+
+<script src="app.js"></script>
+<script src="campetti.js"></script>
+<script src="./bacchetta.js?v=3.4.30" data-bacchetta></script>
+
+
+
+
+<script>
+/* Prova a bloccare l'orientamento dove la PWA/browser lo consente.
+   Su iPhone Safari/iOS può essere ignorato dal sistema operativo. */
+(function(){
+  function lockPortrait(){
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock("portrait").catch(function(){});
+    }
+  }
+  window.addEventListener("load", lockPortrait);
+  document.addEventListener("visibilitychange", function(){
+    if (!document.hidden) lockPortrait();
+  });
+})();
+
+
+/* Aggiornamento manuale dell'app/PWA */
+function refreshApp(){
+  const btn=document.getElementById('refreshAppBtn');
+  if(btn) btn.classList.add('loading');
+  try{
+    if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
+      navigator.serviceWorker.getRegistrations().then(regs=>Promise.all(regs.map(r=>r.update()))).finally(()=>location.reload());
+    }else{
+      location.reload();
+    }
+  }catch(e){
+    location.reload();
+  }
+}
+</script>
 
 </body>
+
 </html>
