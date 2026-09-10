@@ -25,7 +25,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 (function loadUIFixes(){
   if(document.querySelector('script[data-ui-fixes]'))return;
   const script=document.createElement('script');
-  script.src='./ui-fixes.js?v=3.4.39';
+  script.src='./ui-fixes.js?v=3.4.40';
   script.dataset.uiFixes='1';
   script.async=false;
   document.body.appendChild(script);
@@ -43,6 +43,6 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
     if(done)s.onload=done;
   }
   add('./historical-data.js?v=1.0.0','data-historical',function(){
-    add('./historical-analysis.js?v=1.0.0','engine-historical');
+    add('./historical-analysis.js?v=1.1.0','engine-historical');
   });
 })();
