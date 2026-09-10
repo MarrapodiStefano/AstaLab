@@ -32,7 +32,12 @@ function install(){
   const wrapped=function(){
     const ctx=sync();
     try{return original.apply(this,arguments)}
-    finally if(ctx)setTimeout(function(){current.history=ctx.base;if(ctx.originalPersist)persist=ctx.originalPersist},2000);
+    finally{
+      if(ctx)setTimeout(function(){
+        current.history=ctx.base;
+        if(ctx.originalPersist)persist=ctx.originalPersist;
+      },2000);
+    }
   };
   wrapped.__marketSync=true;
   wrapped.__marketSyncVersion=VERSION;
