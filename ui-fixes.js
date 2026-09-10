@@ -1,7 +1,7 @@
-/* UI fixes 3.4.40 — versione interfaccia */
+/* UI fixes 3.4.41 — versione interfaccia */
 (function(){
   'use strict';
-  const VERSION='3.4.40';
+  const VERSION='3.4.41';
   let longPressTimer=null;
   let longPressFired=false;
   let pressTarget=null;
