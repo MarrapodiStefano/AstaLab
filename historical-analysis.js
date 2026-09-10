@@ -1,109 +1,109 @@
-/* Analisi storica Centrale Asta — dati 2023/24, 2024/25, 2025/26 */
+/* Analisi 2025/26 Centrale Asta — sorgente unica Fantacalcio */
 (function(){
   'use strict';
 
-  const WEIGHTS={
-    '2023-2024':0.20,
-    '2024-2025':0.30,
-    '2025-2026':0.50
-  };
-
+  const SEASON='2025-2026';
   const ROLE_LABEL={P:'Portieri',D:'Difensori',C:'Centrocampisti',A:'Attaccanti'};
 
   function normName(v){
     return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
   }
 
-  function seasonRows(season){
-    return Array.isArray(window.HISTORICAL_DATA?.seasons?.[season])
-      ? window.HISTORICAL_DATA.seasons[season]
+  function seasonRows(){
+    return Array.isArray(window.HISTORICAL_DATA?.seasons?.[SEASON])
+      ? window.HISTORICAL_DATA.seasons[SEASON]
       : [];
   }
 
-  function indexSeason(season){
-    const m=new Map();
-    seasonRows(season).forEach(p=>{
-      const key=normName(p.name)+'|'+String(p.role||'');
-      if(!m.has(key))m.set(key,p);
-    });
-    return m;
-  }
+  const rows=seasonRows();
+  const byId=new Map();
+  const byNameRole=new Map();
+  const byName=new Map();
+  const norms={P:{g:0,a:0,fm:0},D:{g:0,a:0,fm:0},C:{g:0,a:0,fm:0},A:{g:0,a:0,fm:0}};
 
-  const indexes={};
-  Object.keys(WEIGHTS).forEach(s=>indexes[s]=indexSeason(s));
+  rows.forEach(p=>{
+    if(p?.id!=null)byId.set(String(p.id),p);
+    const n=normName(p?.name),r=String(p?.role||'').toUpperCase();
+    if(n&&r&&!byNameRole.has(n+'|'+r))byNameRole.set(n+'|'+r,p);
+    if(n&&!byName.has(n))byName.set(n,p);
+    if(!norms[r])return;
+    const pv=Number(p.pv)||0;
+    const g=pv>0?(Number(p.gf)||0)/pv:0;
+    const a=pv>0?(Number(p.ass)||0)/pv:0;
+    const fm=p.fm==null?0:Number(p.fm);
+    norms[r].g=Math.max(norms[r].g,g);
+    norms[r].a=Math.max(norms[r].a,a);
+    norms[r].fm=Math.max(norms[r].fm,fm);
+  });
 
-  function findSeasonPlayer(player,season){
+  function findSeasonPlayer(player){
+    const id=player?.id;
+    if(id!=null){const exact=byId.get(String(id));if(exact)return exact;}
     const role=String(player?.role||'').toUpperCase();
     const name=normName(player?.name);
     if(!name)return null;
-    const exact=indexes[season]?.get(name+'|'+role);
-    if(exact)return exact;
-    /* fallback prudente: nome contenuto solo se il ruolo coincide */
-    const rows=seasonRows(season);
-    return rows.find(p=>String(p.role||'').toUpperCase()===role && (normName(p.name).includes(name)||name.includes(normName(p.name))))||null;
+    const exactRole=byNameRole.get(name+'|'+role);
+    if(exactRole)return exactRole;
+    /* Fallback per nome: copre anche i cambi ruolo già verificati. */
+    return byName.get(name)||null;
   }
 
-  function production(row,field){
+  function rate(row,field){
     const pv=Number(row?.pv)||0;
-    const value=Number(row?.[field])||0;
-    return pv>0?value/pv:0;
+    return pv>0?(Number(row?.[field])||0)/pv:0;
+  }
+
+  function score10(value,max){
+    if(!(max>0)||!(value>0))return 0;
+    return Math.max(0,Math.min(10,(value/max)*10));
   }
 
   function playerHistory(player){
-    const out={name:player?.name||'',role:player?.role||'',seasons:{}};
-    Object.keys(WEIGHTS).forEach(season=>{
-      const p=findSeasonPlayer(player,season);
-      out.seasons[season]=p?{
-        pv:Number(p.pv)||0,
-        mv:p.mv==null?null:Number(p.mv),
-        fm:p.fm==null?null:Number(p.fm),
-        gf:Number(p.gf)||0,
-        ass:Number(p.ass)||0,
-        gs:p.gs==null?null:Number(p.gs),
-        rp:p.rp==null?null:Number(p.rp),
-        rc:p.rc==null?null:Number(p.rc),
-        rg:p.rg==null?null:Number(p.rg),
-        rs:p.rs==null?null:Number(p.rs),
-        amm:p.amm==null?null:Number(p.amm),
-        esp:p.esp==null?null:Number(p.esp),
-        au:p.au==null?null:Number(p.au),
-        goalRate:production(p,'gf'),
-        assistRate:production(p,'ass')
-      }:null;
-    });
-    return out;
-  }
+    const p=findSeasonPlayer(player);
+    if(!p)return {
+      found:false,season:SEASON,name:player?.name||'',role:player?.role||'',
+      pv:0,mv:null,fm:null,gf:0,gs:null,ass:0,amm:null,esp:null,au:null,
+      goalRate:0,assistRate:0,goalScore:0,assistScore:0,formScore:0
+    };
 
-  function weightedProduction(history,field){
-    let score=0,weight=0;
-    Object.entries(WEIGHTS).forEach(([season,w])=>{
-      const row=history.seasons[season];
-      if(!row || !(Number(row.pv)>0))return;
-      const key=field==='gf'?'goalRate':'assistRate';
-      score+=Number(row[key]||0)*w;
-      weight+=w;
-    });
-    return weight?score/weight:0;
-  }
-
-  /* API pubblica: la fase attuale conserva MV/FM ma il punteggio storico
-     Gol/Assist usa produzione per presenza e i pesi 20/30/50 già stabiliti. */
-  function profile(player){
-    const h=playerHistory(player);
+    const role=String(player?.role||p?.role||'').toUpperCase();
+    const pv=Number(p.pv)||0;
+    const goalRate=rate(p,'gf');
+    const assistRate=rate(p,'ass');
+    const fm=p.fm==null?null:Number(p.fm);
+    const rnorm=norms[role]||norms[String(p.role||'').toUpperCase()]||{g:0,a:0,fm:0};
     return {
-      ...h,
-      goalsPerAppearance:weightedProduction(h,'gf'),
-      assistsPerAppearance:weightedProduction(h,'ass')
+      found:true,season:SEASON,name:p.name||player?.name||'',role:player?.role||p.role||'',
+      pv,mv:p.mv==null?null:Number(p.mv),fm,gf:Number(p.gf)||0,gs:p.gs==null?null:Number(p.gs),
+      ass:Number(p.ass)||0,amm:p.amm==null?null:Number(p.amm),esp:p.esp==null?null:Number(p.esp),
+      au:p.au==null?null:Number(p.au),
+      goalRate,assistRate,
+      goalScore:score10(goalRate,rnorm.g),
+      assistScore:score10(assistRate,rnorm.a),
+      formScore:score10(fm,rnorm.fm)
     };
   }
 
+  function profile(player){
+    const h=playerHistory(player);
+    let historicalScore=0;
+    const r=String(player?.role||h.role||'').toUpperCase();
+    if(h.found && h.pv>0){
+      if(r==='D')historicalScore=h.goalScore*.65+h.assistScore*.35;
+      else if(r==='C')historicalScore=h.goalScore*.55+h.assistScore*.45;
+      else if(r==='A')historicalScore=h.goalScore*.75+h.assistScore*.25;
+      else historicalScore=h.formScore;
+    }
+    return {...h,goalsPerAppearance:h.goalRate,assistsPerAppearance:h.assistRate,historicalScore};
+  }
+
   window.ASTA_HISTORICAL={
-    WEIGHTS,
+    SEASON,
     ROLE_LABEL,
     normalizeName:normName,
     playerHistory,
     profile,
-    seasonRows,
-    available:()=>!!window.HISTORICAL_DATA
+    seasonRows:()=>seasonRows(),
+    available:()=>rows.length>0
   };
 })();
