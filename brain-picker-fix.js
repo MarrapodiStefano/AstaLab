@@ -1,7 +1,7 @@
-/* Brain player picker fix v3.4.54 */
+/* Brain player picker fix v3.4.55 */
 (function(){
 'use strict';
-const VERSION='3.4.54';
+const VERSION='3.4.55';
 function sameId(a,b){return String(a)===String(b)}
 function isObjective(id){const list=current?.objectives;if(!Array.isArray(list))return false;return list.some(x=>sameId(x,id))}
 function priorityOf(id){const map=current?.objectivePriorities||{};return map[id]||map[String(id)]||map[Number(id)]||'low'}
@@ -13,8 +13,8 @@ function addStyles(){if(document.getElementById('brainPickerFixStyle'))return;co
 @media(max-width:380px){.brain-slot{gap:3px!important}.brain-slot-name{flex-basis:22px!important;width:22px!important;min-width:22px!important}.brain-slot-percent{flex-basis:50px!important;width:50px!important;min-width:50px!important}.brain-slot-budget{flex-basis:48px!important;width:48px!important;min-width:48px!important}.brain-slot-priority{flex-basis:32px!important;width:32px!important;min-width:32px!important;height:38px!important;min-height:38px!important}.brain-slot-player{height:38px!important;min-height:38px!important;padding:0 6px!important;font-size:14px!important}.brain-slot-sheet-btn{width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;flex-basis:32px!important;font-size:15px!important}}`;
 document.head.appendChild(style)}
 function install(){if(typeof allPlayers!=='function')return false;window.brainSlotPlayers=fixedBrainSlotPlayers;addStyles();addSheetButtons();setVersion();return true}
-function setVersion(){const v=document.querySelector('.app-version');if(v)v.textContent='V. '+VERSION}
-function wrapRender(){if(typeof window.renderBrain!=='function'||window.renderBrain.__brainPickerFixWrapped54)return;const original=window.renderBrain;window.renderBrain=function(){const result=original.apply(this,arguments);setTimeout(()=>{addSheetButtons();setVersion()},0);return result};window.renderBrain.__brainPickerFixWrapped54=true}
+function setVersion(){document.querySelectorAll('.app-version').forEach(v=>v.textContent='V. '+VERSION)}
+function wrapRender(){if(typeof window.renderBrain!=='function'||window.renderBrain.__brainPickerFixWrapped55)return;const original=window.renderBrain;window.renderBrain=function(){const result=original.apply(this,arguments);setTimeout(()=>{addSheetButtons();setVersion()},0);return result};window.renderBrain.__brainPickerFixWrapped55=true}
 function boot(){install();wrapRender();let tries=0;const timer=setInterval(()=>{tries++;install();wrapRender();if(tries>=40)clearInterval(timer)},100)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
