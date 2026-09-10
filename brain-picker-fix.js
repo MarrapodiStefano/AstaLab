@@ -1,9 +1,9 @@
-/* Brain player picker fix v3.4.48
-   Mostra tutti gli obiettivi della stessa appetibilità e ottimizza la riga degli slot Brain.
+/* Brain player picker fix v3.4.49
+   Mostra tutti gli obiettivi della stessa appetibilità e mantiene invariata la riga degli slot Brain.
 */
 (function(){
 'use strict';
-const VERSION='3.4.48';
+const VERSION='3.4.49';
 function sameId(a,b){return String(a)===String(b)}
 function isObjective(id){const list=current?.objectives;if(!Array.isArray(list))return false;return list.some(x=>sameId(x,id))}
 function priorityOf(id){const map=current?.objectivePriorities||{};return map[id]||map[String(id)]||map[Number(id)]||'low'}
