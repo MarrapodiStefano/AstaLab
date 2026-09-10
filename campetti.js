@@ -45,7 +45,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
   add('./historical-data.js?v=1.0.0','data-historical',function(){
     add('./historical-analysis.js?v=1.1.0','engine-historical',function(){
       add('./market-sync.js?v=3.4.44','market-sync',function(){
-        add('./brain-picker-fix.js?v=3.4.45','brain-picker-fix');
+        add('./brain-picker-fix.js?v=3.4.47','brain-picker-fix');
       });
     });
   });
