@@ -16,6 +16,7 @@ function activeStrategy(){return typeof activeBrainStrategy==='function'?activeB
 function roleLimits(){const s=activeStrategy();return s&&typeof brainStrategySlots==='function'?brainStrategySlots(s):{P:2,D:9,C:9,A:7}}
 function hasObjective(id){const list=current?.objectives;if(!Array.isArray(list))return false;return list.some(x=>String(x)===String(id))}
 function priorityOf(p){try{return typeof objectivePriority==='function'?objectivePriority(p.id):'low'}catch(e){return 'low'}}
+function soldIds(){const sold=new Set();(current?.teams||[]).forEach(t=>(t.players||[]).forEach(p=>sold.add(String(p.id))));return sold}
 function targetsFor(s,r){return typeof brainSlotTargets==='function'?brainSlotTargets(s,r):(s.slotTargets?.[r]||[])}
 function refPrice(p){const pmv=Number(p?.pmv);if(Number.isFinite(pmv)&&pmv>0)return pmv;const c=Number(p?.credits);return Number.isFinite(c)&&c>0?c:1}
 function maxBid(p){const c=Number(p?.credits);return Number.isFinite(c)&&c>0?Math.round(c):1}
