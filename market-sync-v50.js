@@ -72,15 +72,14 @@ function applyPlan(s,plan){
   if(typeof renderBrain==='function')renderBrain();
 }
 function syncMarket(){if(!current||!Array.isArray(current.teams))return null;const base=Array.isArray(current.history)?current.history:[],existing=new Set(base.map(h=>String(h?.playerId??'')+'|'+String(h?.price??''))),extra=[];current.teams.forEach(t=>(t.players||[]).forEach(p=>{const price=Number(p?.price);if(!(price>0)||p?.id==null)return;const key=String(p.id)+'|'+String(price);if(existing.has(key))return;extra.push({playerId:p.id,price,role:p.role,team:t.name,teamId:t.id,source:'team-sync'});}));current.history=base.concat(extra);return{base,extra};}
-function assignedCost(s,r){const st=roleState(s,r),sold=new Set((st.bought||[]).map(p=>String(p.id)));let sum=0;for(const t of st.targets||[]){if(t?.playerId==null)continue;const p=all().find(x=>String(x.id)===String(t.playerId));if(!p)continue;if(sold.has(String(p.id))){const b=st.bought.find(x=>String(x.id)===String(p.id));sum+=Math.max(1,Number(b?.price)||0);}else sum+=maxBid(p);}return sum;}
+function assignedCost(s,r){const st=roleState(s,r),bought=new Set((st.bought||[]).map(p=>String(p.id)));let sum=0;for(const t of st.targets||[]){if(t?.playerId==null)continue;const p=all().find(x=>String(x.id)===String(t.playerId));if(!p||bought.has(String(p.id)))continue;sum+=maxBid(p);}return sum;}
 function syncTargetAllocations(s){
   if(!s)return;
   ['P','D','C','A'].forEach(r=>{
-    const st=roleState(s,r);
-    const defs=[];
+    const st=roleState(s,r),defs=[];
     for(let i=st.bought.length;i<st.total;i++)defs.push({index:i,priority:st.targets[i]?.priority||'base'});
     const reserved=assignedCost(s,r);
-    /* HARD RULE: the sum of all reserved max bids can never exceed the role budget. */
+    /* HARD RULE: remaining reserved max bids can never exceed the role budget remaining after actual purchases. */
     if(reserved>st.budget){
       const solved=solveRole(r,defs,st.budget);
       if(solved.ok){
@@ -89,9 +88,7 @@ function syncTargetAllocations(s){
         solved.chosen.forEach(c=>{next[c.slot.index]={priority:c.slot.priority,playerId:c.p.id};});
         s.slotTargets[r]=next;
       }else{
-        /* Se una combinazione preesistente è impossibile, non lasciamo mai un piano sopra budget: svuotiamo gli slot non acquistati dal meno prioritario in su finché il totale rientra. */
-        const next=(st.targets||[]).map(t=>({...t}));
-        const rows=[];
+        const next=(st.targets||[]).map(t=>({...t})),rows=[];
         for(let i=st.bought.length;i<st.total;i++){const t=next[i];if(t?.playerId==null)continue;const p=all().find(x=>String(x.id)===String(t.playerId));if(p)rows.push({i,p,cost:maxBid(p),rank:PRIORITY_RANK[t.priority]||1});}
         rows.sort((a,b)=>a.rank-b.rank||b.cost-a.cost);
         let total=reserved;
