@@ -1,11 +1,14 @@
-/* Bacchetta Magica v5 — scelta slot con dati Fantacalcio 2025/26 */
+/* Bacchetta Magica v6 — ottimizzazione globale degli slot */
 (function(){
   'use strict';
 
-  const VERSION='3.4.40';
+  const VERSION='3.4.41';
   const ROLE_WEIGHT={P:1,D:1,C:1.05,A:1.1};
   const PRIORITY_VALUE={max:1,high:.9,base:.78,low:.62,bet:.52};
   const HIST_WEIGHT={P:.35,D:.40,C:.40,A:.40};
+  const BEAM_WIDTH=48;
+  const CANDIDATE_LIMIT=24;
+  const CHEAP_LIMIT=6;
 
   function all(){return typeof allPlayers==='function'?allPlayers():[];}
   function limits(){return typeof roleLimits==='function'?roleLimits():{P:2,D:9,C:9,A:7};}
@@ -16,7 +19,7 @@
   function slotPct(s,r){return typeof brainStrategySlotAllocation==='function'?brainStrategySlotAllocation(s,r):Array.from({length:strategySlots(s)[r]||0},()=>100/(strategySlots(s)[r]||1));}
   function targetFor(s,r,i){const raw=s?.slotTargets?.[r];const t=Array.isArray(raw)&&raw[i]?raw[i]:null;return t?{priority:t.priority||'base',playerId:t.playerId??null}:{priority:'base',playerId:null};}
 
-  let playersCache=null,priceCache=new Map();
+  let playersCache=null,priceCache=new Map(),profileCache=new Map(),poolCache=new Map();
   function players(){return playersCache||(playersCache=all());}
   function refPrice(p){const x=Number(p?.pmv);if(Number.isFinite(x)&&x>0)return x;const y=Number(p?.credits);return Number.isFinite(y)&&y>0?y:Math.max(1,Number(p?.price)||1);}
 
@@ -38,12 +41,22 @@
   function priceEstimate(p){const key=String(p.id);if(priceCache.has(key))return priceCache.get(key);const ms=marketStats(p.role,Number(p.appeal)||0);const v=Math.max(1,Math.round(refPrice(p)*ms.mult));priceCache.set(key,v);return v;}
 
   function historicalProfile(p){
-    if(typeof window.ASTA_HISTORICAL?.profile!=='function')return null;
-    try{return window.ASTA_HISTORICAL.profile(p);}catch(e){return null;}
+    const key=String(p?.id);
+    if(profileCache.has(key))return profileCache.get(key);
+    let h=null;
+    if(typeof window.ASTA_HISTORICAL?.profile==='function'){try{h=window.ASTA_HISTORICAL.profile(p);}catch(e){h=null;}}
+    profileCache.set(key,h);
+    return h;
   }
 
-  /* Punteggio qualitativo: l'appeal/Listone resta la base, mentre il dato
-     Fantacalcio 2025/26 corregge la scelta quando esiste una stagione utile. */
+  function teamContext(p){
+    const team=String(p.team||'');
+    const comp=(team==='Como'||team==='Inter'||team==='Napoli'||team==='Roma')?'Champions':(team==='Milan'||team==='Juventus')?'Europa League':team==='Atalanta'?'Conference':'';
+    const rotation=comp==='Champions'?.10:comp==='Europa League'?.07:comp==='Conference'?.035:0;
+    return {rotation,comp};
+  }
+  function targetPriorityBonus(p){const obj=typeof objectivePriority==='function'?objectivePriority(p.id):'base';return (PRIORITY_VALUE[obj]||PRIORITY_VALUE.base)*.55;}
+
   function playerScore(p,role){
     const appeal=Math.max(0,Math.min(10,Number(p.appeal)||0));
     const ctx=teamContext(p);
@@ -58,13 +71,6 @@
   }
 
   function sameTeamPenalty(p,chosen,role){const n=chosen.filter(x=>x.p.role===role&&String(x.p.team||'')===String(p.team||'')).length;return n?Math.min(.8,n*.32):0;}
-  function teamContext(p){
-    const team=String(p.team||'');
-    const comp=(team==='Como'||team==='Inter'||team==='Napoli'||team==='Roma')?'Champions':(team==='Milan'||team==='Juventus')?'Europa League':team==='Atalanta'?'Conference':'';
-    const rotation=comp==='Champions'?.10:comp==='Europa League'?.07:comp==='Conference'?.035:0;
-    return {rotation,comp};
-  }
-  function targetPriorityBonus(p){const obj=typeof objectivePriority==='function'?objectivePriority(p.id):'base';return (PRIORITY_VALUE[obj]||PRIORITY_VALUE.base)*.55;}
 
   function makeSlots(s){
     const t=myTeam(),counts={P:0,D:0,C:0,A:0};
@@ -82,9 +88,11 @@
     return slots;
   }
 
-  function candidateRows(s,slot,used){
+  function baseCandidates(s,slot){
+    const key=slot.r+'|'+slot.i+'|'+slot.priority;
+    if(poolCache.has(key))return poolCache.get(key);
     const sold=soldIds();
-    const rows=players().filter(p=>p.role===slot.r&&!sold.has(String(p.id))&&!used.has(String(p.id))).map(p=>{
+    const rows=players().filter(p=>p.role===slot.r&&!sold.has(String(p.id))).map(p=>{
       const est=priceEstimate(p),score=playerScore(p,slot.r),target=targetFor(s,slot.r,slot.i),hist=historicalProfile(p);
       const selected=target.playerId!=null&&String(target.playerId)===String(p.id)?1.18:1;
       const priority=PRIORITY_VALUE[target.priority]||PRIORITY_VALUE.base;
@@ -92,56 +100,98 @@
       return {p,est,score,priority,preferred:selected,historicalFound,historicalScore:Number(hist?.historicalScore)||0,utility:score*selected*(.75+.25*priority)};
     });
     rows.sort((a,b)=>b.utility-a.utility||b.historicalScore-a.historicalScore||a.est-b.est);
-    const cheap=[...rows].sort((a,b)=>a.est-b.est).slice(0,5);
-    const top=rows.slice(0,30);
+    const cheap=[...rows].sort((a,b)=>a.est-b.est).slice(0,CHEAP_LIMIT);
+    const top=rows.slice(0,CANDIDATE_LIMIT);
     const map=new Map();[...top,...cheap].forEach(x=>map.set(String(x.p.id),x));
-    return [...map.values()];
+    const out=[...map.values()];poolCache.set(key,out);return out;
   }
 
-  function cheapestFuture(slots,start,used){
+  function candidateRows(s,slot,used){return baseCandidates(s,slot).filter(x=>!used.has(String(x.p.id)));}
+
+  function futureLowerBound(ordered,start,used){
     let total=0;
-    for(let j=start;j<slots.length;j++){
-      const rows=candidateRows(null,slots[j],used);let best=Infinity;
-      for(const c of rows)if(c.est<best)best=c.est;
+    for(let j=start;j<ordered.length;j++){
+      const rows=baseCandidates(null,ordered[j]);
+      let best=Infinity;
+      for(const c of rows){if(used.has(String(c.p.id)))continue;if(c.est<best)best=c.est;}
       if(!Number.isFinite(best))return Infinity;
       total+=best;
     }
     return total;
   }
 
+  function fitValue(c,slot){
+    const over=Math.max(0,c.est-slot.budget),under=Math.max(0,slot.budget-c.est);
+    return Math.min(.45,under/Math.max(50,slot.budget)*.45)-Math.min(.65,over/Math.max(50,slot.budget)*.65);
+  }
+
+  /*
+    Ottimizzazione globale a beam search.
+    La Bacchetta costruisce più scenari contemporaneamente e li confronta
+    fino all'ultimo slot. In questo modo un acquisto costoso oggi può perdere
+    contro una combinazione leggermente meno forte ma molto più completa.
+  */
   function optimize(s){
     const budget=Math.max(0,(Number(current.initialCredits)||0)-(Number(myTeam()?.spent)||0));
     const slots=makeSlots(s);
     if(!slots.length)return {budget,slots,best:{chosen:[],spent:0,value:0,roleSpent:{P:0,D:0,C:0,A:0}},complete:true};
 
     const ordered=[...slots].sort((a,b)=>b.budget-a.budget||((PRIORITY_VALUE[b.priority]||0)-(PRIORITY_VALUE[a.priority]||0)));
-    const chosen=[],used=new Set();
-    let spent=0,value=0,roleSpent={P:0,D:0,C:0,A:0};
+    let beam=[{chosen:[],used:new Set(),spent:0,value:0,roleSpent:{P:0,D:0,C:0,A:0}}];
 
     for(let i=0;i<ordered.length;i++){
-      const slot=ordered[i],rows=candidateRows(s,slot,used),feasible=[];
-      for(const c of rows){
-        if(spent+c.est>budget)continue;
-        const nextUsed=new Set(used);nextUsed.add(String(c.p.id));
-        const future=cheapestFuture(ordered,i+1,nextUsed);
-        if(spent+c.est+future>budget)continue;
-        const penalty=sameTeamPenalty(c.p,chosen,slot.r);
-        const over=Math.max(0,c.est-slot.budget),under=Math.max(0,slot.budget-c.est);
-        const fit=Math.min(.45,under/Math.max(50,slot.budget)*.45)-Math.min(.65,over/Math.max(50,slot.budget)*.65);
-        feasible.push({...c,adjusted:c.utility+fit-penalty});
+      const slot=ordered[i],next=[];
+      for(const state of beam){
+        const rows=candidateRows(s,slot,state.used);
+        for(const c of rows){
+          const spent=state.spent+c.est;
+          if(spent>budget)continue;
+          const used=new Set(state.used);used.add(String(c.p.id));
+          const future=futureLowerBound(ordered,i+1,used);
+          if(spent+future>budget)continue;
+          const penalty=sameTeamPenalty(c.p,state.chosen,slot.r);
+          const gain=c.utility+fitValue(c,slot)-penalty;
+          const chosen=state.chosen.concat({...c,slot});
+          const roleSpent={...state.roleSpent,[slot.r]:state.roleSpent[slot.r]+c.est};
+          next.push({chosen,used,spent,value:state.value+gain,roleSpent});
+        }
       }
-      feasible.sort((a,b)=>b.adjusted-a.adjusted||b.historicalScore-a.historicalScore||a.est-b.est);
-      let c=feasible[0];
-      if(!c){
-        const fallback=rows.filter(x=>spent+x.est<=budget).sort((a,b)=>a.est-b.est||b.utility-a.utility)[0];
-        c=fallback;
+
+      if(!next.length){
+        /* Se il vincolo di completamento è impossibile, manteniamo gli
+           scenari più solidi senza inventare giocatori o budget. */
+        break;
       }
-      if(!c)continue;
-      const penalty=sameTeamPenalty(c.p,chosen,slot.r),over=Math.max(0,c.est-slot.budget),under=Math.max(0,slot.budget-c.est);
-      chosen.push({...c,slot});used.add(String(c.p.id));spent+=c.est;roleSpent[slot.r]+=c.est;
-      value+=c.utility+Math.min(.45,under/Math.max(50,slot.budget)*.45)-Math.min(.65,over/Math.max(50,slot.budget)*.65)-penalty;
+
+      next.sort((a,b)=>{
+        const sa=b.value-a.value;
+        if(sa)return sa;
+        const sb=a.spent-b.spent;
+        return sb;
+      });
+      beam=next.slice(0,BEAM_WIDTH);
     }
-    return {budget,slots,best:{chosen,spent,value,roleSpent},complete:chosen.length===slots.length};
+
+    let best=beam[0]||{chosen:[],spent:0,value:0,roleSpent:{P:0,D:0,C:0,A:0}};
+    const complete=best.chosen.length===slots.length;
+
+    if(!complete){
+      /* fallback sicuro: prova a completare partendo dallo scenario migliore
+         rimasto, privilegiando il giocatore meno costoso compatibile. */
+      const used=new Set(best.used||[]);
+      const chosen=best.chosen.slice();
+      let spent=best.spent||0,value=best.value||0,roleSpent={...(best.roleSpent||{P:0,D:0,C:0,A:0})};
+      for(let i=chosen.length;i<ordered.length;i++){
+        const slot=ordered[i],rows=candidateRows(s,slot,used).filter(c=>spent+c.est<=budget);
+        if(!rows.length)break;
+        rows.sort((a,b)=>(a.est-b.est)||((b.utility-fitValue(b,slot))-(a.utility-fitValue(a,slot))));
+        const c=rows[0],penalty=sameTeamPenalty(c,chosen,slot.r);
+        chosen.push({...c,slot});used.add(String(c.p.id));spent+=c.est;roleSpent[slot.r]+=c.est;value+=c.utility+fitValue(c,slot)-penalty;
+      }
+      best={chosen,spent,value,roleSpent};
+    }
+
+    return {budget,slots,best,complete:best.chosen.length===slots.length};
   }
 
   function applyToActiveStrategy(result){
@@ -174,7 +224,7 @@
     const btn=sourceButton||document.getElementById('magicWandFixed')||document.querySelector('.magic-wand-btn');
     if(!current){alert('Apri prima un’asta.');return;}
     if(btn?.disabled)return;
-    setBusy(btn,true);playersCache=null;priceCache=new Map();
+    setBusy(btn,true);playersCache=null;priceCache=new Map();profileCache=new Map();poolCache=new Map();
     requestAnimationFrame(()=>setTimeout(()=>{
       try{
         const s=activeStrategy();
@@ -183,6 +233,7 @@
         if(!result?.best?.chosen?.length){alert('Non ci sono giocatori disponibili per compilare gli slot rimasti.');return;}
         if(!applyToActiveStrategy(result))alert('Non è stato possibile scrivere la proposta negli slot della strategia attiva.');
         else if(!result.complete)console.warn('Bacchetta Magica: completamento parziale per limiti reali di giocatori/budget.',result);
+        else console.info('Bacchetta Magica: piano globale ottimizzato.',result);
       }catch(e){console.error('Bacchetta Magica',e);alert('Errore Bacchetta Magica: '+(e?.message||e));}
       finally{setBusy(btn,false);}
     },20));
@@ -218,7 +269,7 @@
   function start(){
     style();inject();
     const oldRender=window.renderBrain;
-    if(typeof oldRender==='function'&&!oldRender.__magicWandWrappedV5){
+    if(typeof oldRender==='function'&&!oldRender.__magicWandWrappedV6){
       window.renderBrain=function(){
         const original=window.brainSlotPlayers;
         if(typeof original==='function'){
@@ -238,7 +289,7 @@
         }
         try{return oldRender.apply(this,arguments);}finally{if(original)window.brainSlotPlayers=original;inject();}
       };
-      window.renderBrain.__magicWandWrappedV5=true;
+      window.renderBrain.__magicWandWrappedV6=true;
     }
   }
 
