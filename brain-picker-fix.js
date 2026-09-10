@@ -1,9 +1,9 @@
-/* Brain player picker fix v3.4.47
-   Mostra tutti gli obiettivi della stessa appetibilità e mantiene una riga compatta negli slot Brain.
+/* Brain player picker fix v3.4.48
+   Mostra tutti gli obiettivi della stessa appetibilità e ottimizza la riga degli slot Brain.
 */
 (function(){
 'use strict';
-const VERSION='3.4.47';
+const VERSION='3.4.48';
 function sameId(a,b){return String(a)===String(b)}
 function isObjective(id){const list=current?.objectives;if(!Array.isArray(list))return false;return list.some(x=>sameId(x,id))}
 function priorityOf(id){const map=current?.objectivePriorities||{};return map[id]||map[String(id)]||map[Number(id)]||'low'}
@@ -11,16 +11,18 @@ function soldIds(){const sold=new Set();(current?.teams||[]).forEach(t=>(t.playe
 function fixedBrainSlotPlayers(role,priority){const sold=soldIds();return allPlayers().filter(p=>p.role===role&&!sold.has(String(p.id))&&isObjective(p.id)&&priorityOf(p.id)===priority).sort((a,b)=>Number(b.appeal||0)-Number(a.appeal||0)||String(a.name||'').localeCompare(String(b.name||''),'it'))}
 function addSheetButtons(){const brain=document.getElementById('brain');if(!brain||typeof activeBrainStrategy!=='function')return;const strategy=activeBrainStrategy();if(!strategy)return;brain.querySelectorAll('.brain-slot').forEach(slot=>{const playerBtn=slot.querySelector('.brain-slot-player.has-player');if(!playerBtn||slot.querySelector('.brain-slot-sheet-btn'))return;const onclick=playerBtn.getAttribute('onclick')||'';const match=onclick.match(/openBrainSlotPlayerPicker\(\s*\d+\s*,\s*['\"]([PDCA])['\"]\s*,\s*(\d+)/);if(!match)return;const role=match[1],index=Number(match[2]),target=strategy.slotTargets?.[role]?.[index],playerId=target?.playerId??null;if(playerId==null)return;const player=allPlayers().find(p=>sameId(p.id,playerId));if(!player)return;const btn=document.createElement('button');btn.type='button';btn.className='brain-slot-sheet-btn';btn.textContent='ⓘ';btn.title='Apri scheda giocatore';btn.setAttribute('aria-label','Apri scheda di '+(player.name||'giocatore'));btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(typeof openPlayer==='function')openPlayer(player.id,'brain')});playerBtn.insertAdjacentElement('afterend',btn)})}
 function addStyles(){if(document.getElementById('brainPickerFixStyle'))return;const style=document.createElement('style');style.id='brainPickerFixStyle';style.textContent=`
-#brain .brain-slot{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:6px!important;min-width:0!important;}
-#brain .brain-slot-name{flex:0 0 28px!important;width:28px!important;min-width:28px!important;text-align:center!important;}
-#brain .brain-slot-percent{flex:0 0 58px!important;width:58px!important;min-width:58px!important;}
-#brain .brain-slot-budget{flex:0 0 58px!important;width:58px!important;min-width:58px!important;}
-#brain .brain-slot-priority{flex:0 0 40px!important;width:40px!important;min-width:40px!important;}
-#brain .brain-slot-player{flex:1 1 auto!important;width:auto!important;min-width:0!important;max-width:none!important;height:42px!important;min-height:42px!important;padding:0 9px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
-#brain .brain-slot-sheet-btn{box-sizing:border-box!important;width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;flex:0 0 34px!important;margin:0!important;padding:0!important;border:1px solid #dfe4e9!important;border-radius:10px!important;background:#fff!important;color:#68758a!important;font-size:17px!important;line-height:1!important;font-weight:700!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;cursor:pointer!important;-webkit-tap-highlight-color:transparent;}
-#brain .brain-slot-sheet-btn:active{transform:scale(.94)}
-#brain .brain-slot-sheet-btn:focus-visible{outline:2px solid currentColor;outline-offset:2px}
-@media(max-width:380px){#brain .brain-slot{gap:4px!important}#brain .brain-slot-name{flex-basis:24px!important;width:24px!important;min-width:24px!important}#brain .brain-slot-percent,#brain .brain-slot-budget{flex-basis:52px!important;width:52px!important;min-width:52px!important}#brain .brain-slot-priority{flex-basis:36px!important;width:36px!important;min-width:36px!important}#brain .brain-slot-player{padding:0 7px!important}#brain .brain-slot-sheet-btn{width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;flex-basis:32px!important;font-size:16px!important}}
+/* La riga occupa tutta la larghezza disponibile: niente spazio laterale inutile. */
+.brain-slots{padding-left:0!important;padding-right:0!important;margin-left:0!important;margin-right:0!important;}
+.brain-slot{box-sizing:border-box!important;display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:4px!important;width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important;}
+.brain-slot-name{box-sizing:border-box!important;flex:0 0 24px!important;width:24px!important;min-width:24px!important;padding:0!important;text-align:center!important;}
+.brain-slot-percent{box-sizing:border-box!important;flex:0 0 52px!important;width:52px!important;min-width:52px!important;padding:0!important;}
+.brain-slot-budget{box-sizing:border-box!important;flex:0 0 50px!important;width:50px!important;min-width:50px!important;padding:0!important;text-align:center!important;}
+.brain-slot-priority{box-sizing:border-box!important;flex:0 0 34px!important;width:34px!important;min-width:34px!important;height:40px!important;min-height:40px!important;padding:0!important;}
+.brain-slot-player{box-sizing:border-box!important;flex:1 1 auto!important;width:auto!important;min-width:0!important;max-width:none!important;height:40px!important;min-height:40px!important;padding:0 7px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:15px!important;font-weight:800!important;}
+.brain-slot-sheet-btn{box-sizing:border-box!important;width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;flex:0 0 34px!important;margin:0!important;padding:0!important;border:1px solid #dfe4e9!important;border-radius:9px!important;background:#fff!important;color:#68758a!important;font-size:16px!important;line-height:1!important;font-weight:700!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;cursor:pointer!important;-webkit-tap-highlight-color:transparent;}
+.brain-slot-sheet-btn:active{transform:scale(.94)}
+.brain-slot-sheet-btn:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+@media(max-width:380px){.brain-slot{gap:3px!important}.brain-slot-name{flex-basis:22px!important;width:22px!important;min-width:22px!important}.brain-slot-percent{flex-basis:50px!important;width:50px!important;min-width:50px!important}.brain-slot-budget{flex-basis:48px!important;width:48px!important;min-width:48px!important}.brain-slot-priority{flex-basis:32px!important;width:32px!important;min-width:32px!important;height:38px!important;min-height:38px!important}.brain-slot-player{height:38px!important;min-height:38px!important;padding:0 6px!important;font-size:14px!important}.brain-slot-sheet-btn{width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;flex-basis:32px!important;font-size:15px!important}}
 `;document.head.appendChild(style)}
 function install(){if(typeof allPlayers!=='function')return false;window.brainSlotPlayers=fixedBrainSlotPlayers;addStyles();addSheetButtons();const v=document.querySelector('.app-version');if(v)v.textContent=VERSION;return true}
 function wrapRender(){if(typeof window.renderBrain!=='function'||window.renderBrain.__brainPickerFixWrapped)return;const original=window.renderBrain;window.renderBrain=function(){const result=original.apply(this,arguments);setTimeout(addSheetButtons,0);return result};window.renderBrain.__brainPickerFixWrapped=true}
