@@ -3,9 +3,17 @@
 'use strict';
 const VERSION='3.4.56';
 function sameId(a,b){return String(a)===String(b)}
-function isObjective(id){const list=current?.objectives;if(!Array.isArray(list))return false;return list.some(x=>sameId(x,id))}
-function priorityOf(id){const map=current?.objectivePriorities||{};return map[id]||map[String(id)]||map[Number(id)]||'low'}
-function priorityGroup(priority){const rank={max:5,high:4,base:3,low:2,bet:1}[priority]||1;return rank>=4?'fire':rank>=2?'star':'dice'}
+function isObjective(id){const list=current?.objectives;if(!Array.isArray(list))return false;return list.some(x=>x&&typeof x==='object'?sameId(x.id??x.playerId,id):sameId(x,id))}
+function normalizePriority(value){
+  if(typeof value==='number'){if(value>=5)return'max';if(value===4)return'high';if(value===3)return'base';if(value===2)return'low';return'bet'}
+  const v=String(value??'').trim().toLowerCase();
+  if(v==='max'||v==='high'||v==='🔥'||v==='fire'||v==='top'||v==='elite')return v==='max'||v==='🔥'||v==='fire'||v==='top'||v==='elite'?'max':'high';
+  if(v==='base'||v==='low'||v==='⭐'||v==='star'||v==='medium')return v==='base'||v==='⭐'||v==='star'||v==='medium'?'base':'low';
+  if(v==='bet'||v==='🎲'||v==='dice'||v==='scommessa')return'bet';
+  return'low';
+}
+function priorityOf(id){try{const p=allPlayers().find(x=>sameId(x.id,id));if(typeof objectivePriority==='function'&&p)return normalizePriority(objectivePriority(p.id));const map=current?.objectivePriorities||{};return normalizePriority(map[id]??map[String(id)]??map[Number(id)]??'low')}catch(e){return'low'}}
+function priorityGroup(priority){const rank={max:5,high:4,base:3,low:2,bet:1}[normalizePriority(priority)]||1;return rank>=4?'fire':rank>=2?'star':'dice'}
 function soldIds(){const sold=new Set();(current?.teams||[]).forEach(t=>(t.players||[]).forEach(p=>sold.add(String(p.id))));return sold}
 function fixedBrainSlotPlayers(role,priority){const sold=soldIds(),group=priorityGroup(priority);return allPlayers().filter(p=>p.role===role&&!sold.has(String(p.id))&&isObjective(p.id)&&priorityGroup(priorityOf(p.id))===group).sort((a,b)=>Number(b.appeal||0)-Number(a.appeal||0)||String(a.name||'').localeCompare(String(b.name||''),'it'))}
 function addSheetButtons(){const brain=document.getElementById('brain');if(!brain||typeof activeBrainStrategy!=='function')return;const strategy=activeBrainStrategy();if(!strategy)return;brain.querySelectorAll('.brain-slot').forEach(slot=>{const playerBtn=slot.querySelector('.brain-slot-player.has-player');if(!playerBtn||slot.querySelector('.brain-slot-sheet-btn'))return;const onclick=playerBtn.getAttribute('onclick')||'';const match=onclick.match(/openBrainSlotPlayerPicker\(\s*\d+\s*,\s*['\"]([PDCA])['\"]\s*,\s*(\d+)/);if(!match)return;const role=match[1],index=Number(match[2]),target=strategy.slotTargets?.[role]?.[index],playerId=target?.playerId??null;if(playerId==null)return;const player=allPlayers().find(p=>sameId(p.id,playerId));if(!player)return;const btn=document.createElement('button');btn.type='button';btn.className='brain-slot-sheet-btn';btn.textContent='ⓘ';btn.title='Apri scheda giocatore';btn.setAttribute('aria-label','Apri scheda di '+(player.name||'giocatore'));btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(typeof openPlayer==='function')openPlayer(player.id,'brain')});playerBtn.insertAdjacentElement('afterend',btn)})}
