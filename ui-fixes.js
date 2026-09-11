@@ -1,7 +1,7 @@
-/* UI fixes 3.5.1 — funzioni di interfaccia indipendenti */
+/* UI fixes 3.5.2 — funzioni di interfaccia indipendenti */
 (function(){
   'use strict';
-  const VERSION='3.5.1';
+  const VERSION='3.5.2';
   let longPressTimer=null;
   let longPressFired=false;
   let pressTarget=null;
@@ -136,8 +136,25 @@
       if(document.documentElement.dataset.refreshing==='1')return;
       document.documentElement.dataset.refreshing='1';
       const btn=document.getElementById('refreshAppBtn');
-      if(btn){btn.disabled=true;btn.classList.add('loading');btn.setAttribute('aria-label','Aggiornamento in corso');}
-      window.location.reload();
+      if(btn){
+        btn.disabled=true;
+        btn.classList.add('loading');
+        btn.setAttribute('aria-label','Aggiornamento in corso');
+      }
+      const reload=function(){
+        window.setTimeout(function(){window.location.reload();},450);
+      };
+      try{
+        if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations){
+          navigator.serviceWorker.getRegistrations().then(function(regs){
+            return Promise.all(regs.map(function(r){return r.update().catch(function(){return null;});}));
+          }).then(reload).catch(reload);
+        }else{
+          reload();
+        }
+      }catch(e){
+        reload();
+      }
     };
   }
 
