@@ -58,12 +58,22 @@
       if(slot.dataset.infoReady==='1')return;
       const playerBtn=slot.querySelector('.brain-slot-player');
       if(!playerBtn)return;
+      if(!playerBtn.classList.contains('has-player'))return;
 
-      // Il selettore dello slot viene gestito tramite onchange, quindi
-      // non possiede un onclick da cui ricavare strategia/ruolo/indice.
-      // Il giocatore attualmente selezionato è direttamente il value del select.
-      const playerId=playerBtn.value;
-      if(!playerId)return;
+      // Lo slot Brain usa un pulsante con onclick="openBrainSlotPlayerPicker(...)".
+      // Ricaviamo ID strategia/ruolo/indice dal pulsante e l'ID del giocatore
+      // dal nome visualizzato, senza modificare il rendering originale di Brain.
+      const m=String(playerBtn.getAttribute('onclick')||'').match(/openBrainSlotPlayerPicker\((\d+),'([^']+)',(\d+)\)/);
+      if(!m)return;
+      const playerName=playerBtn.textContent.trim();
+      if(!playerName || playerName==='Scegli giocatore')return;
+
+      let playerId=null;
+      if(typeof window.allPlayers==='function'){
+        const p=window.allPlayers().find(x=>String(x.name||'').trim()===playerName);
+        if(p)playerId=p.id;
+      }
+      if(playerId==null)return;
 
       const wrap=document.createElement('div');
       wrap.className='brain-slot-player-wrap';
