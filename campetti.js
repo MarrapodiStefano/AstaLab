@@ -1,12 +1,6 @@
 /* =========================
    CAMPETTI – SERIE A 2026/27
 ========================= */
-
-/*
-  Stemmi reali della stessa Serie A 2026/27 mostrata nel mockup.
-  Usiamo PNG diretti e trasparenti, evitando le vecchie ricostruzioni
-  geometriche e i collegamenti Wikimedia che in PWA potevano non caricarsi.
-*/
 const CAMPI_SERIE_A = [
   ['atalanta','Atalanta','Atalanta BC.png'],['bologna','Bologna','Bologna FC 1909.png'],['cagliari','Cagliari','Cagliari Calcio.png'],['como','Como','Como 1907.png'],['fiorentina','Fiorentina','ACF Fiorentina.png'],['frosinone','Frosinone','Frosinone Calcio.png'],['genoa','Genoa','Genoa CFC.png'],['inter','Inter','Inter Milan.png'],['juventus','Juventus','Juventus FC.png'],['lazio','Lazio','SS Lazio.png'],['lecce','Lecce','US Lecce.png'],['milan','Milan','AC Milan.png'],['monza','Monza','AC Monza.png'],['napoli','Napoli','SSC Napoli.png'],['parma','Parma','Parma Calcio 1913.png'],['roma','Roma','AS Roma.png'],['sassuolo','Sassuolo','US Sassuolo.png'],['torino','Torino','Torino FC.png'],['udinese','Udinese','Udinese Calcio.png'],['venezia','Venezia','Venezia FC.png']
 ].map(([id,name,file])=>({id,name,crest:'https://raw.githubusercontent.com/luukhopman/football-logos/master/logos/Italy%20-%20Serie%20A/'+encodeURIComponent(file)}));
@@ -20,23 +14,6 @@ function campettiDistance(touches){const dx=touches[0].clientX-touches[1].client
 function initCampettiZoom(){const area=document.getElementById('campettiImageStage');if(!area||area.dataset.zoomReady)return;area.dataset.zoomReady='1';area.addEventListener('touchstart',e=>{if(e.touches.length===2){campettiPinching=true;campettiPanning=false;campettiStartDist=campettiDistance(e.touches);campettiStartScale=campettiScale;}else if(e.touches.length===1&&campettiScale>1){campettiPanning=true;campettiStartX=e.touches[0].clientX-campettiX;campettiStartY=e.touches[0].clientY-campettiY;}},{passive:false});area.addEventListener('touchmove',e=>{if(e.touches.length===2&&campettiPinching){e.preventDefault();const ratio=campettiDistance(e.touches)/campettiStartDist;campettiScale=Math.min(4,Math.max(1,campettiStartScale*ratio));campettiApplyTransform();}else if(e.touches.length===1&&campettiPanning){e.preventDefault();campettiX=e.touches[0].clientX-campettiStartX;campettiY=e.touches[0].clientY-campettiStartY;campettiApplyTransform();}},{passive:false});area.addEventListener('touchend',e=>{if(e.touches.length<2)campettiPinching=false;if(!e.touches.length)campettiPanning=false;if(campettiScale<=1.02)campettiResetZoom();});area.addEventListener('dblclick',()=>{if(campettiScale===1){campettiScale=2;}else{campettiResetZoom();return;}campettiApplyTransform();});}
 function campettiBoot(){renderCampetti();initCampettiZoom();}
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',campettiBoot,{once:true});}else{campettiBoot();}
-
-/* UI bootstrap */
-(function loadUIFixes(){
-  if(document.querySelector('script[data-ui-fixes]'))return;
-  const script=document.createElement('script');
-  script.src='./ui-fixes.js?v=3.5.9';
-  script.dataset.uiFixes='1';
-  script.async=false;
-  document.body.appendChild(script);
-})();
-
-/* Brain slot sync bootstrap */
-(function loadBrainSync(){
-  if(document.querySelector('script[data-brain-sync]'))return;
-  const script=document.createElement('script');
-  script.src='./brain-sync.js?v=1.2.0';
-  script.dataset.brainSync='1';
-  script.async=false;
-  document.body.appendChild(script);
-})();
+(function loadUIFixes(){if(document.querySelector('script[data-ui-fixes]'))return;const script=document.createElement('script');script.src='./ui-fixes.js?v=3.5.9';script.dataset.uiFixes='1';script.async=false;document.body.appendChild(script);})();
+(function loadBrainSync(){if(document.querySelector('script[data-brain-sync]'))return;const script=document.createElement('script');script.src='./brain-sync.js?v=1.2.0';script.dataset.brainSync='1';script.async=false;document.body.appendChild(script);})();
+(function loadBrainSizeFix(){if(document.querySelector('script[data-brain-size-fix]'))return;const script=document.createElement('script');script.src='./brain-size-fix.js?v=3.6.0';script.dataset.brainSizeFix='1';script.async=false;document.body.appendChild(script);})();
