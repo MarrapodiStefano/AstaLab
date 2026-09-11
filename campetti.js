@@ -30,3 +30,13 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
   script.async=false;
   document.body.appendChild(script);
 })();
+
+/* Brain slot sync bootstrap */
+(function loadBrainSync(){
+  if(document.querySelector('script[data-brain-sync]'))return;
+  const script=document.createElement('script');
+  script.src='./brain-sync.js?v=1.0.0';
+  script.dataset.brainSync='1';
+  script.async=false;
+  document.body.appendChild(script);
+})();
