@@ -25,7 +25,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 (function loadUIFixes(){
   if(document.querySelector('script[data-ui-fixes]'))return;
   const script=document.createElement('script');
-  script.src='./ui-fixes.js?v=3.5.7';
+  script.src='./ui-fixes.js?v=3.5.8';
   script.dataset.uiFixes='1';
   script.async=false;
   document.body.appendChild(script);
@@ -35,7 +35,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 (function loadBrainSync(){
   if(document.querySelector('script[data-brain-sync]'))return;
   const script=document.createElement('script');
-  script.src='./brain-sync.js?v=1.1.2';
+  script.src='./brain-sync.js?v=1.2.0';
   script.dataset.brainSync='1';
   script.async=false;
   document.body.appendChild(script);
