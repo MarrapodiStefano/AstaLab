@@ -64,7 +64,6 @@
         if(p)playerId=p.id;
       }
       if(playerId==null)return;
-
       const wrap=document.createElement('div');
       wrap.className='brain-slot-player-wrap';
       const info=document.createElement('button');
@@ -87,11 +86,9 @@
 
   function addBrainBudgetInputs(){
     document.querySelectorAll('.brain-strategy').forEach(function(card){
-      const m=String(card.className).match(/\bactive\b/);
       const title=card.querySelector('.brain-strategy-name');
       if(!title)return;
-      const onclick=String(title.getAttribute('onclick')||'');
-      const idMatch=onclick.match(/toggleBrainStrategy\((\d+)\)/);
+      const idMatch=String(title.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/);
       if(!idMatch)return;
       const strategyId=Number(idMatch[1]);
       const strategy=(window.current?.brainStrategies||[]).find(s=>Number(s.id)===strategyId);
@@ -113,18 +110,17 @@
         const value=Number.isFinite(Number(stored))?Number(stored):calculated;
         if(!Array.isArray(strategy.slotBudgets[role]))strategy.slotBudgets[role]=[];
         strategy.slotBudgets[role][index]=value;
-
         const input=document.createElement('input');
         input.type='number';
         input.min='0';
         input.step='1';
+        input.inputMode='numeric';
         input.value=String(value);
         input.className='brain-slot-budget-input';
         input.setAttribute('aria-label','Budget slot '+(index+1));
         input.addEventListener('change',function(){
           const v=Math.max(0,Math.round(Number(input.value)||0));
           input.value=String(v);
-          if(!Array.isArray(strategy.slotBudgets[role]))strategy.slotBudgets[role]=[];
           strategy.slotBudgets[role][index]=v;
           if(typeof persist==='function')persist();
         });
@@ -145,11 +141,12 @@
       .brain-slot-player-wrap .brain-slot-player{flex:1 1 auto;min-width:0;width:auto!important;}
       .brain-slot-player-info{width:28px;height:35px;min-width:28px;padding:0;border:1px solid rgba(80,90,100,.20);border-radius:9px;background:#fff;color:var(--muted);font-size:17px;font-weight:850;line-height:1;display:flex;align-items:center;justify-content:center;flex:0 0 28px;}
       .brain-slot-player-info:active{transform:scale(.94);}
-      .brain-slot-budget-input{width:auto!important;height:35px!important;min-height:35px!important;padding:0 3px!important;text-align:center;font-size:14px!important;font-weight:750;}
+      .brain-slot-budget{display:flex;align-items:center;justify-content:center;min-width:0;padding:0 1px;}
+      .brain-slot-budget-input{width:100%!important;height:35px!important;min-height:35px!important;padding:0 2px!important;border:1px solid rgba(80,90,100,.18)!important;border-radius:9px!important;background:rgba(255,255,255,.42)!important;box-shadow:none!important;text-align:center!important;font-size:14px!important;font-weight:850!important;}
       @media(max-width:390px){
         .brain-slot{grid-template-columns:18px max-content max-content 36px minmax(0,1fr)!important;gap:3px!important;}
         .brain-slot-player-info{width:26px;height:35px;min-width:26px;flex-basis:26px;font-size:16px;}
-        .brain-slot-budget-input{height:35px!important;min-height:35px!important;font-size:13px!important;padding:0 2px!important;}
+        .brain-slot-budget-input{height:35px!important;min-height:35px!important;font-size:13px!important;}
       }
     `;
     document.head.appendChild(css);
@@ -160,23 +157,9 @@
       if(document.documentElement.dataset.refreshing==='1')return;
       document.documentElement.dataset.refreshing='1';
       const btn=document.getElementById('refreshAppBtn');
-      if(btn){btn.disabled=true;btn.setAttribute('aria-label','Aggiornamento in corso');}
-
-      const reload=function(){
-        try{window.location.reload();}
-        catch(e){window.location.href=window.location.href;}
-      };
-
-      if(!navigator.serviceWorker){reload();return;}
-      navigator.serviceWorker.getRegistration().then(function(reg){
-        if(!reg){reload();return;}
-        let reloaded=false;
-        const onceReload=function(){if(reloaded)return;reloaded=true;reload();};
-        navigator.serviceWorker.addEventListener('controllerchange',onceReload,{once:true});
-        return reg.update().catch(()=>{}).then(function(){
-          setTimeout(onceReload,1200);
-        });
-      }).catch(reload);
+      if(btn){btn.disabled=true;btn.classList.add('loading');btn.setAttribute('aria-label','Aggiornamento in corso');}
+      /* Il Service Worker usa già network-first per HTML, JS e CSS: un solo reload evita lo sfarfallio. */
+      window.location.reload();
     };
   }
 
@@ -203,6 +186,8 @@
     }
     addBrainPlayerInfoButtons();
     addBrainBudgetInputs();
+    /* L'handler inline di index.html viene dichiarato dopo questo script: lo sovrascriviamo a fine tick. */
+    setTimeout(installStableRefresh,0);
   }
 
   function load(){
