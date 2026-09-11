@@ -1,4 +1,4 @@
-/* Brain slot sync — logica aggiuntiva, nessuna modifica al layout di Brain */
+/* Brain sync — logica aggiuntiva, nessuna modifica alla struttura di Brain */
 (function(){
   'use strict';
 
@@ -39,6 +39,45 @@
     if(p)p.value=String(pct);
     if(b)b.value=String(credits);
   }
+
+  /* Trasforma solo il valore numerico di "Piano" in un campo editabile.
+     L'etichetta, la disposizione e tutti gli altri valori della strategia
+     restano invariati. */
+  function addBrainRolePlanInputs(){
+    document.querySelectorAll('.brain-role-row').forEach(function(row){
+      const plan=row.querySelector('.brain-role-numbers > span:first-child');
+      if(!plan || plan.dataset.planReady==='1')return;
+      const value=plan.querySelector('b');
+      if(!value)return;
+      const role=(String(row.className||'').match(/\brole-([PDCA])\b/)||[])[1];
+      const card=row.closest('.brain-strategy');
+      const title=card?.querySelector('.brain-strategy-name');
+      const m=String(title?.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/);
+      if(!role||!m)return;
+      const strategyId=Number(m[1]);
+      const input=document.createElement('input');
+      input.type='number';
+      input.min='0';
+      input.step='1';
+      input.inputMode='numeric';
+      input.value=String(Number(value.textContent.trim())||0);
+      input.className='brain-role-plan-input';
+      input.setAttribute('aria-label','Piano '+role);
+      input.addEventListener('change',function(){
+        const s=findStrategy(strategyId); if(!s)return;
+        const budget=Number(state()?.initialCredits)||0;
+        const credits=Math.max(0,Math.round(Number(input.value)||0));
+        const pct=budget>0?Math.max(0,Math.min(100,Math.round(credits/budget*100))):0;
+        input.value=String(credits);
+        if(typeof window.updateBrainAllocation==='function'){
+          window.updateBrainAllocation(strategyId,role,pct);
+        }
+      });
+      value.replaceWith(input);
+      plan.dataset.planReady='1';
+    });
+  }
+
   function syncSlotFromPercent(input){
     const slot=input.closest('.brain-slot'),row=input.closest('.brain-role-row'),card=input.closest('.brain-strategy');
     if(!slot||!row||!card)return;
@@ -65,7 +104,6 @@
     const pct=planned>0?Math.max(0,Math.min(99,Math.round(credits/planned*100))):0;
     input.value=String(credits);
     const p=slot.querySelector('.brain-slot-percent input'); if(p)p.value=String(pct);
-    /* Manteniamo la percentuale nella struttura dati originale di Brain. */
     if(typeof window.updateBrainSlotAllocation==='function')window.updateBrainSlotAllocation(id,role,index,pct);
     saveSlotBudget(id,role,index,credits);
   }
@@ -90,7 +128,6 @@
       const pctRaw=Number(player.pct)||0;
       const pct=pctRaw<=1?pctRaw*100:pctRaw;
       const credits=Math.round(Number(player.credits)||0);
-      /* Usa la funzione originale di Brain per memorizzare la percentuale. */
       if(typeof window.updateBrainSlotAllocation==='function')window.updateBrainSlotAllocation(id,role,index,pct);
       saveSlotBudget(id,role,index,credits);
       setSlotUI(id,role,index,pct,credits);
@@ -98,10 +135,27 @@
     wrapped.__slotSyncWrapped=true;
     window.updateBrainSlotPlayer=wrapped;
   }
-  function boot(){installInputSync();installPlayerDefault();}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+
+  function wrapBrainRender(){
+    if(typeof window.renderBrain!=='function'||window.renderBrain.__brainSyncRolePlanWrapped)return;
+    const original=window.renderBrain;
+    window.renderBrain=function(){
+      try{return original.apply(this,arguments);}
+      finally{addBrainRolePlanInputs();}
+    };
+    window.renderBrain.__brainSyncRolePlanWrapped=true;
+    addBrainRolePlanInputs();
+  }
+
+  function install(){
+    installInputSync();
+    installPlayerDefault();
+    wrapBrainRender();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
   const timer=setInterval(function(){
     installPlayerDefault();
-    if(typeof window.updateBrainSlotPlayer==='function'&&window.updateBrainSlotPlayer.__slotSyncWrapped)clearInterval(timer);
+    wrapBrainRender();
+    if(typeof window.updateBrainSlotPlayer==='function'&&window.updateBrainSlotPlayer.__slotSyncWrapped&&typeof window.renderBrain==='function'&&window.renderBrain.__brainSyncRolePlanWrapped)clearInterval(timer);
   },100);
 })();
