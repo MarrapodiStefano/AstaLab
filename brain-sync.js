@@ -1,4 +1,4 @@
-/* Brain sync — logica aggiuntiva, nessuna modifica alla struttura di Brain */
+/* Brain sync v1.0.3 — logica aggiuntiva, nessuna modifica alla struttura di Brain */
 (function(){
   'use strict';
 
@@ -78,9 +78,41 @@
     const css=document.createElement('style');
     css.id='brainRolePlanStyle';
     css.textContent=`
-      .brain-role-plan-input{width:100%;min-width:0;margin:0;padding:0 2px;border:1px solid rgba(80,90,100,.16);border-radius:7px;background:rgba(255,255,255,.36);box-sizing:border-box;text-align:center;font:inherit;font-size:24px;font-weight:900;line-height:1.15;color:inherit;outline:none;}
-      .brain-role-plan-input:focus{border-color:rgba(80,90,100,.35);background:rgba(255,255,255,.68);}
-      @media(max-width:390px){.brain-role-plan-input{font-size:22px;}}
+      .brain-role-numbers .brain-role-plan-input{
+        display:inline-block!important;
+        width:58px!important;
+        min-width:58px!important;
+        max-width:58px!important;
+        flex:0 0 58px!important;
+        height:38px!important;
+        min-height:38px!important;
+        margin:0!important;
+        padding:0 2px!important;
+        box-sizing:border-box!important;
+        border:1px solid rgba(80,90,100,.16)!important;
+        border-radius:7px!important;
+        background:rgba(255,255,255,.36)!important;
+        text-align:center!important;
+        font:inherit!important;
+        font-size:24px!important;
+        font-weight:900!important;
+        line-height:38px!important;
+        color:inherit!important;
+        outline:none!important;
+      }
+      .brain-role-numbers .brain-role-plan-input:focus{
+        border-color:rgba(80,90,100,.35)!important;
+        background:rgba(255,255,255,.68)!important;
+      }
+      @media(max-width:390px){
+        .brain-role-numbers .brain-role-plan-input{
+          width:54px!important;
+          min-width:54px!important;
+          max-width:54px!important;
+          flex-basis:54px!important;
+          font-size:22px!important;
+        }
+      }
     `;
     document.head.appendChild(css);
   }
