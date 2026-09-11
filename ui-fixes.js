@@ -1,7 +1,7 @@
-/* UI fixes 3.5.6 — funzioni di interfaccia indipendenti */
+/* UI fixes 3.5.7 — funzioni di interfaccia indipendenti */
 (function(){
   'use strict';
-  const VERSION='3.5.6';
+  const VERSION='3.5.7';
   let longPressTimer=null;
   let longPressFired=false;
   let pressTarget=null;
