@@ -53,12 +53,69 @@
     },true);
   }
 
+  function addBrainPlayerInfoButtons(){
+    document.querySelectorAll('.brain-slot').forEach(function(slot){
+      if(slot.dataset.infoReady==='1')return;
+      const playerBtn=slot.querySelector('.brain-slot-player');
+      if(!playerBtn)return;
+
+      const m=String(playerBtn.getAttribute('onclick')||'').match(/openBrainSlotPlayerPicker\((\d+),'([PDCA])',(\d+)\)/);
+      if(!m)return;
+
+      const strategyId=Number(m[1]);
+      const role=m[2];
+      const index=Number(m[3]);
+      const strategy=window.current?.brainStrategies?.find(s=>s.id===strategyId);
+      const target=strategy?.slotTargets?.[role]?.[index];
+      const playerId=target?.playerId;
+      if(playerId==null)return;
+
+      const wrap=document.createElement('div');
+      wrap.className='brain-slot-player-wrap';
+
+      const info=document.createElement('button');
+      info.type='button';
+      info.className='brain-slot-player-info';
+      info.setAttribute('aria-label','Apri scheda giocatore');
+      info.setAttribute('title','Scheda giocatore');
+      info.textContent='ⓘ';
+      info.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        if(typeof window.openPlayer==='function')window.openPlayer(Number(playerId),'auction');
+      });
+
+      playerBtn.parentNode.insertBefore(wrap,playerBtn);
+      wrap.appendChild(playerBtn);
+      wrap.appendChild(info);
+      slot.dataset.infoReady='1';
+    });
+  }
+
+  function installBrainSlotInfoStyle(){
+    if(document.getElementById('brainSlotInfoStyle'))return;
+    const css=document.createElement('style');
+    css.id='brainSlotInfoStyle';
+    css.textContent=`
+      .brain-slot{grid-template-columns:18px max-content max-content 36px minmax(0,1fr)!important;}
+      .brain-slot-name,.brain-slot-percent,.brain-slot-budget,.brain-slot-priority,.brain-slot-player-wrap{min-width:0;white-space:nowrap;}
+      .brain-slot-player-wrap{display:flex;align-items:center;gap:4px;min-width:0;}
+      .brain-slot-player-wrap .brain-slot-player{flex:1 1 auto;min-width:0;width:auto!important;}
+      .brain-slot-player-info{width:28px;height:35px;min-width:28px;padding:0;border:1px solid rgba(80,90,100,.20);border-radius:9px;background:#fff;color:var(--muted);font-size:17px;font-weight:850;line-height:1;display:flex;align-items:center;justify-content:center;flex:0 0 28px;}
+      .brain-slot-player-info:active{transform:scale(.94);}
+      @media(max-width:390px){
+        .brain-slot{grid-template-columns:18px max-content max-content 36px minmax(0,1fr)!important;gap:3px!important;}
+        .brain-slot-player-info{width:26px;height:35px;min-width:26px;flex-basis:26px;font-size:16px;}
+      }
+    `;
+    document.head.appendChild(css);
+  }
+
   function boot(){
     setVersion();
     setupLongPress();
+    installBrainSlotInfoStyle();
 
-    /* Il nome della strategia e tutta la sua intestazione non devono
-       diventare selezionabili durante il tap prolungato su iOS. */
     if(!document.getElementById('brainLongPressStyle')){
       const css=document.createElement('style');
       css.id='brainLongPressStyle';
@@ -66,16 +123,17 @@
       document.head.appendChild(css);
     }
 
-    /* Bacchetta.js gestisce direttamente il pulsante .magic-wand-btn,
-       nella stessa posizione originale dentro l'intestazione di Brain.
-       Qui non lo spostiamo e non lo sostituiamo. */
     const oldRender=window.renderBrain;
     if(typeof oldRender==='function'&&!oldRender.__uiFixesVersionWrap){
       window.renderBrain=function(){
-        try{return oldRender.apply(this,arguments);}finally{setVersion();}
-      };
+        try{return oldRender.apply(this,arguments);}finally{
+          setVersion();
+          addBrainPlayerInfoButtons();
+        }};
       window.renderBrain.__uiFixesVersionWrap=true;
     }
+
+    addBrainPlayerInfoButtons();
   }
 
   function load(){
