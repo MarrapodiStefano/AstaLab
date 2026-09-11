@@ -59,16 +59,11 @@
       const playerBtn=slot.querySelector('.brain-slot-player');
       if(!playerBtn)return;
 
-      const m=String(playerBtn.getAttribute('onclick')||'').match(/openBrainSlotPlayerPicker\((\d+),'([PDCA])',(\d+)\)/);
-      if(!m)return;
-
-      const strategyId=Number(m[1]);
-      const role=m[2];
-      const index=Number(m[3]);
-      const strategy=window.current?.brainStrategies?.find(s=>s.id===strategyId);
-      const target=strategy?.slotTargets?.[role]?.[index];
-      const playerId=target?.playerId;
-      if(playerId==null)return;
+      // Il selettore dello slot viene gestito tramite onchange, quindi
+      // non possiede un onclick da cui ricavare strategia/ruolo/indice.
+      // Il giocatore attualmente selezionato è direttamente il value del select.
+      const playerId=playerBtn.value;
+      if(!playerId)return;
 
       const wrap=document.createElement('div');
       wrap.className='brain-slot-player-wrap';
