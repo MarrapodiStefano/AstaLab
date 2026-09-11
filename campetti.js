@@ -35,7 +35,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 (function loadBrainSync(){
   if(document.querySelector('script[data-brain-sync]'))return;
   const script=document.createElement('script');
-  script.src='./brain-sync.js?v=1.0.0';
+  script.src='./brain-sync.js?v=1.0.1';
   script.dataset.brainSync='1';
   script.async=false;
   document.body.appendChild(script);
