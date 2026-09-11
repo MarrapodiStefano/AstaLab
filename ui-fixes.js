@@ -1,7 +1,7 @@
-/* UI fixes 3.5.9 — funzioni di interfaccia indipendenti */
+/* UI fixes 3.7.0 — funzioni di interfaccia indipendenti */
 (function(){
   'use strict';
-  const VERSION='3.5.9';
+  const VERSION='3.7.0';
   let longPressTimer=null,longPressFired=false,pressTarget=null;
   function setVersion(){const v=document.querySelector('.app-version');if(v)v.textContent='V. '+VERSION;}
   function setupLongPress(){if(document.documentElement.dataset.brainLongPressReady==='1')return;document.documentElement.dataset.brainLongPressReady='1';document.addEventListener('pointerdown',function(e){const btn=e.target?.closest?.('.brain-strategy-name');if(!btn)return;const m=String(btn.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/);if(!m)return;pressTarget=btn;longPressFired=false;clearTimeout(longPressTimer);longPressTimer=setTimeout(function(){if(!pressTarget)return;const id=Number(m[1]);if(typeof window.selectBrainStrategy==='function')window.selectBrainStrategy(id);longPressFired=true;pressTarget=null;},550);},true);const cancel=function(){clearTimeout(longPressTimer);longPressTimer=null;pressTarget=null;};document.addEventListener('pointerup',cancel,true);document.addEventListener('pointercancel',cancel,true);document.addEventListener('pointermove',function(e){if(pressTarget&&e.pointerType==='touch')cancel();},true);document.addEventListener('click',function(e){const btn=e.target?.closest?.('.brain-strategy-name');if(btn&&longPressFired){e.preventDefault();e.stopImmediatePropagation();longPressFired=false;}},true);}
