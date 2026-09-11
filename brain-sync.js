@@ -2,20 +2,30 @@
 (function(){
   'use strict';
 
-  function findStrategy(id){
-    return window.current?.brainStrategies?.find(function(s){return Number(s.id)===Number(id);})||null;
+  function state(){
+    try{return JSON.parse(localStorage.getItem('AF_CURRENT')||'null');}catch(e){return null;}
   }
-
+  function findStrategy(id){
+    const c=state();
+    return c?.brainStrategies?.find(function(s){return Number(s.id)===Number(id);})||null;
+  }
   function rolePlanned(strategy,role){
-    const budget=Number(window.current?.initialCredits)||0;
+    const c=state();
+    const budget=Number(c?.initialCredits)||0;
     const pct=Number(strategy?.allocation?.[role])||0;
     return Math.round(budget*pct/100);
   }
-
+  function saveSlotBudget(id,role,index,credits){
+    const c=state(); if(!c)return;
+    const s=c.brainStrategies?.find(function(x){return Number(x.id)===Number(id);}); if(!s)return;
+    s.slotBudgets=s.slotBudgets||{};
+    s.slotBudgets[role]=Array.isArray(s.slotBudgets[role])?s.slotBudgets[role]:[];
+    s.slotBudgets[role][index]=credits;
+    localStorage.setItem('AF_CURRENT',JSON.stringify(c));
+  }
   function setSlotUI(id,role,index,pct,credits){
-    const slots=document.querySelectorAll('.brain-strategy');
     let card=null;
-    slots.forEach(function(c){
+    document.querySelectorAll('.brain-strategy').forEach(function(c){
       const title=c.querySelector('.brain-strategy-name');
       const m=String(title?.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/);
       if(m&&Number(m[1])===Number(id))card=c;
@@ -29,61 +39,36 @@
     if(p)p.value=String(pct);
     if(b)b.value=String(credits);
   }
-
   function syncSlotFromPercent(input){
-    const slot=input.closest('.brain-slot');
-    const row=input.closest('.brain-role-row');
-    const card=input.closest('.brain-strategy');
+    const slot=input.closest('.brain-slot'),row=input.closest('.brain-role-row'),card=input.closest('.brain-strategy');
     if(!slot||!row||!card)return;
-    const title=card.querySelector('.brain-strategy-name');
-    const m=String(title?.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/);
-    const rm=String(row.className||'').match(/\brole-([PDCA])\b/);
-    if(!m||!rm)return;
-    const id=Number(m[1]),role=rm[1];
-    const index=Array.prototype.indexOf.call(row.querySelectorAll('.brain-slot'),slot);
-    const strategy=findStrategy(id); if(!strategy)return;
-    const planned=rolePlanned(strategy,role);
+    const m=String(card.querySelector('.brain-strategy-name')?.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/);
+    const rm=String(row.className||'').match(/\brole-([PDCA])\b/); if(!m||!rm)return;
+    const id=Number(m[1]),role=rm[1],index=Array.prototype.indexOf.call(row.querySelectorAll('.brain-slot'),slot);
+    const s=findStrategy(id); if(!s)return;
+    const planned=rolePlanned(s,role);
     const pct=Math.max(0,Math.min(99,Number(input.value)||0));
     const credits=Math.round(planned*pct/100);
     input.value=String(pct);
-    const b=slot.querySelector('.brain-slot-budget-input');
-    if(b)b.value=String(credits);
-    if(window.current?.brainStrategies){
-      const arr=window.brainStrategySlotAllocation?window.brainStrategySlotAllocation(strategy,role):null;
-      if(arr){arr[index]=pct;strategy.slotAllocation[role]=arr;}
-      strategy.slotBudgets=strategy.slotBudgets||{};
-      strategy.slotBudgets[role]=Array.isArray(strategy.slotBudgets[role])?strategy.slotBudgets[role]:[];
-      strategy.slotBudgets[role][index]=credits;
-      if(typeof window.persist==='function')window.persist();
-    }
+    const b=slot.querySelector('.brain-slot-budget-input'); if(b)b.value=String(credits);
+    saveSlotBudget(id,role,index,credits);
   }
-
   function syncSlotFromCredits(input){
-    const slot=input.closest('.brain-slot');
-    const row=input.closest('.brain-role-row');
-    const card=input.closest('.brain-strategy');
+    const slot=input.closest('.brain-slot'),row=input.closest('.brain-role-row'),card=input.closest('.brain-strategy');
     if(!slot||!row||!card)return;
-    const title=card.querySelector('.brain-strategy-name');
-    const m=String(title?.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/);
-    const rm=String(row.className||'').match(/\brole-([PDCA])\b/);
-    if(!m||!rm)return;
-    const id=Number(m[1]),role=rm[1];
-    const index=Array.prototype.indexOf.call(row.querySelectorAll('.brain-slot'),slot);
-    const strategy=findStrategy(id); if(!strategy)return;
-    const planned=rolePlanned(strategy,role);
+    const m=String(card.querySelector('.brain-strategy-name')?.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/);
+    const rm=String(row.className||'').match(/\brole-([PDCA])\b/); if(!m||!rm)return;
+    const id=Number(m[1]),role=rm[1],index=Array.prototype.indexOf.call(row.querySelectorAll('.brain-slot'),slot);
+    const s=findStrategy(id); if(!s)return;
+    const planned=rolePlanned(s,role);
     const credits=Math.max(0,Math.round(Number(input.value)||0));
     const pct=planned>0?Math.max(0,Math.min(99,Math.round(credits/planned*100))):0;
     input.value=String(credits);
-    const p=slot.querySelector('.brain-slot-percent input');
-    if(p)p.value=String(pct);
-    const arr=window.brainStrategySlotAllocation?window.brainStrategySlotAllocation(strategy,role):null;
-    if(arr){arr[index]=pct;strategy.slotAllocation[role]=arr;}
-    strategy.slotBudgets=strategy.slotBudgets||{};
-    strategy.slotBudgets[role]=Array.isArray(strategy.slotBudgets[role])?strategy.slotBudgets[role]:[];
-    strategy.slotBudgets[role][index]=credits;
-    if(typeof window.persist==='function')window.persist();
+    const p=slot.querySelector('.brain-slot-percent input'); if(p)p.value=String(pct);
+    /* Manteniamo la percentuale nella struttura dati originale di Brain. */
+    if(typeof window.updateBrainSlotAllocation==='function')window.updateBrainSlotAllocation(id,role,index,pct);
+    saveSlotBudget(id,role,index,credits);
   }
-
   function installInputSync(){
     if(document.documentElement.dataset.brainSlotSync==='1')return;
     document.documentElement.dataset.brainSlotSync='1';
@@ -94,7 +79,6 @@
       if(b)syncSlotFromCredits(b);
     },true);
   }
-
   function installPlayerDefault(){
     if(typeof window.updateBrainSlotPlayer!=='function'||window.updateBrainSlotPlayer.__slotSyncWrapped)return;
     const original=window.updateBrainSlotPlayer;
@@ -102,27 +86,19 @@
       original.apply(this,arguments);
       if(value===''||value==null)return;
       const player=(typeof window.allPlayers==='function'?window.allPlayers():[]).find(function(p){return String(p.id)===String(value);});
-      const strategy=findStrategy(id);
-      if(!player||!strategy)return;
+      if(!player)return;
       const pctRaw=Number(player.pct)||0;
       const pct=pctRaw<=1?pctRaw*100:pctRaw;
       const credits=Math.round(Number(player.credits)||0);
-      const arr=window.brainStrategySlotAllocation?window.brainStrategySlotAllocation(strategy,role):null;
-      if(arr){arr[index]=pct;strategy.slotAllocation[role]=arr;}
-      strategy.slotBudgets=strategy.slotBudgets||{};
-      strategy.slotBudgets[role]=Array.isArray(strategy.slotBudgets[role])?strategy.slotBudgets[role]:[];
-      strategy.slotBudgets[role][index]=credits;
-      if(typeof window.persist==='function')window.persist();
+      /* Usa la funzione originale di Brain per memorizzare la percentuale. */
+      if(typeof window.updateBrainSlotAllocation==='function')window.updateBrainSlotAllocation(id,role,index,pct);
+      saveSlotBudget(id,role,index,credits);
       setSlotUI(id,role,index,pct,credits);
     };
     wrapped.__slotSyncWrapped=true;
     window.updateBrainSlotPlayer=wrapped;
   }
-
-  function boot(){
-    installInputSync();
-    installPlayerDefault();
-  }
+  function boot(){installInputSync();installPlayerDefault();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   const timer=setInterval(function(){
     installPlayerDefault();
