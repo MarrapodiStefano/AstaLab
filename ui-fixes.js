@@ -14,7 +14,6 @@
   function setupLongPress(){
     if(document.documentElement.dataset.brainLongPressReady==='1')return;
     document.documentElement.dataset.brainLongPressReady='1';
-
     document.addEventListener('pointerdown',function(e){
       const btn=e.target?.closest?.('.brain-strategy-name');
       if(!btn)return;
@@ -31,7 +30,6 @@
         pressTarget=null;
       },550);
     },true);
-
     const cancel=function(){
       clearTimeout(longPressTimer);
       longPressTimer=null;
@@ -42,7 +40,6 @@
     document.addEventListener('pointermove',function(e){
       if(pressTarget&&e.pointerType==='touch')cancel();
     },true);
-
     document.addEventListener('click',function(e){
       const btn=e.target?.closest?.('.brain-strategy-name');
       if(btn&&longPressFired){
@@ -53,83 +50,14 @@
     },true);
   }
 
-  function readCurrent(){
-    try{return JSON.parse(localStorage.getItem('AF_CURRENT')||'null');}catch(e){return null;}
-  }
-
-  function saveCurrent(data){
-    if(!data)return;
-    try{
-      localStorage.setItem('AF_CURRENT',JSON.stringify(data));
-      const db=JSON.parse(localStorage.getItem('AF_DB')||'[]');
-      if(Array.isArray(db)){
-        const i=db.findIndex(a=>String(a.id)===String(data.id));
-        if(i>=0){db[i]=data;localStorage.setItem('AF_DB',JSON.stringify(db));}
-      }
-    }catch(e){console.error('Brain slot budget',e);}
-  }
-
-  function addBrainSlotBudgetInputs(){
-    const data=readCurrent();
-    if(!data)return;
-    const strategyId=data.activeBrainStrategyId;
-    const strategy=(data.brainStrategies||[]).find(s=>String(s.id)===String(strategyId));
-    if(!strategy)return;
-
-    document.querySelectorAll('.brain-role-row').forEach(function(roleRow){
-      const role=['P','D','C','A'].find(r=>roleRow.classList.contains('role-'+r));
-      if(!role)return;
-      const slots=roleRow.querySelectorAll('.brain-slot');
-      slots.forEach(function(slot,index){
-        const old=slot.querySelector('.brain-slot-budget');
-        if(!old || old.dataset.editableReady==='1')return;
-
-        if(!strategy.slotBudgets||typeof strategy.slotBudgets!=='object')strategy.slotBudgets={};
-        if(!Array.isArray(strategy.slotBudgets[role]))strategy.slotBudgets[role]=[];
-
-        const allocationInput=slot.querySelector('.brain-slot-percent input');
-        const pct=Number(allocationInput?.value)||0;
-        const plannedRole=Number(data.initialCredits||0)*((Number(strategy.allocation?.[role])||0)/100);
-        if(strategy.slotBudgets[role][index]==null){
-          strategy.slotBudgets[role][index]=Math.round(plannedRole*pct/100);
-        }
-
-        const input=document.createElement('input');
-        input.type='number';
-        input.min='0';
-        input.max='999';
-        input.step='1';
-        input.inputMode='numeric';
-        input.value=String(Math.max(0,Math.min(999,Number(strategy.slotBudgets[role][index])||0)));
-        input.className='brain-slot-budget-input';
-        input.setAttribute('aria-label','Budget slot '+(index+1));
-        input.addEventListener('change',function(){
-          const v=Math.max(0,Math.min(999,Math.round(Number(input.value)||0)));
-          input.value=String(v);
-          if(!strategy.slotBudgets||typeof strategy.slotBudgets!=='object')strategy.slotBudgets={};
-          if(!Array.isArray(strategy.slotBudgets[role]))strategy.slotBudgets[role]=[];
-          strategy.slotBudgets[role][index]=v;
-          saveCurrent(data);
-        });
-
-        old.replaceWith(input);
-        slot.dataset.infoBudgetReady='1';
-      });
-    });
-
-    saveCurrent(data);
-  }
-
   function addBrainPlayerInfoButtons(){
     document.querySelectorAll('.brain-slot').forEach(function(slot){
       if(slot.dataset.infoReady==='1')return;
       const playerBtn=slot.querySelector('.brain-slot-player');
       if(!playerBtn)return;
       if(!playerBtn.classList.contains('has-player'))return;
-
       const playerName=playerBtn.textContent.trim();
       if(!playerName || playerName==='Scegli giocatore')return;
-
       let playerId=null;
       if(typeof window.allPlayers==='function'){
         const p=window.allPlayers().find(x=>String(x.name||'').trim()===playerName);
@@ -139,7 +67,6 @@
 
       const wrap=document.createElement('div');
       wrap.className='brain-slot-player-wrap';
-
       const info=document.createElement('button');
       info.type='button';
       info.className='brain-slot-player-info';
@@ -151,7 +78,6 @@
         e.stopPropagation();
         if(typeof window.openPlayer==='function')window.openPlayer(Number(playerId),'auction');
       });
-
       playerBtn.parentNode.insertBefore(wrap,playerBtn);
       wrap.appendChild(playerBtn);
       wrap.appendChild(info);
@@ -166,71 +92,37 @@
     css.textContent=`
       .brain-slot{grid-template-columns:18px max-content max-content 36px minmax(0,1fr)!important;}
       .brain-slot-name,.brain-slot-percent,.brain-slot-budget,.brain-slot-player-wrap{min-width:0;white-space:nowrap;}
-      .brain-slot-budget-input{display:block;width:58px!important;min-width:58px!important;height:35px!important;margin:0!important;padding:0 3px!important;border:1px solid rgba(80,90,100,.20)!important;border-radius:10px!important;background:rgba(255,255,255,.42)!important;color:var(--ink)!important;font-family:inherit!important;font-size:14px!important;font-weight:850!important;text-align:center!important;outline:0!important;box-sizing:border-box!important;}
-      .brain-slot-budget-input::-webkit-inner-spin-button,.brain-slot-budget-input::-webkit-outer-spin-button{opacity:0;}
       .brain-slot-player-wrap{display:flex;align-items:center;gap:4px;min-width:0;}
       .brain-slot-player-wrap .brain-slot-player{flex:1 1 auto;min-width:0;width:auto!important;}
       .brain-slot-player-info{width:28px;height:35px;min-width:28px;padding:0;border:1px solid rgba(80,90,100,.20);border-radius:9px;background:#fff;color:var(--muted);font-size:17px;font-weight:850;line-height:1;display:flex;align-items:center;justify-content:center;flex:0 0 28px;}
       .brain-slot-player-info:active{transform:scale(.94);}
       @media(max-width:390px){
         .brain-slot{grid-template-columns:18px max-content max-content 36px minmax(0,1fr)!important;gap:3px!important;}
-        .brain-slot-budget-input{width:58px!important;min-width:58px!important;height:35px!important;font-size:13px!important;}
         .brain-slot-player-info{width:26px;height:35px;min-width:26px;flex-basis:26px;font-size:16px;}
       }
     `;
     document.head.appendChild(css);
   }
 
-  function installStableRefresh(){
-    window.refreshApp=function(){
-      const btn=document.getElementById('refreshAppBtn');
-      if(btn){
-        btn.disabled=true;
-        btn.classList.add('loading');
-        btn.setAttribute('aria-label','Aggiornamento in corso');
-      }
-
-      const reload=function(){
-        try{window.location.reload();}
-        catch(e){window.location.href=window.location.href;}
-      };
-
-      if(navigator.serviceWorker?.ready){
-        Promise.race([
-          navigator.serviceWorker.ready.then(reg=>reg.update()).catch(()=>{}),
-          new Promise(resolve=>setTimeout(resolve,700))
-        ]).then(reload);
-      }else{
-        reload();
-      }
-    };
-  }
-
   function boot(){
     setVersion();
     setupLongPress();
     installBrainSlotInfoStyle();
-    installStableRefresh();
-
     if(!document.getElementById('brainLongPressStyle')){
       const css=document.createElement('style');
       css.id='brainLongPressStyle';
       css.textContent='.brain-strategy-title,.brain-strategy-title *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none;}';
       document.head.appendChild(css);
     }
-
     const oldRender=window.renderBrain;
     if(typeof oldRender==='function'&&!oldRender.__uiFixesVersionWrap){
       window.renderBrain=function(){
         try{return oldRender.apply(this,arguments);}finally{
           setVersion();
-          addBrainSlotBudgetInputs();
           addBrainPlayerInfoButtons();
         }};
       window.renderBrain.__uiFixesVersionWrap=true;
     }
-
-    addBrainSlotBudgetInputs();
     addBrainPlayerInfoButtons();
   }
 
