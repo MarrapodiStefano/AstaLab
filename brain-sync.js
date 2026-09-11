@@ -1,4 +1,4 @@
-/* Brain sync v1.1.0 — logica aggiuntiva, nessuna modifica alla struttura di Brain */
+/* Brain sync v1.1.2 — logica aggiuntiva, nessuna modifica alla struttura di Brain */
 (function(){
   'use strict';
 
@@ -26,11 +26,40 @@
   function installRolePlanStyle(){
     if(document.getElementById('brainRolePlanStyle'))return;
     const css=document.createElement('style');css.id='brainRolePlanStyle';css.textContent=`
-      /* Il campo Piano deve avere la stessa impronta compatta del numero originale. */
-      .brain-role-numbers > span:first-child{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:58px!important;min-width:58px!important;max-width:58px!important;flex:0 0 58px!important;box-sizing:border-box!important;}
-      .brain-role-numbers > span:first-child .brain-role-plan-input{display:block!important;width:58px!important;min-width:58px!important;max-width:58px!important;height:38px!important;min-height:38px!important;max-height:38px!important;margin:0!important;padding:0 1px!important;box-sizing:border-box!important;border:1px solid rgba(80,90,100,.16)!important;border-radius:7px!important;background:rgba(255,255,255,.36)!important;text-align:center!important;font:inherit!important;font-size:24px!important;font-weight:900!important;line-height:38px!important;color:inherit!important;outline:none!important;}
-      .brain-role-numbers > span:first-child .brain-role-plan-input:focus{border-color:rgba(80,90,100,.35)!important;background:rgba(255,255,255,.68)!important;}
-      @media(max-width:390px){.brain-role-numbers > span:first-child{width:54px!important;min-width:54px!important;max-width:54px!important;flex-basis:54px!important;}.brain-role-numbers > span:first-child .brain-role-plan-input{width:54px!important;min-width:54px!important;max-width:54px!important;font-size:22px!important;}}
+      /* Il campo Piano conserva esattamente l'impronta del <b> originale. */
+      .brain-role-numbers > span:first-child .brain-role-plan-input{
+        display:block!important;
+        width:100%!important;
+        min-width:0!important;
+        max-width:none!important;
+        height:auto!important;
+        min-height:0!important;
+        max-height:none!important;
+        margin:0!important;
+        padding:0!important;
+        border:0!important;
+        border-radius:0!important;
+        background:transparent!important;
+        box-shadow:none!important;
+        text-align:center!important;
+        font:inherit!important;
+        font-size:18px!important;
+        font-weight:900!important;
+        line-height:1.05!important;
+        color:inherit!important;
+        box-sizing:border-box!important;
+        outline:none!important;
+        -webkit-appearance:none!important;
+        appearance:none!important;
+      }
+      .brain-role-numbers > span:first-child .brain-role-plan-input:focus{
+        border:0!important;
+        background:transparent!important;
+        box-shadow:none!important;
+        outline:none!important;
+      }
+      .brain-role-numbers > span:first-child .brain-role-plan-input::-webkit-inner-spin-button,
+      .brain-role-numbers > span:first-child .brain-role-plan-input::-webkit-outer-spin-button{opacity:0;display:none;}
     `;document.head.appendChild(css);
   }
 
