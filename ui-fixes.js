@@ -1,7 +1,7 @@
-/* UI fixes 3.5.4 — funzioni di interfaccia indipendenti */
+/* UI fixes 3.5.5 — funzioni di interfaccia indipendenti */
 (function(){
   'use strict';
-  const VERSION='3.5.4';
+  const VERSION='3.5.5';
   let longPressTimer=null;
   let longPressFired=false;
   let pressTarget=null;
@@ -126,10 +126,7 @@
       .brain-slot-budget{display:flex;align-items:center;justify-content:center;min-width:0;padding:0 1px;}
       .brain-slot-budget-input{width:100%!important;height:35px!important;min-height:35px!important;padding:0 2px!important;border:1px solid rgba(80,90,100,.18)!important;border-radius:9px!important;background:rgba(255,255,255,.42)!important;box-shadow:none!important;text-align:center!important;font-size:14px!important;font-weight:850!important;}
       @media(max-width:390px){.brain-slot{grid-template-columns:18px 54px 54px 36px minmax(0,1fr)!important;gap:3px!important;}.brain-slot-player-info{width:26px;height:35px;min-width:26px;flex-basis:26px;font-size:16px;}.brain-slot-budget-input{height:35px!important;min-height:35px!important;font-size:13px!important;}}
-      #appRefreshOverlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(244,245,247,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
-      #appRefreshOverlay .refresh-card{display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--ink);font-size:14px;font-weight:800;}
-      #appRefreshOverlay .refresh-spinner{width:30px;height:30px;border:3px solid rgba(21,27,38,.14);border-top-color:var(--ink);border-radius:50%;animation:appRefreshSpin .7s linear infinite;}
-      @keyframes appRefreshSpin{to{transform:rotate(360deg)}}
+      #appRefreshOverlay{display:none!important;}
     `;
     document.head.appendChild(css);
   }
@@ -138,23 +135,13 @@
     window.refreshApp=function(){
       if(document.documentElement.dataset.refreshing==='1')return;
       document.documentElement.dataset.refreshing='1';
-      let overlay=document.getElementById('appRefreshOverlay');
-      if(!overlay){
-        overlay=document.createElement('div');
-        overlay.id='appRefreshOverlay';
-        overlay.innerHTML='<div class="refresh-card"><div class="refresh-spinner" aria-hidden="true"></div><div>Aggiornamento in corso…</div></div>';
-        (document.body||document.documentElement).appendChild(overlay);
-      }
       const btn=document.getElementById('refreshAppBtn');
-      if(btn){btn.disabled=true;btn.classList.add('loading');btn.setAttribute('aria-label','Aggiornamento in corso');}
-
-      /*
-         NON attendiamo navigator.serviceWorker.update(): su iOS/PWA può
-         rimanere pending e lasciare l'overlay bloccato indefinitamente.
-         Il Service Worker usa già network-first/no-store per navigate e
-         script, quindi il reload può partire immediatamente mentre il
-         controllo del SW procede in background.
-      */
+      if(btn){
+        btn.disabled=true;
+        btn.classList.add('loading');
+        btn.setAttribute('aria-label','Aggiornamento in corso');
+      }
+      /* Il controllo del Service Worker è secondario: non deve ritardare il reload. */
       try{
         if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations){
           navigator.serviceWorker.getRegistrations().then(function(regs){
@@ -162,11 +149,8 @@
           }).catch(function(){});
         }
       }catch(e){}
-
-      window.setTimeout(function(){
-        const base=window.location.href.split('#')[0].split('?')[0];
-        window.location.replace(base+'?refresh='+Date.now());
-      },650);
+      /* Un solo breve intervallo consente al browser di dipingere lo spinner. */
+      window.setTimeout(function(){window.location.reload();},350);
     };
   }
 
