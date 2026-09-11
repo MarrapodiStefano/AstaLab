@@ -1,7 +1,7 @@
-/* UI fixes 3.5.3 — funzioni di interfaccia indipendenti */
+/* UI fixes 3.5.4 — funzioni di interfaccia indipendenti */
 (function(){
   'use strict';
-  const VERSION='3.5.3';
+  const VERSION='3.5.4';
   let longPressTimer=null;
   let longPressFired=false;
   let pressTarget=null;
@@ -147,14 +147,26 @@
       }
       const btn=document.getElementById('refreshAppBtn');
       if(btn){btn.disabled=true;btn.classList.add('loading');btn.setAttribute('aria-label','Aggiornamento in corso');}
-      const reload=function(){window.setTimeout(function(){window.location.replace(window.location.href.split('#')[0].split('?')[0]+'?refresh='+Date.now());},500);};
+
+      /*
+         NON attendiamo navigator.serviceWorker.update(): su iOS/PWA può
+         rimanere pending e lasciare l'overlay bloccato indefinitamente.
+         Il Service Worker usa già network-first/no-store per navigate e
+         script, quindi il reload può partire immediatamente mentre il
+         controllo del SW procede in background.
+      */
       try{
         if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations){
           navigator.serviceWorker.getRegistrations().then(function(regs){
-            return Promise.all(regs.map(function(r){return r.update().catch(function(){return null;});}));
-          }).then(reload).catch(reload);
-        }else reload();
-      }catch(e){reload();}
+            regs.forEach(function(r){try{r.update();}catch(e){}});
+          }).catch(function(){});
+        }
+      }catch(e){}
+
+      window.setTimeout(function(){
+        const base=window.location.href.split('#')[0].split('?')[0];
+        window.location.replace(base+'?refresh='+Date.now());
+      },650);
     };
   }
 
@@ -168,7 +180,6 @@
     addBrainPlayerInfoButtons();addBrainBudgetInputs();
   }
 
-  /* La versione deve essere corretta subito, non solo a DOMContentLoaded. */
   setVersion();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
