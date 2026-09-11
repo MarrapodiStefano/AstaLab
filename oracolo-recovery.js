@@ -9,6 +9,7 @@
       enumerable:desc.enumerable,
       get:desc.get,
       set:function(value){
+        if(this.classList?.contains('app-version')) value='V. 3.9.0';
         if(String(this.textContent??'')===String(value??'')) return;
         return desc.set.call(this,value);
       }
@@ -17,7 +18,7 @@
   }
   function version(){
     const v=document.querySelector('.app-version');
-    if(v&&v.textContent!=='V. 3.9.0') v.textContent='V. 3.9.0';
+    if(v) v.textContent='V. 3.9.0';
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',version,{once:true}); else version();
 })();
