@@ -124,8 +124,9 @@
       .brain-slot-player-info{width:28px;height:35px;min-width:28px;padding:0;border:1px solid rgba(80,90,100,.20);border-radius:9px;background:#fff;color:var(--muted);font-size:17px;font-weight:850;line-height:1;display:flex;align-items:center;justify-content:center;flex:0 0 28px;}
       .brain-slot-player-info:active{transform:scale(.94);}
       .brain-slot-budget{display:flex;align-items:center;justify-content:center;min-width:0;padding:0 1px;}
-      .brain-slot-budget-input{width:100%!important;height:35px!important;min-height:35px!important;padding:0 2px!important;border:1px solid rgba(80,90,100,.18)!important;border-radius:9px!important;background:rgba(255,255,255,.42)!important;box-shadow:none!important;text-align:center!important;font-size:14px!important;font-weight:850!important;}
-      @media(max-width:390px){.brain-slot{grid-template-columns:18px 54px 54px 36px minmax(0,1fr)!important;gap:3px!important;}.brain-slot-player-info{width:26px;height:35px;min-width:26px;flex-basis:26px;font-size:16px;}.brain-slot-budget-input{height:35px!important;min-height:35px!important;font-size:13px!important;}}
+      .brain-slot-budget-input{width:58px!important;max-width:58px!important;height:auto!important;min-height:0!important;margin:0 auto!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;text-align:center!important;font:inherit!important;font-size:28px!important;font-weight:850!important;line-height:1.1!important;box-sizing:border-box!important;-webkit-appearance:none!important;appearance:none!important;}
+      .brain-role-numbers .brain-slot-budget-input{width:58px!important;max-width:58px!important;}
+      @media(max-width:390px){.brain-slot{grid-template-columns:18px 54px 54px 36px minmax(0,1fr)!important;gap:3px!important;}.brain-slot-player-info{width:26px;height:35px;min-width:26px;flex-basis:26px;font-size:16px;}.brain-slot-budget-input{height:auto!important;min-height:0!important;width:54px!important;max-width:54px!important;font-size:28px!important;}}
       #appRefreshOverlay{display:none!important;}
     `;
     document.head.appendChild(css);
@@ -141,7 +142,6 @@
         btn.classList.add('loading');
         btn.setAttribute('aria-label','Aggiornamento in corso');
       }
-      /* Il controllo del Service Worker è secondario: non deve ritardare il reload. */
       try{
         if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations){
           navigator.serviceWorker.getRegistrations().then(function(regs){
@@ -149,7 +149,6 @@
           }).catch(function(){});
         }
       }catch(e){}
-      /* Un solo breve intervallo consente al browser di dipingere lo spinner. */
       window.setTimeout(function(){window.location.reload();},350);
     };
   }
