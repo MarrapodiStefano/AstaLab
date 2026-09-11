@@ -40,9 +40,6 @@
     if(b)b.value=String(credits);
   }
 
-  /* Trasforma solo il valore numerico di "Piano" in un campo editabile.
-     L'etichetta, la disposizione e tutti gli altri valori della strategia
-     restano invariati. */
   function addBrainRolePlanInputs(){
     document.querySelectorAll('.brain-role-row').forEach(function(row){
       const plan=row.querySelector('.brain-role-numbers > span:first-child');
@@ -69,13 +66,23 @@
         const credits=Math.max(0,Math.round(Number(input.value)||0));
         const pct=budget>0?Math.max(0,Math.min(100,Math.round(credits/budget*100))):0;
         input.value=String(credits);
-        if(typeof window.updateBrainAllocation==='function'){
-          window.updateBrainAllocation(strategyId,role,pct);
-        }
+        if(typeof window.updateBrainAllocation==='function')window.updateBrainAllocation(strategyId,role,pct);
       });
       value.replaceWith(input);
       plan.dataset.planReady='1';
     });
+  }
+
+  function installRolePlanStyle(){
+    if(document.getElementById('brainRolePlanStyle'))return;
+    const css=document.createElement('style');
+    css.id='brainRolePlanStyle';
+    css.textContent=`
+      .brain-role-plan-input{width:100%;min-width:0;margin:0;padding:0 2px;border:1px solid rgba(80,90,100,.16);border-radius:7px;background:rgba(255,255,255,.36);box-sizing:border-box;text-align:center;font:inherit;font-size:24px;font-weight:900;line-height:1.15;color:inherit;outline:none;}
+      .brain-role-plan-input:focus{border-color:rgba(80,90,100,.35);background:rgba(255,255,255,.68);}
+      @media(max-width:390px){.brain-role-plan-input{font-size:22px;}}
+    `;
+    document.head.appendChild(css);
   }
 
   function syncSlotFromPercent(input){
@@ -149,6 +156,7 @@
 
   function install(){
     installInputSync();
+    installRolePlanStyle();
     installPlayerDefault();
     wrapBrainRender();
   }
