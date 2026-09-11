@@ -117,15 +117,16 @@
     const css=document.createElement('style');css.id='brainSlotInfoStyle';
     css.textContent=`
       .brain-strategy-title,.brain-strategy-title *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none;}
-      .brain-slot{grid-template-columns:18px max-content max-content 36px minmax(0,1fr)!important;}
+      /* Layout compatto: tutte le colonne devono rientrare nel viewport da 6,1". */
+      .brain-slot{grid-template-columns:32px 96px minmax(72px,118px) 56px minmax(0,1fr)!important;gap:4px!important;width:100%;min-width:0;}
       .brain-slot-name,.brain-slot-percent,.brain-slot-budget,.brain-slot-budget-input,.brain-slot-player-wrap{min-width:0;white-space:nowrap;}
-      .brain-slot-player-wrap{display:flex;align-items:center;gap:4px;min-width:0;}
-      .brain-slot-player-wrap .brain-slot-player{flex:1 1 auto;min-width:0;width:auto!important;}
+      .brain-slot-player-wrap{display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden;}
+      .brain-slot-player-wrap .brain-slot-player{flex:1 1 auto;min-width:0;width:auto!important;overflow:hidden;text-overflow:ellipsis;}
       .brain-slot-player-info{width:28px;height:35px;min-width:28px;padding:0;border:1px solid rgba(80,90,100,.20);border-radius:9px;background:#fff;color:var(--muted);font-size:17px;font-weight:850;line-height:1;display:flex;align-items:center;justify-content:center;flex:0 0 28px;}
       .brain-slot-player-info:active{transform:scale(.94);}
       .brain-slot-budget{display:flex;align-items:center;justify-content:center;min-width:0;padding:0 1px;}
       .brain-slot-budget-input{width:100%!important;height:35px!important;min-height:35px!important;padding:0 2px!important;border:1px solid rgba(80,90,100,.18)!important;border-radius:9px!important;background:rgba(255,255,255,.42)!important;box-shadow:none!important;text-align:center!important;font-size:14px!important;font-weight:850!important;}
-      @media(max-width:390px){.brain-slot{grid-template-columns:18px max-content max-content 36px minmax(0,1fr)!important;gap:3px!important;}.brain-slot-player-info{width:26px;height:35px;min-width:26px;flex-basis:26px;font-size:16px;}.brain-slot-budget-input{height:35px!important;min-height:35px!important;font-size:13px!important;}}
+      @media(max-width:390px){.brain-slot{grid-template-columns:30px 88px minmax(64px,104px) 52px minmax(0,1fr)!important;gap:3px!important;}.brain-slot-player-info{width:26px;height:35px;min-width:26px;flex-basis:26px;font-size:16px;}.brain-slot-budget-input{height:35px!important;min-height:35px!important;font-size:13px!important;}}
     `;
     document.head.appendChild(css);
   }
