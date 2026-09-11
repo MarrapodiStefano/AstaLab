@@ -21,7 +21,7 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
 function campettiBoot(){renderCampetti();initCampettiZoom();}
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',campettiBoot,{once:true});}else{campettiBoot();}
 
-/* Bootstrap UI: mantenuto qui solo temporaneamente perché index.html contiene ancora il vecchio loader Bacchetta. */
+/* UI bootstrap */
 (function loadUIFixes(){
   if(document.querySelector('script[data-ui-fixes]'))return;
   const script=document.createElement('script');
