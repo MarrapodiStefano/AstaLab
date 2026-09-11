@@ -21,11 +21,11 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
 function campettiBoot(){renderCampetti();initCampettiZoom();}
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',campettiBoot,{once:true});}else{campettiBoot();}
 
-/* Bacchetta separata: evita che il codice UI interferisca con Campetti e Aggiorna. */
+/* UI fixes indipendenti dal motore di gioco. */
 (function loadUIFixes(){
   if(document.querySelector('script[data-ui-fixes]'))return;
   const script=document.createElement('script');
-  script.src='./ui-fixes.js?v=3.4.36.2';
+  script.src='./ui-fixes.js?v=3.5.0';
   script.dataset.uiFixes='1';
   script.async=false;
   document.body.appendChild(script);
