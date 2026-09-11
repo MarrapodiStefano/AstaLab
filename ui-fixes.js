@@ -1,7 +1,7 @@
-/* UI fixes 3.4.36 — versione interfaccia */
+/* UI fixes 3.5.0 — versione interfaccia */
 (function(){
   'use strict';
-  const VERSION='3.4.36';
+  const VERSION='3.5.0';
   let longPressTimer=null;
   let longPressFired=false;
   let pressTarget=null;
@@ -104,10 +104,34 @@
     document.head.appendChild(css);
   }
 
+  function installStableRefresh(){
+    window.refreshApp=function(){
+      const btn=document.getElementById('refreshAppBtn');
+      if(btn){
+        btn.disabled=true;
+        btn.classList.add('loading');
+        btn.setAttribute('aria-label','Aggiornamento in corso');
+      }
+      const reload=function(){
+        try{window.location.reload();}
+        catch(e){window.location.href=window.location.href;}
+      };
+      if(navigator.serviceWorker?.ready){
+        Promise.race([
+          navigator.serviceWorker.ready.then(reg=>reg.update()).catch(()=>{}),
+          new Promise(resolve=>setTimeout(resolve,700))
+        ]).then(reload);
+      }else{
+        reload();
+      }
+    };
+  }
+
   function boot(){
     setVersion();
     setupLongPress();
     installBrainSlotInfoStyle();
+    installStableRefresh();
     if(!document.getElementById('brainLongPressStyle')){
       const css=document.createElement('style');
       css.id='brainLongPressStyle';
