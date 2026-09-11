@@ -62,7 +62,36 @@
     `;document.head.appendChild(css);
   }
 
-  function installStableRefresh(){window.refreshApp=function(){if(document.documentElement.dataset.refreshing==='1')return;document.documentElement.dataset.refreshing='1';const btn=document.getElementById('refreshAppBtn');if(btn){btn.disabled=true;btn.classList.add('loading');btn.setAttribute('aria-label','Aggiornamento in corso');}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations){navigator.serviceWorker.getRegistrations().then(function(regs){regs.forEach(function(r){try{r.update();}catch(e){}});}).catch(function(){});}}catch(e){}window.setTimeout(function(){window.location.reload();},350);};}
+  function installStableRefresh(){
+    window.refreshApp=function(){
+      if(document.documentElement.dataset.refreshing==='1')return;
+      document.documentElement.dataset.refreshing='1';
+      const btn=document.getElementById('refreshAppBtn');
+      if(btn){btn.disabled=true;btn.classList.add('loading');btn.setAttribute('aria-label','Aggiornamento in corso');}
+      let reloaded=false;
+      const reloadFresh=function(){if(reloaded)return;reloaded=true;const u=new URL(window.location.href);u.searchParams.set('v',Date.now());window.location.replace(u.toString());};
+      try{
+        if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration){
+          navigator.serviceWorker.getRegistration().then(function(reg){
+            if(!reg||!reg.update){reloadFresh();return;}
+            const onController=function(){navigator.serviceWorker.removeEventListener('controllerchange',onController);setTimeout(reloadFresh,50);};
+            navigator.serviceWorker.addEventListener('controllerchange',onController);
+            return reg.update().then(function(){
+              if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});return;}
+              if(reg.installing){
+                const worker=reg.installing;
+                worker.addEventListener('statechange',function(){if(worker.state==='installed'&&reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});});
+                setTimeout(reloadFresh,1500);
+              }else{
+                setTimeout(reloadFresh,150);
+              }
+            });
+          }).catch(reloadFresh);
+        }else{reloadFresh();}
+      }catch(e){reloadFresh();}
+    };
+  }
+
   function boot(){setVersion();setupLongPress();installStyle();installStableRefresh();const oldRender=window.renderBrain;if(typeof oldRender==='function'&&!oldRender.__uiFixesVersionWrap){window.renderBrain=function(){try{return oldRender.apply(this,arguments);}finally{setVersion();addBrainPlayerInfoButtons();addBrainBudgetInputs();}};window.renderBrain.__uiFixesVersionWrap=true;}addBrainPlayerInfoButtons();addBrainBudgetInputs();}
   setVersion();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
