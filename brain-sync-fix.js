@@ -1,53 +1,26 @@
-/* Brain sync 3.5.30 — mantiene slot, appetibilità e budget coerenti con gli acquisti */
+/* Brain sync 3.5.35 — acquisti reali, slot congelati e budget dinamico */
 (function(){
 'use strict';
-const VERSION='3.5.30';
-let syncing=false,wrapped=false;
-const ROLES=['P','D','C','A'];
+const VERSION='3.5.35',ROLES=['P','D','C','A'];
+let syncing=false,wrapped=false,renderWrapped=false;
 function read(){try{return JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}
 function save(s){localStorage.setItem('AF_CURRENT',JSON.stringify(s));try{const db=JSON.parse(localStorage.getItem('AF_DB')||'[]'),i=db.findIndex(x=>Number(x.id)===Number(s.id));if(i>=0){db[i]=s;localStorage.setItem('AF_DB',JSON.stringify(db))}}catch(e){}}
-function players(){try{return typeof window.allPlayers==='function'?window.allPlayers():[]}catch(e){return []}}
+function players(){try{return typeof window.allPlayers==='function'?window.allPlayers():[]}catch(e){return[]}}
 function sold(s){const set=new Set();(s?.teams||[]).forEach(t=>(t.players||[]).forEach(p=>set.add(String(p.id))));return set}
+function myTeam(s){return(s?.teams||[]).find(t=>Number(t.id)===Number(s.myTeamId))||(s?.teams||[])[0]||null}
 function priority(s,id){const v=s?.objectivePriorities?.[id]??s?.objectivePriorities?.[String(id)];return ['max','high','low','bet','base'].includes(v)?v:'base'}
-function planned(s,st,r){return Math.round((Number(s.initialCredits)||1200)*(Number(st?.allocation?.[r])||0)/100)}
-function slotCount(st,r){const n=Number(st?.slots?.[r]);return Number.isFinite(n)&&n>=0?Math.round(n):0}
-function ensureArrays(st,r,n){if(!st.slotTargets||typeof st.slotTargets!=='object')st.slotTargets={};if(!Array.isArray(st.slotTargets[r]))st.slotTargets[r]=[];while(st.slotTargets[r].length<n)st.slotTargets[r].push({priority:'base',playerId:null});st.slotTargets[r]=st.slotTargets[r].slice(0,n);if(!st.slotAllocation||typeof st.slotAllocation!=='object')st.slotAllocation={};if(!Array.isArray(st.slotAllocation[r]))st.slotAllocation[r]=[];while(st.slotAllocation[r].length<n)st.slotAllocation[r].push(0);st.slotAllocation[r]=st.slotAllocation[r].slice(0,n);if(!st.slotBudgets||typeof st.slotBudgets!=='object')st.slotBudgets={};if(!Array.isArray(st.slotBudgets[r]))st.slotBudgets[r]=[];while(st.slotBudgets[r].length<n)st.slotBudgets[r].push(0);st.slotBudgets[r]=st.slotBudgets[r].slice(0,n)}
-function sync(){
-  if(syncing)return false;
-  const s=read();if(!s||!Array.isArray(s.brainStrategies))return false;
-  syncing=true;let changed=false;const soldIds=sold(s),all=players();
-  s.brainStrategies.forEach(st=>{
-    ROLES.forEach(r=>{
-      const n=slotCount(st,r);if(!n)return;ensureArrays(st,r,n);
-      const targets=st.slotTargets[r],pcts=st.slotAllocation[r],budgets=st.slotBudgets[r];
-      const used=new Set();
-      targets.forEach(t=>{if(t?.playerId!=null&&!soldIds.has(String(t.playerId)))used.add(String(t.playerId))});
-      targets.forEach((t,i)=>{
-        const pid=t?.playerId;
-        if(pid!=null&&!soldIds.has(String(pid)))return;
-        if(pid!=null&&soldIds.has(String(pid))){
-          const wanted=priority(s,pid);
-          const slotPct=Number(pcts[i])||0;
-          const fallbackBudget=Math.round(planned(s,st,r)*slotPct/100);
-          const slotBudget=Number(budgets[i])>0?Number(budgets[i]):fallbackBudget;
-          const candidates=all.filter(p=>p.role===r&&!soldIds.has(String(p.id))&&!used.has(String(p.id))&&s.objectives?.some(x=>String(x)===String(p.id))&&priority(s,p.id)===wanted&&(Number(p.credits)||0)<=slotBudget).sort((a,b)=>(Number(b.appeal)||-1)-(Number(a.appeal)||-1)||(Number(a.credits)||0)-(Number(b.credits)||0));
-          if(candidates.length){t.playerId=candidates[0].id;used.add(String(candidates[0].id));changed=true}else{t.playerId=null;changed=true}
-        }
-      });
-      targets.forEach((t,i)=>{
-        if(t?.playerId==null)return;
-        const p=all.find(x=>String(x.id)===String(t.playerId));if(!p)return;
-        if((Number(pcts[i])||0)<=0){const pl=planned(s,st,r);if(pl>0&&Number(p.credits)>0){const pct=Math.max(1,Math.min(99,Math.round(Number(p.credits)/pl*100)));pcts[i]=pct;budgets[i]=Number(p.credits);changed=true}}
-        else if(!(Number(budgets[i])>0)){budgets[i]=Math.round(planned(s,st,r)*Number(pcts[i])/100);changed=true}
-      });
-    });
-  });
-  if(changed)save(s);syncing=false;return changed;
-}
-function preserveView(){try{const screen=document.querySelector('.screen.active')?.id;if(screen)sessionStorage.setItem('AF_BRAIN_SYNC_SCREEN',screen)}catch(e){}}
-function restoreView(){try{const screen=sessionStorage.getItem('AF_BRAIN_SYNC_SCREEN');if(!screen)return;sessionStorage.removeItem('AF_BRAIN_SYNC_SCREEN');setTimeout(()=>{if(typeof window.go==='function')window.go(screen)},0)}catch(e){}}
-function wrapAssign(){if(wrapped)return;const fn=window.assignPlayer;if(typeof fn!=='function'){setTimeout(wrapAssign,100);return}window.assignPlayer=function(){const out=fn.apply(this,arguments);setTimeout(()=>{preserveView();if(sync())window.location.reload()},0);return out};wrapped=true}
-function boot(){const changed=sync();if(changed){preserveView();setTimeout(()=>window.location.reload(),20);return}restoreView();wrapAssign();if(typeof window.undoPurchase==='function'&&!window.undoPurchase.__brainSyncWrap){const fn=window.undoPurchase;window.undoPurchase=function(){const out=fn.apply(this,arguments);setTimeout(()=>{preserveView();if(sync())window.location.reload()},0);return out};window.undoPurchase.__brainSyncWrap=true}}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-window.BrainSyncFix={version:VERSION,sync};
+function slots(st,r){const n=Number(st?.slots?.[r]);return Number.isFinite(n)&&n>=0?Math.round(n):0}
+function ensure(st,r,n){if(!st.slotTargets||typeof st.slotTargets!=='object')st.slotTargets={};if(!Array.isArray(st.slotTargets[r]))st.slotTargets[r]=[];while(st.slotTargets[r].length<n)st.slotTargets[r].push({priority:'base',playerId:null});st.slotTargets[r]=st.slotTargets[r].slice(0,n);if(!st.slotBudgets||typeof st.slotBudgets!=='object')st.slotBudgets={};if(!Array.isArray(st.slotBudgets[r]))st.slotBudgets[r]=[];while(st.slotBudgets[r].length<n)st.slotBudgets[r].push(0);st.slotBudgets[r]=st.slotBudgets[r].slice(0,n);if(!st.slotBudgetManual||typeof st.slotBudgetManual!=='object')st.slotBudgetManual={};if(!Array.isArray(st.slotBudgetManual[r]))st.slotBudgetManual[r]=[];while(st.slotBudgetManual[r].length<n)st.slotBudgetManual[r].push(false);st.slotBudgetManual[r]=st.slotBudgetManual[r].slice(0,n);if(!st.slotFrozen||typeof st.slotFrozen!=='object')st.slotFrozen={};if(!Array.isArray(st.slotFrozen[r]))st.slotFrozen[r]=[];while(st.slotFrozen[r].length<n)st.slotFrozen[r].push(null);st.slotFrozen[r]=st.slotFrozen[r].slice(0,n)}
+function base(st){if(!st.baseAllocation||typeof st.baseAllocation!=='object')st.baseAllocation={...(st.allocation||{})};ROLES.forEach(r=>st.baseAllocation[r]=Math.max(0,Number(st.baseAllocation[r])||0));return st.baseAllocation}
+function planned(s,st,r){return Math.round((Number(s.initialCredits)||1200)*base(st)[r]/100)}
+function roleSpent(s,r){const my=myTeam(s);return Math.round((my?.players||[]).filter(p=>p.role===r).reduce((n,p)=>n+Math.max(0,Number(p.price)||0),0))}
+function sync(){if(syncing)return false;const s=read();if(!s||!Array.isArray(s.brainStrategies))return false;syncing=true;let changed=false;const soldSet=sold(s),all=players();s.brainStrategies.forEach(st=>{base(st);ROLES.forEach(r=>{const n=slots(st,r);if(!n)return;ensure(st,r,n);const t=st.slotTargets[r],f=st.slotFrozen[r];for(let i=0;i<n;i++){const pid=t[i]?.playerId;if(pid!=null&&soldSet.has(String(pid))){const own=(myTeam(s)?.players||[]).find(p=>String(p.id)===String(pid))||all.find(p=>String(p.id)===String(pid));if(own){const rec={playerId:own.id,name:own.name,price:Math.max(0,Number(own.price)||0),role:r};if(JSON.stringify(f[i])!==JSON.stringify(rec)){f[i]=rec;changed=true}}}else if(f[i]&& !soldSet.has(String(f[i].playerId))){f[i]=null;changed=true}}const budget=planned(s,st,r),spent=roleSpent(s,r);st.liveRoleBudget=st.liveRoleBudget||{};st.liveRoleBudget[r]=Math.max(0,budget-spent);});});if(changed)save(s);syncing=false;return changed}
+function liveState(s,st){base(st);const total=Math.max(0,Math.round((Number(s.initialCredits)||1200)-(Number(myTeam(s)?.spent)||0)));const raw={};let sum=0;ROLES.forEach(r=>{raw[r]=Math.max(0,planned(s,st,r)-roleSpent(s,r));sum+=raw[r]});if(sum>total&&sum>0){const f=total/sum;ROLES.forEach(r=>raw[r]=Math.floor(raw[r]*f))}else if(sum<total){const active=ROLES.filter(r=>slots(st,r)>((st.slotFrozen?.[r]||[]).filter(Boolean).length));let left=total-sum;for(const r of active){if(left<=0)break;const add=Math.floor(left/Math.max(1,active.length));raw[r]+=add;left-=add}if(left>0&&active[0])raw[active[0]]+=left}st.liveRoleBudget=raw;st.liveAllocation={};ROLES.forEach(r=>st.liveAllocation[r]=total>0?Math.round(raw[r]/total*100):0);return raw}
+function patchDOM(s,st){const rows=[...document.querySelectorAll('#brainContent .brain-role-row')];rows.forEach(row=>{const role=(row.className.match(/\brole-([PDCA])\b/)||[])[1];if(!role)return;const budget=Number(st.liveRoleBudget?.[role])||0;const pct=Number(st.liveAllocation?.[role])||0;const pctInput=row.querySelector('.brain-percent input');if(pctInput)pctInput.value=String(pct);const nums=row.querySelectorAll('.brain-role-numbers span');if(nums[2]){const b=nums[2].querySelector('b');if(b)b.textContent=String(budget)}const slotsBox=row.querySelector('.brain-slots');if(!slotsBox)return;const sb=st.slotBudgets?.[role]||[],f=st.slotFrozen?.[role]||[];[...slotsBox.querySelectorAll('.brain-slot')].forEach((slot,i)=>{const budgetEl=slot.querySelector('.brain-slot-budget');const pctEl=slot.querySelector('.brain-slot-percent input');const player=slot.querySelector('.brain-slot-player');if(f[i]){if(budgetEl)budgetEl.textContent=String(f[i].price);if(pctEl)pctEl.value=String(budget>0?Math.round(f[i].price/budget*100):0);if(player){player.textContent=f[i].name;player.classList.add('has-player')}}else if(budgetEl)budgetEl.textContent=String(Math.max(0,Math.round(Number(sb[i])||0)))})})}
+function wrapRender(){if(renderWrapped||typeof window.renderBrain!=='function')return;const old=window.renderBrain;window.renderBrain=function(){const s=read();const st=s&&s.brainStrategies?.find(x=>Number(x.id)===Number(s.activeBrainStrategyId));if(s&&st)liveState(s,st);const out=old.apply(this,arguments);setTimeout(()=>{if(s&&st){liveState(s,st);patchDOM(s,st)}},0);return out};renderWrapped=true}
+function wrapAssign(){if(wrapped)return;const fn=window.assignPlayer;if(typeof fn!=='function'){setTimeout(wrapAssign,100);return}window.assignPlayer=function(){const out=fn.apply(this,arguments);setTimeout(()=>{if(sync()){try{sessionStorage.setItem('AF_BRAIN_SYNC_SCREEN',document.querySelector('.screen.active')?.id||'brain')}catch(e){}window.location.reload()}else if(typeof window.renderBrain==='function')window.renderBrain()},0);return out};wrapped=true}
+function wrapUndo(){if(typeof window.undoPurchase!=='function'||window.undoPurchase.__brainSync35)return;const fn=window.undoPurchase;window.undoPurchase=function(){const out=fn.apply(this,arguments);setTimeout(()=>{sync();if(typeof window.renderBrain==='function')window.renderBrain()},0);return out};window.undoPurchase.__brainSync35=true}
+function wrapAllocation(){if(typeof window.updateBrainAllocation!=='function'||window.updateBrainAllocation.__brainSync35)return;const fn=window.updateBrainAllocation;window.updateBrainAllocation=function(id,role,value){const s=read(),st=s?.brainStrategies?.find(x=>Number(x.id)===Number(id));if(st){base(st);st.baseAllocation[role]=Math.max(0,Math.min(100,Number(value)||0))}const out=fn.apply(this,arguments);const fresh=read(),fs=fresh?.brainStrategies?.find(x=>Number(x.id)===Number(id));if(fs){base(fs);fs.baseAllocation[role]=Math.max(0,Math.min(100,Number(value)||0));save(fresh);liveState(fresh,fs)}return out};window.updateBrainAllocation.__brainSync35=true}
+function boot(){sync();wrapRender();wrapAssign();wrapUndo();wrapAllocation();try{const screen=sessionStorage.getItem('AF_BRAIN_SYNC_SCREEN');if(screen){sessionStorage.removeItem('AF_BRAIN_SYNC_SCREEN');setTimeout(()=>window.go&&window.go(screen),0)}}catch(e){}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();window.BrainSyncFix={version:VERSION,sync,liveState};
 })();
