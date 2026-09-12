@@ -1,4 +1,4 @@
-const CACHE = "asta-fantacalcio-v101";
+const CACHE = "asta-fantacalcio-v102";
 
 const ASSETS = [
     "./",
@@ -6,6 +6,9 @@ const ASSETS = [
     "./app.js",
     "./campetti.js",
     "./ui-fixes.js",
+    "./oracolo.js",
+    "./brain-sync-fix.js",
+    "./brain-picker-fix.js",
     "./players.js",
     "./listone-version.json",
     "./manifest.json",
