@@ -1,4 +1,4 @@
-const CACHE = "asta-fantacalcio-v113";
+const CACHE = "asta-fantacalcio-v114";
 
 const ASSETS = [
     "./","./index.html","./app.js","./campetti.js","./ui-fixes.js","./oracolo.js","./brain-sync-fix.js","./brain-picker-fix.js","./players.js","./listone-version.json","./manifest.json","./icon.svg","./assets/campetto.JPG"
