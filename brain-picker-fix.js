@@ -1,0 +1,10 @@
+/* Brain picker budget fix 3.5.24 */
+(function(){
+'use strict';
+const VERSION='3.5.24';
+function setVersion(){const v=document.querySelector('.app-version');if(v)v.textContent='V. '+VERSION}
+function addBudgets(){const modal=document.getElementById('modal');if(!modal||!modal.classList.contains('show'))return;let state=null;try{state=JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return}if(!state)return;modal.querySelectorAll('.brain-player-option').forEach(function(option){if(option.dataset.budgetReady==='1')return;const m=String(option.getAttribute('onclick')||'').match(/updateBrainSlotPlayer\((\d+),\s*[\'\"]([PDCA])[\'\"],\s*(\d+),/);if(!m)return;const strategyId=Number(m[1]),role=m[2],index=Number(m[3]);const strategy=(state.brainStrategies||[]).find(s=>Number(s.id)===strategyId);if(!strategy)return;const stored=Array.isArray(strategy.slotBudgets?.[role])?Number(strategy.slotBudgets[role][index]):NaN;let value=stored;if(!Number.isFinite(value)||value<0){let pct=0;try{pct=Number(window.brainStrategySlotAllocation?.(strategy,role)?.[index])||0}catch(e){pct=Number(strategy.slotAllocation?.[role]?.[index])||0}value=Math.round((Number(state.initialCredits)||1200)*(Number(strategy.allocation?.[role])||0)/100*pct/100)}if(!Number.isFinite(value)||value<0)value=0;const name=option.querySelector('.brain-player-option-name');if(!name)return;const budget=document.createElement('span');budget.className='brain-player-option-budget-v24';budget.textContent=value+' cr';name.insertAdjacentElement('afterend',budget);option.dataset.budgetReady='1'})}
+function boot(){setVersion();const modal=document.getElementById('modal');if(!modal)return;new MutationObserver(function(){addBudgets()}).observe(modal,{childList:true,subtree:true});document.addEventListener('click',function(e){if(e.target?.closest?.('.brain-slot-player'))setTimeout(addBudgets,0)},true);addBudgets()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+window.BrainPickerFix={version:VERSION};
+})();
