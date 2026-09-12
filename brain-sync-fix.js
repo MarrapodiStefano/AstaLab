@@ -1,7 +1,7 @@
-/* Brain sync 3.5.50 — acquisti reali, slot congelati e budget dinamico */
+/* Brain sync 3.5.51 — acquisti reali, slot congelati e budget dinamico */
 (function(){
 'use strict';
-const VERSION='3.5.50',ROLES=['P','D','C','A'];
+const VERSION='3.5.51',ROLES=['P','D','C','A'];
 let syncing=false,wrapped=false,renderWrapped=false;
 function read(){try{return JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}
 function save(s){localStorage.setItem('AF_CURRENT',JSON.stringify(s));try{const db=JSON.parse(localStorage.getItem('AF_DB')||'[]'),i=db.findIndex(x=>Number(x.id)===Number(s.id));if(i>=0){db[i]=s;localStorage.setItem('AF_DB',JSON.stringify(db))}}catch(e){}}
