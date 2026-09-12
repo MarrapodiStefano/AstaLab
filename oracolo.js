@@ -1,7 +1,7 @@
 /* ORACOLO 1.0.2 — motore Smart isolato dal Brain */
 (function(){
   'use strict';
-  const VERSION='3.5.7';
+  const VERSION='3.5.10';
   let busy=false,renderWrapped=false;
   const ROLES=['P','D','C','A'];
   function state(){try{return JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}
