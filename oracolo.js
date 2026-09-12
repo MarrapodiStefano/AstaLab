@@ -1,7 +1,7 @@
 /* ORACOLO 1.0.5 — motore Smart isolato dal Brain */
 (function(){
 'use strict';
-const VERSION='3.5.14';
+const VERSION='3.5.15';
 let busy=false,renderWrapped=false,observer=null;
 const ROLES=['P','D','C','A'];
 function state(){try{return JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}
@@ -18,7 +18,7 @@ function score(p,s,r,maxBudget,priority){const price=Math.max(0,Number(p.credits
 function slotBudget(st,r,i,planned,ps,budgets){const stored=Array.isArray(budgets)?Number(budgets[i]):NaN;if(Number.isFinite(stored)&&stored>0)return stored;return Math.round(planned*(Number(ps[i])||0)/100)}
 function choose(s,st,r,i,used,maxBudget){const priority=targets(st,r)[i]?.priority||'base';return candidatePool(s,r,priority,used).map(p=>({p,v:score(p,s,r,maxBudget,priority)})).filter(x=>Number.isFinite(x.v)).sort((a,b)=>b.v-a.v)[0]?.p||null}
 function writeState(s,st,r,i,p,budget){if(!st.slotTargets)st.slotTargets={};if(!Array.isArray(st.slotTargets[r]))st.slotTargets[r]=[];while(st.slotTargets[r].length<=i)st.slotTargets[r].push({priority:'base',playerId:null});st.slotTargets[r][i].playerId=p.id;if(!st.slotBudgets)st.slotBudgets={};if(!Array.isArray(st.slotBudgets[r]))st.slotBudgets[r]=[];st.slotBudgets[r][i]=Math.round(Number(budget)||Number(p.credits)||0)}
-function setBudgetInput(r,i,v){const row=document.querySelector('.brain-role-row.role-'+r),slot=row?.querySelectorAll('.brain-slot')[i],input=slot?.querySelector('.brain-slot-budget-input');if(input){input.value=String(Math.round(v));input.dispatchEvent(new Event('change',{bubbles:true))}}
+function setBudgetInput(r,i,v){const row=document.querySelector('.brain-role-row.role-'+r),slot=row?.querySelectorAll('.brain-slot')[i],input=slot?.querySelector('.brain-slot-budget-input');if(input){input.value=String(Math.round(v));input.dispatchEvent(new Event('change',{bubbles:true}))}}
 function persistState(s){localStorage.setItem('AF_CURRENT',JSON.stringify(s));try{const db=JSON.parse(localStorage.getItem('AF_DB')||'[]'),i=db.findIndex(x=>Number(x.id)===Number(s.id));if(i>=0){db[i]=s;localStorage.setItem('AF_DB',JSON.stringify(db))}}catch(e){}}
 function isEmptyPlayerId(v){return v==null||v===''||Number(v)===0||String(v).toLowerCase()==='undefined'}
 function fillStrategy(){if(busy)return;const s=state(),st=strategy(s);if(!s||!st)return;window.__AF_STATE=s;busy=true;const used=new Set(),mine=myTeam(s);(mine?.players||[]).forEach(p=>used.add(String(p.id)));let changed=0;ROLES.forEach(r=>{const ts=targets(st,r),ps=pcts(st,r),planned=Math.round((Number(s.initialCredits)||1200)*(Number(st.allocation?.[r])||0)/100),budgets=Array.isArray(st.slotBudgets?.[r])?st.slotBudgets[r]:[];ts.forEach((t,i)=>{if(!isEmptyPlayerId(t?.playerId))used.add(String(t.playerId))});ts.forEach((t,i)=>{if(!isEmptyPlayerId(t?.playerId))return;const cap=slotBudget(st,r,i,planned,ps,budgets);if(cap<=0)return;const p=choose(s,st,r,i,used,cap);if(!p)return;const price=Number(p.credits)||0;writeState(s,st,r,i,p,price);used.add(String(p.id));changed++;setBudgetInput(r,i,price)})});persistState(s);setTimeout(()=>{busy=false;if(changed)window.location.reload();else alert('Oracolo non ha trovato un giocatore compatibile con gli slot e i budget della strategia.')},250)}
