@@ -1,7 +1,7 @@
-/* ORACOLO 1.0.7 — motore Smart isolato dal Brain */
+/* ORACOLO 1.0.8 — motore Smart isolato dal Brain */
 (function(){
 'use strict';
-const VERSION='3.5.18';
+const VERSION='3.5.19';
 let busy=false,renderWrapped=false,observer=null;
 const ROLES=['P','D','C','A'];
 
@@ -37,7 +37,7 @@ function isEmptyPlayerId(v){
   return v==null||v===''||Number(v)===0||String(v).toLowerCase()==='undefined'||String(v).toLowerCase()==='null'
 }
 function objectivePriorityFor(s,id){
-  return s?.objectivePriorities?.[id] || 'low'
+  return s?.objectivePriorities?.[id] || 'base'
 }
 function eligibleTarget(s,r,target,pool,sold){
   const id=target?.playerId;
@@ -46,9 +46,9 @@ function eligibleTarget(s,r,target,pool,sold){
   if(!p||p.role!==r)return null;
   const priority=target?.priority||'base';
   const objectives=Array.isArray(s?.objectives)?s.objectives:[];
-  if(objectives.includes(p.id) && objectivePriorityFor(s,p.id)!==priority)return null;
-  if(priority!=='base' && (!objectives.includes(p.id)||objectivePriorityFor(s,p.id)!==priority))return null;
-  return p;
+  if(!objectives.includes(p.id))return null;
+  if(objectivePriorityFor(s,p.id)!==priority)return null;
+  return p
 }
 function targets(st,r,s,pool,sold){
   const n=slotCount(st,r);
@@ -81,9 +81,13 @@ function stats(id){
     return Array.isArray(v)?{pres:v[0],fm:v[2],goals:v[3],assists:v[4],yellow:v[5],red:v[6],pmv:v[9]}:(v||{})
   }catch(e){return {}}
 }
-function candidatePool(s,r,used){
-  const sold=soldMap(s);
-  return players().filter(p=>p.role===r&&!sold.has(String(p.id))&&!used.has(String(p.id)))
+function candidatePool(s,r,used,priority){
+  const sold=soldMap(s),objectives=Array.isArray(s?.objectives)?s.objectives:[];
+  return players().filter(p=>{
+    if(p.role!==r||sold.has(String(p.id))||used.has(String(p.id)))return false;
+    if(!objectives.includes(p.id))return false;
+    return objectivePriorityFor(s,p.id)===(priority||'base');
+  })
 }
 function score(p,s,r,maxBudget,priority){
   const price=Math.max(0,Number(p.credits)||0);
@@ -111,7 +115,7 @@ function slotBudget(st,r,i,planned,ps,budgets){
 }
 function choose(s,st,r,i,used,maxBudget,roleBudget){
   const priority=(Array.isArray(st?.slotTargets?.[r])?st.slotTargets[r][i]?.priority:'base')||'base';
-  const pool=candidatePool(s,r,used);
+  const pool=candidatePool(s,r,used,priority);
   let best=pool.map(p=>({p,v:score(p,s,r,maxBudget,priority)})).filter(x=>Number.isFinite(x.v)).sort((a,b)=>b.v-a.v)[0]?.p||null;
   if(best)return best;
   best=pool.map(p=>({p,v:score(p,s,r,roleBudget,priority)})).filter(x=>Number.isFinite(x.v)).sort((a,b)=>b.v-a.v)[0]?.p||null;
@@ -181,8 +185,12 @@ function fillStrategy(){
   persistState(s);
   setTimeout(()=>{
     busy=false;
-    if(changed)window.location.reload();
-    else alert('Oracolo non ha trovato un giocatore compatibile: nessun calciatore disponibile del ruolo rientra nel budget della strategia.');
+    if(changed){
+      sessionStorage.setItem('AF_ORACOLO_RETURN','brain');
+      window.location.reload();
+    }else{
+      alert('Oracolo non ha trovato un giocatore compatibile: nessun obiettivo disponibile del ruolo rientra nel budget della strategia.');
+    }
   },250)
 }
 function addButton(){
