@@ -21,20 +21,25 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
 function campettiBoot(){renderCampetti();initCampettiZoom();}
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',campettiBoot,{once:true});}else{campettiBoot();}
 
-/* UI + Oracolo bootstrap */
+/* UI + Oracolo bootstrap — Oracolo deve essere caricato anche quando ui-fixes è già presente */
 (function loadAstaModules(){
-  if(document.querySelector('script[data-ui-fixes]'))return;
+  function loadOracolo(){
+    if(document.querySelector('script[data-oracolo]'))return;
+    const script=document.createElement('script');
+    script.src='./oracolo.js?v=3.5.10';
+    script.dataset.oracolo='1';
+    script.async=false;
+    document.body.appendChild(script);
+  }
+  const existingUi=document.querySelector('script[data-ui-fixes]');
+  if(existingUi){
+    loadOracolo();
+    return;
+  }
   const ui=document.createElement('script');
   ui.src='./ui-fixes.js?v=3.5.7';
   ui.dataset.uiFixes='1';
   ui.async=false;
   document.body.appendChild(ui);
-  ui.onload=function(){
-    if(document.querySelector('script[data-oracolo]'))return;
-    const script=document.createElement('script');
-    script.src='./oracolo.js?v=3.5.9';
-    script.dataset.oracolo='1';
-    script.async=false;
-    document.body.appendChild(script);
-  };
+  ui.onload=loadOracolo;
 })();
