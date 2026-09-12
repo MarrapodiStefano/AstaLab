@@ -1,7 +1,7 @@
-/* Brain sync 3.5.55 — acquisti reali, recupero slot e budget dinamico */
+/* Brain sync 3.5.56 — acquisti reali, recupero slot e budget dinamico */
 (function(){
 'use strict';
-const VERSION='3.5.55',ROLES=['P','D','C','A'],RANK={max:5,high:4,low:3,base:2,bet:1};
+const VERSION='3.5.56',ROLES=['P','D','C','A'],RANK={max:5,high:4,low:3,base:2,bet:1};
 let syncing=false,wrapped=false,renderWrapped=false;
 function read(){try{return JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}
 function save(s){localStorage.setItem('AF_CURRENT',JSON.stringify(s));try{const db=JSON.parse(localStorage.getItem('AF_DB')||'[]'),i=db.findIndex(x=>Number(x.id)===Number(s.id));if(i>=0){db[i]=s;localStorage.setItem('AF_DB',JSON.stringify(db))}}catch(e){}}
@@ -26,7 +26,7 @@ function wrapRender(){if(renderWrapped||typeof window.renderBrain!=='function')r
 function wrapAssign(){if(wrapped)return;const fn=window.assignPlayer;if(typeof fn!=='function'){setTimeout(wrapAssign,100);return}window.assignPlayer=function(){const out=fn.apply(this,arguments);setTimeout(refresh,80);return out};wrapped=true}
 function wrapUndo(){if(typeof window.undoPurchase!=='function'||window.undoPurchase.__brainSync55)return;const fn=window.undoPurchase;window.undoPurchase=function(){const out=fn.apply(this,arguments);setTimeout(refresh,80);return out};window.undoPurchase.__brainSync55=true}
 function wrapAllocation(){if(typeof window.updateBrainAllocation!=='function'||window.updateBrainAllocation.__brainSync55)return;const fn=window.updateBrainAllocation;window.updateBrainAllocation=function(id,role,value){const out=fn.apply(this,arguments);setTimeout(refresh,0);return out};window.updateBrainAllocation.__brainSync55=true}
-function ensureOracolo(){try{if(window.Oracolo?.version===VERSION)return;const old=document.querySelector('script[data-oracolo]');if(old)old.remove();const s=document.createElement('script');s.src='./oracolo.js?v=3.5.54';s.setAttribute('data-oracolo','1');s.setAttribute('data-oracolo-sync-355','1');s.async=false;(document.head||document.documentElement).appendChild(s)}catch(e){}}
+function ensureOracolo(){try{if(window.Oracolo?.version===VERSION)return;const old=document.querySelector('script[data-oracolo]');if(old)old.remove();const s=document.createElement('script');s.src='./oracolo.js?v=3.5.56';s.setAttribute('data-oracolo','1');s.setAttribute('data-oracolo-sync-355','1');s.async=false;(document.head||document.documentElement).appendChild(s)}catch(e){}}
 function setVersion(){const v=document.querySelector('.app-version');if(v)v.textContent='V. '+VERSION}
 function boot(){installStyle();setVersion();ensureOracolo();sync();wrapRender();wrapAssign();wrapUndo();wrapAllocation();setTimeout(refresh,80)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();window.BrainSyncFix={version:VERSION,sync,refresh};
