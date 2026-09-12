@@ -4,63 +4,25 @@
   const VERSION='3.5.7';
   let busy=false,renderWrapped=false;
   const ROLES=['P','D','C','A'];
-  const ROLE_LABEL={P:'Portieri',D:'Difensori',C:'Centrocampisti',A:'Attaccanti'};
   function state(){try{return JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}
   function players(){return typeof window.allPlayers==='function'?window.allPlayers():[]}
   function myTeam(s){return (s?.teams||[]).find(t=>Number(t.id)===Number(s.myTeamId??0))||(s?.teams||[])[0]}
   function soldMap(s){const m=new Map();(s?.teams||[]).forEach(t=>(t.players||[]).forEach(p=>m.set(String(p.id),t.id)));return m}
-  function strategy(s){
-    const direct=(s?.brainStrategies||[]).find(x=>Number(x.id)===Number(s.activeBrainStrategyId));
-    if(direct)return direct;
-    const card=document.querySelector('.brain-strategy.active');
-    const title=card?.querySelector('.brain-strategy-name');
-    const m=String(title?.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/);
-    return m?(s?.brainStrategies||[]).find(x=>Number(x.id)===Number(m[1]))||null:null;
-  }
+  function strategy(s){const direct=(s?.brainStrategies||[]).find(x=>Number(x.id)===Number(s.activeBrainStrategyId));if(direct)return direct;const card=document.querySelector('.brain-strategy.active'),title=card?.querySelector('.brain-strategy-name'),m=String(title?.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/);return m?(s?.brainStrategies||[]).find(x=>Number(x.id)===Number(m[1]))||null:null}
   function targets(st,r){const a=Array.isArray(st?.slotTargets?.[r])?st.slotTargets[r].slice():[];const n=Number(st?.slots?.[r]||0);while(a.length<n)a.push({priority:'base',playerId:null});return a.slice(0,n)}
   function pcts(st,r){const a=Array.isArray(st?.slotAllocation?.[r])?st.slotAllocation[r].slice():[];const n=Number(st?.slots?.[r]||0);while(a.length<n)a.push(0);return a.slice(0,n)}
-  function stats(id){const db=JSON.parse(localStorage.getItem('AF_ORACOLO_STATS')||'{}');const v=db[String(id)];return Array.isArray(v)?{pres:v[0],mv:v[1],fm:v[2],goals:v[3],assists:v[4],yellow:v[5],red:v[6],pmv:v[9]}:(v||{})}
-  function candidatePool(s,r,priority,used){
-    const sold=soldMap(s),all=players().filter(p=>p.role===r&&!sold.has(String(p.id))&&!used.has(String(p.id)));
-    if(typeof window.objectivePriority!=='function')return all;
-    const preferred=all.filter(p=>window.objectivePriority(p.id)===priority);
-    return preferred.length?preferred:all;
-  }
-  function score(p,s,r,remaining,priority){
-    const price=Math.max(0,Number(p.credits)||0);if(price>remaining)return -Infinity;
-    const st=stats(p.id),my=myTeam(s),owned=(my?.players||[]).filter(x=>x.role===r);
-    const same=owned.filter(x=>String(x.realTeam||x.team||'').toLowerCase()===String(p.team||'').toLowerCase()).length;
-    let v=(Number(p.appeal)||0)*18+Math.min(Number(st.pres)||0,38)*.9+(Number(st.goals)||0)*2.8+(Number(st.assists)||0)*2.6+(Number(st.fm)||0)*4.5+(Number(st.pmv)||Number(p.pmv)||0)*.05;
-    v-=(Number(st.yellow)||0)*.35+(Number(st.red)||0)*1.5+same*9;if(!same)v+=5;
-    if(typeof window.objectivePriority==='function'&&window.objectivePriority(p.id)===priority)v+=20;
-    return v;
-  }
+  function stats(id){const db=JSON.parse(localStorage.getItem('AF_ORACOLO_STATS')||'{}'),v=db[String(id)];return Array.isArray(v)?{pres:v[0],fm:v[2],goals:v[3],assists:v[4],yellow:v[5],red:v[6],pmv:v[9]}:(v||{})}
+  function candidatePool(s,r,priority,used){const sold=soldMap(s),all=players().filter(p=>p.role===r&&!sold.has(String(p.id))&&!used.has(String(p.id)));if(typeof window.objectivePriority!=='function')return all;const preferred=all.filter(p=>window.objectivePriority(p.id)===priority);return preferred.length?preferred:all}
+  function score(p,s,r,remaining,priority){const price=Math.max(0,Number(p.credits)||0);if(price>remaining)return -Infinity;const st=stats(p.id),my=myTeam(s),owned=(my?.players||[]).filter(x=>x.role===r),same=owned.filter(x=>String(x.realTeam||x.team||'').toLowerCase()===String(p.team||'').toLowerCase()).length;let v=(Number(p.appeal)||0)*18+Math.min(Number(st.pres)||0,38)*.9+(Number(st.goals)||0)*2.8+(Number(st.assists)||0)*2.6+(Number(st.fm)||0)*4.5+(Number(st.pmv)||Number(p.pmv)||0)*.05;v-=(Number(st.yellow)||0)*.35+(Number(st.red)||0)*1.5+same*9;if(!same)v+=5;if(typeof window.objectivePriority==='function'&&window.objectivePriority(p.id)===priority)v+=20;return v}
   function choose(s,st,r,i,used,remaining){const priority=targets(st,r)[i]?.priority||'base';return candidatePool(s,r,priority,used).map(p=>({p,v:score(p,s,r,remaining,priority)})).filter(x=>Number.isFinite(x.v)).sort((a,b)=>b.v-a.v)[0]?.p||null}
-  function writeState(s,st,r,i,p,budget){
-    if(!st.slotTargets)st.slotTargets={};if(!Array.isArray(st.slotTargets[r]))st.slotTargets[r]=[];
-    while(st.slotTargets[r].length<=i)st.slotTargets[r].push({priority:'base',playerId:null});
-    st.slotTargets[r][i].playerId=p.id;
-    if(!st.slotBudgets)st.slotBudgets={};if(!Array.isArray(st.slotBudgets[r]))st.slotBudgets[r]=[];
-    st.slotBudgets[r][i]=Math.round(Number(budget)||Number(p.credits)||0);
-    localStorage.setItem('AF_CURRENT',JSON.stringify(s));
-    return true;
-  }
+  function writeState(s,st,r,i,p,budget){if(!st.slotTargets)st.slotTargets={};if(!Array.isArray(st.slotTargets[r]))st.slotTargets[r]=[];while(st.slotTargets[r].length<=i)st.slotTargets[r].push({priority:'base',playerId:null});st.slotTargets[r][i].playerId=p.id;if(!st.slotBudgets)st.slotBudgets={};if(!Array.isArray(st.slotBudgets[r]))st.slotBudgets[r]=[];st.slotBudgets[r][i]=Math.round(Number(budget)||Number(p.credits)||0);return true}
   function setBudgetInput(r,i,v){const row=document.querySelector('.brain-role-row.role-'+r),slot=row?.querySelectorAll('.brain-slot')[i],input=slot?.querySelector('.brain-slot-budget-input');if(input){input.value=String(Math.round(v));input.dispatchEvent(new Event('change',{bubbles:true))}}
-  function fillStrategy(){
-    if(busy)return;const s=state(),st=strategy(s);if(!s||!st)return;busy=true;
-    const used=new Set(),mine=myTeam(s);(mine?.players||[]).forEach(p=>used.add(String(p.id)));let changed=0;
-    ROLES.forEach(r=>{
-      const ts=targets(st,r),ps=pcts(st,r),planned=Math.round((Number(s.initialCredits)||1200)*(Number(st.allocation?.[r])||0)/100),budgets=Array.isArray(st.slotBudgets?.[r])?st.slotBudgets[r]:[];let committed=0;
-      ts.forEach((t,i)=>{if(t?.playerId!=null){used.add(String(t.playerId));committed+=Number(budgets[i]??Math.round(planned*(Number(ps[i])||0)/100))||0}});
-      ts.forEach((t,i)=>{if(t?.playerId!=null)return;const remaining=Math.max(0,planned-committed),p=choose(s,st,r,i,used,remaining);if(!p)return;const price=Number(p.credits)||0;if(!writeState(s,st,r,i,p,price))return;used.add(String(p.id));committed+=price;changed++;setBudgetInput(r,i,price)});
-    });
-    localStorage.setItem('AF_CURRENT',JSON.stringify(s));
-    setTimeout(()=>{busy=false;if(changed&&typeof window.renderBrain==='function')window.renderBrain();if(!changed)alert('Oracolo non ha trovato uno slot compilabile: controlla slot vuoti e budget disponibili.')},250);
-  }
+  function persistState(s){localStorage.setItem('AF_CURRENT',JSON.stringify(s));try{const db=JSON.parse(localStorage.getItem('AF_DB')||'[]'),i=db.findIndex(x=>Number(x.id)===Number(s.id));if(i>=0){db[i]=s;localStorage.setItem('AF_DB',JSON.stringify(db))}}catch(e){}}
+  function fillStrategy(){if(busy)return;const s=state(),st=strategy(s);if(!s||!st)return;busy=true;const used=new Set(),mine=myTeam(s);(mine?.players||[]).forEach(p=>used.add(String(p.id)));let changed=0;ROLES.forEach(r=>{const ts=targets(st,r),ps=pcts(st,r),planned=Math.round((Number(s.initialCredits)||1200)*(Number(st.allocation?.[r])||0)/100),budgets=Array.isArray(st.slotBudgets?.[r])?st.slotBudgets[r]:[];let committed=0;ts.forEach((t,i)=>{if(t?.playerId!=null){used.add(String(t.playerId));committed+=Number(budgets[i]??Math.round(planned*(Number(ps[i])||0)/100))||0}});ts.forEach((t,i)=>{if(t?.playerId!=null)return;const remaining=Math.max(0,planned-committed),p=choose(s,st,r,i,used,remaining);if(!p)return;const price=Number(p.credits)||0;writeState(s,st,r,i,p,price);used.add(String(p.id));committed+=price;changed++;setBudgetInput(r,i,price)})});persistState(s);setTimeout(()=>{busy=false;if(changed)window.location.reload();else alert('Oracolo non ha trovato uno slot compilabile: controlla slot vuoti e budget disponibili.')},250)}
   function addButton(){document.querySelectorAll('.brain-strategy.active').forEach(card=>{if(card.querySelector('.oracolo-button'))return;const total=card.querySelector('.brain-total');if(!total)return;const wrap=document.createElement('span');wrap.className='oracolo-wrap';const b=document.createElement('button');b.type='button';b.className='oracolo-button';b.innerHTML='<span class="oracolo-icon">🔮</span><span>Oracolo</span>';b.title='Consigli Smart per gli slot vuoti';b.onclick=e=>{e.preventDefault();e.stopPropagation();fillStrategy()};wrap.appendChild(b);total.appendChild(wrap)})}
   function style(){if(document.getElementById('oracoloStyle'))return;const c=document.createElement('style');c.id='oracoloStyle';c.textContent='.brain-total{display:flex!important;align-items:center;justify-content:space-between;gap:6px;flex-wrap:nowrap!important}.oracolo-wrap{display:inline-flex;align-items:center;gap:4px;margin-left:auto}.oracolo-button{height:30px;padding:0 9px;border:1px solid rgba(93,63,145,.28);border-radius:10px;background:linear-gradient(135deg,#fff,#f2edff);color:#5b3b8f;font-weight:850;font-size:12px;display:inline-flex;align-items:center;gap:4px;box-shadow:0 2px 7px rgba(75,45,120,.12)}.oracolo-icon{font-size:16px;line-height:1}';document.head.appendChild(c)}
-  function boot(){style();if(renderWrapped)return;const old=window.renderBrain;if(typeof old==='function'){window.renderBrain=function(){const x=old.apply(this,arguments);setTimeout(()=>{addButton()},0);return x};renderWrapped=true;window.renderBrain()}else setTimeout(boot,100)}
+  function boot(){style();if(renderWrapped)return;const old=window.renderBrain;if(typeof old==='function'){window.renderBrain=function(){const x=old.apply(this,arguments);setTimeout(addButton,0);return x};renderWrapped=true;window.renderBrain()}else setTimeout(boot,100)}
   window.Oracolo={version:VERSION,run:fillStrategy};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
-(function(){function sync(e){const b=e.target?.closest?.('.oracolo-button');if(!b)return;const card=b.closest('.brain-strategy'),title=card?.querySelector('.brain-strategy-name'),m=String(title?.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/);if(!m)return;const s=stateSafe();if(s){s.activeBrainStrategyId=Number(m[1]);localStorage.setItem('AF_CURRENT',JSON.stringify(s))}}function stateSafe(){try{return JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}document.addEventListener('click',sync,true)})();
+(function(){function sync(e){const b=e.target?.closest?.('.oracolo-button');if(!b)return;const card=b.closest('.brain-strategy'),title=card?.querySelector('.brain-strategy-name'),m=String(title?.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/);if(!m)return;try{const s=JSON.parse(localStorage.getItem('AF_CURRENT')||'null');if(s){s.activeBrainStrategyId=Number(m[1]);localStorage.setItem('AF_CURRENT',JSON.stringify(s))}}catch(x){}}document.addEventListener('click',sync,true)})();
