@@ -26,7 +26,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
   function loadOracolo(){
     if(document.querySelector('script[data-oracolo]'))return;
     const script=document.createElement('script');
-    script.src='./oracolo.js?v=3.5.11';
+    script.src='./oracolo.js?v=3.5.12';
     script.dataset.oracolo='1';
     script.async=false;
     document.body.appendChild(script);
@@ -37,7 +37,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
     return;
   }
   const ui=document.createElement('script');
-  ui.src='./ui-fixes.js?v=3.5.11';
+  ui.src='./ui-fixes.js?v=3.5.12';
   ui.dataset.uiFixes='1';
   ui.async=false;
   document.body.appendChild(ui);
