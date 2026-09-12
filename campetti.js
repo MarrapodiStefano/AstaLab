@@ -32,7 +32,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
   ui.onload=function(){
     if(document.querySelector('script[data-oracolo]'))return;
     const script=document.createElement('script');
-    script.src='./oracolo.js?v=3.5.8';
+    script.src='./oracolo.js?v=3.5.9';
     script.dataset.oracolo='1';
     script.async=false;
     document.body.appendChild(script);
