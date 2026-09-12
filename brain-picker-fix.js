@@ -1,7 +1,7 @@
-/* Brain picker results redesign 3.5.50 */
+/* Brain picker results redesign 3.5.53 */
 (function(){
 'use strict';
-const VERSION='3.5.50';
+const VERSION='3.5.53';
 function setVersion(){const v=document.querySelector('.app-version');if(v)v.textContent='V. '+VERSION}
 function playerReference(p){const credits=Number(p?.credits);return Number.isFinite(credits)&&credits>0?credits:null}
 function installStyle(){if(document.getElementById('brainPickerBudgetStyleV38'))return;const s=document.createElement('style');s.id='brainPickerBudgetStyleV38';s.textContent=`
