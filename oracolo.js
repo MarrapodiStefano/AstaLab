@@ -1,6 +1,6 @@
-/* ORACOLO 1.0.26 — motore Smart 3.5.52 */
+/* ORACOLO 1.0.27 — motore Smart 3.5.53 */
 (function(){'use strict';
-const VERSION='3.5.52',ROLES=['P','D','C','A'],ROLE_NAMES={P:'Portieri',D:'Difensori',C:'Centrocampisti',A:'Attaccanti'},RANK={max:5,high:4,low:3,base:2,bet:1};let busy=false,observer=null,wrapped=false;
+const VERSION='3.5.53',ROLES=['P','D','C','A'],ROLE_NAMES={P:'Portieri',D:'Difensori',C:'Centrocampisti',A:'Attaccanti'},RANK={max:5,high:4,low:3,base:2,bet:1};let busy=false,observer=null,wrapped=false;
 function state(){try{return(typeof current!=='undefined'&&current)||JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}
 function players(){try{return typeof window.allPlayers==='function'?window.allPlayers():[]}catch(e){return[]}}
 function mine(s){return(s?.teams||[]).find(t=>Number(t.id)===Number(s.myTeamId))||(s?.teams||[])[0]||null}
@@ -13,7 +13,6 @@ function base(st){st.baseAllocation=st.baseAllocation&&typeof st.baseAllocation=
 function planned(s,st,r){return Math.round((Number(s.initialCredits)||1200)*base(st)[r]/100)}
 function roleSpent(s,r){const my=mine(s);return Math.round((my?.players||[]).filter(p=>p.role===r).reduce((n,p)=>n+Math.max(0,Number(p.price)||0),0))}
 function score(p,s,r){const my=mine(s),owned=(my?.players||[]).filter(x=>x.role===r),same=owned.some(x=>String(x.realTeam||x.team||'').toLowerCase()===String(p.team||'').toLowerCase());return(Number(p.appeal)||0)*18+(same?-9:5)}
-/* Lo slot richiede ESATTAMENTE la stessa appetibilità del giocatore. */
 function eligiblePriority(candidate,required){return RANK[candidate]===RANK[required]}
 function candidatePool(s,r,used,required){const soldSet=sold(s),obj=new Set((s.objectives||[]).map(x=>String(x)));return players().filter(p=>p.role===r&&!soldSet.has(String(p.id))&&!used.has(String(p.id))&&obj.has(String(p.id))&&Number(p.credits)>0&&eligiblePriority(priority(s,p.id),required))}
 function cheapestForTask(s,t,used){const list=candidatePool(s,t.r,used,t.priority).sort((a,b)=>Number(a.credits)-Number(b.credits)||score(b,s,t.r)-score(a,s,t.r));return list.find(p=>t.manualCap==null||Math.round(Number(p.credits)||0)<=t.manualCap)||null}
