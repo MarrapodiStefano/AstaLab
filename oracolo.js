@@ -96,7 +96,7 @@
     const input=document.createElement('input');input.type='file';input.accept='.csv,text/csv';input.onchange=()=>{const file=input.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const lines=String(reader.result||'').split(/\r?\n/).filter(Boolean);if(!lines.length)throw 0;const parse=line=>line.split(',').map(x=>x.trim()),head=parse(lines[0]),idx={};head.forEach((x,i)=>idx[x]=i);const out={};lines.slice(1).forEach(line=>{const a=parse(line),id=a[idx.Id];if(!id)return;const n=k=>{const v=Number(a[idx[k]]);return Number.isFinite(v)?v:null;};out[String(id)]=[n('Pv'),n('Mv'),n('Fm'),n('Gf'),n('Ass'),n('Amm'),n('Esp'),n('Au'),n('Gs'),n('PMV')];});localStorage.setItem('AF_ORACOLO_STATS',JSON.stringify(out));alert('Statistiche caricate: '+Object.keys(out).length+' calciatori.');}catch(e){alert('Impossibile leggere il file statistiche. Verifica che sia il CSV della stagione precedente.');}};reader.readAsText(file,'UTF-8');};input.click();
   }
   function addButton(){
-    document.querySelectorAll('.brain-strategy.expanded.active').forEach(card=>{
+    document.querySelectorAll('.brain-strategy.active').forEach(card=>{
       if(card.querySelector('.oracolo-button'))return;const total=card.querySelector('.brain-total');if(!total)return;
       const title=card.querySelector('.brain-strategy-name'),m=String(title?.getAttribute('onclick')||'').match(/toggleBrainStrategy\((\d+)\)/);if(!m)return;
       const wrap=document.createElement('span');wrap.className='oracolo-wrap';
