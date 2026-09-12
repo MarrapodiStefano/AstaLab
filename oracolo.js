@@ -1,6 +1,6 @@
-/* ORACOLO 1.0.27 — motore Smart 3.5.53 */
+/* ORACOLO 1.0.27 — motore Smart 3.5.54 */
 (function(){'use strict';
-const VERSION='3.5.53',ROLES=['P','D','C','A'],ROLE_NAMES={P:'Portieri',D:'Difensori',C:'Centrocampisti',A:'Attaccanti'},RANK={max:5,high:4,low:3,base:2,bet:1};let busy=false,observer=null,wrapped=false;
+const VERSION='3.5.54',ROLES=['P','D','C','A'],ROLE_NAMES={P:'Portieri',D:'Difensori',C:'Centrocampisti',A:'Attaccanti'},RANK={max:5,high:4,low:3,base:2,bet:1};let busy=false,observer=null,wrapped=false;
 function state(){try{return(typeof current!=='undefined'&&current)||JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}
 function players(){try{return typeof window.allPlayers==='function'?window.allPlayers():[]}catch(e){return[]}}
 function mine(s){return(s?.teams||[]).find(t=>Number(t.id)===Number(s.myTeamId))||(s?.teams||[])[0]||null}
