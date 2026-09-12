@@ -2,7 +2,7 @@
 (function(){
   'use strict';
   const VERSION='3.5.10';
-  let busy=false,renderWrapped=false;
+  let busy=false,renderWrapped=false,observer=null;
   const ROLES=['P','D','C','A'];
   function state(){try{return JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}
   function players(){return typeof window.allPlayers==='function'?window.allPlayers():[]}
@@ -19,9 +19,42 @@
   function setBudgetInput(r,i,v){const row=document.querySelector('.brain-role-row.role-'+r),slot=row?.querySelectorAll('.brain-slot')[i],input=slot?.querySelector('.brain-slot-budget-input');if(input){input.value=String(Math.round(v));input.dispatchEvent(new Event('change',{bubbles:true))}}
   function persistState(s){localStorage.setItem('AF_CURRENT',JSON.stringify(s));try{const db=JSON.parse(localStorage.getItem('AF_DB')||'[]'),i=db.findIndex(x=>Number(x.id)===Number(s.id));if(i>=0){db[i]=s;localStorage.setItem('AF_DB',JSON.stringify(db))}}catch(e){}}
   function fillStrategy(){if(busy)return;const s=state(),st=strategy(s);if(!s||!st)return;busy=true;const used=new Set(),mine=myTeam(s);(mine?.players||[]).forEach(p=>used.add(String(p.id)));let changed=0;ROLES.forEach(r=>{const ts=targets(st,r),ps=pcts(st,r),planned=Math.round((Number(s.initialCredits)||1200)*(Number(st.allocation?.[r])||0)/100),budgets=Array.isArray(st.slotBudgets?.[r])?st.slotBudgets[r]:[];let committed=0;ts.forEach((t,i)=>{if(t?.playerId!=null){used.add(String(t.playerId));committed+=Number(budgets[i]??Math.round(planned*(Number(ps[i])||0)/100))||0}});ts.forEach((t,i)=>{if(t?.playerId!=null)return;const remaining=Math.max(0,planned-committed),p=choose(s,st,r,i,used,remaining);if(!p)return;const price=Number(p.credits)||0;writeState(s,st,r,i,p,price);used.add(String(p.id));committed+=price;changed++;setBudgetInput(r,i,price)})});persistState(s);setTimeout(()=>{busy=false;if(changed)window.location.reload();else alert('Oracolo non ha trovato uno slot compilabile: controlla slot vuoti e budget disponibili.')},250)}
-  function addButton(){document.querySelectorAll('.brain-strategy.active').forEach(card=>{if(card.querySelector('.oracolo-button'))return;const total=card.querySelector('.brain-total');if(!total)return;const wrap=document.createElement('span');wrap.className='oracolo-wrap';const b=document.createElement('button');b.type='button';b.className='oracolo-button';b.innerHTML='<span class="oracolo-icon">🔮</span><span>Oracolo</span>';b.title='Consigli Smart per gli slot vuoti';b.onclick=e=>{e.preventDefault();e.stopPropagation();fillStrategy()};wrap.appendChild(b);total.appendChild(wrap)})}
+  function addButton(){
+    document.querySelectorAll('.brain-strategy.active').forEach(card=>{
+      if(card.querySelector('.oracolo-button'))return;
+      const total=card.querySelector('.brain-total');
+      if(!total)return;
+      const wrap=document.createElement('span');
+      wrap.className='oracolo-wrap';
+      const b=document.createElement('button');
+      b.type='button';
+      b.className='oracolo-button';
+      b.innerHTML='<span class="oracolo-icon">🔮</span><span>Oracolo</span>';
+      b.title='Consigli Smart per gli slot vuoti';
+      b.onclick=e=>{e.preventDefault();e.stopPropagation();fillStrategy()};
+      wrap.appendChild(b);
+      total.appendChild(wrap);
+    });
+  }
   function style(){if(document.getElementById('oracoloStyle'))return;const c=document.createElement('style');c.id='oracoloStyle';c.textContent='.brain-total{display:flex!important;align-items:center;justify-content:space-between;gap:6px;flex-wrap:nowrap!important}.oracolo-wrap{display:inline-flex;align-items:center;gap:4px;margin-left:auto}.oracolo-button{height:30px;padding:0 9px;border:1px solid rgba(93,63,145,.28);border-radius:10px;background:linear-gradient(135deg,#fff,#f2edff);color:#5b3b8f;font-weight:850;font-size:12px;display:inline-flex;align-items:center;gap:4px;box-shadow:0 2px 7px rgba(75,45,120,.12)}.oracolo-icon{font-size:16px;line-height:1}';document.head.appendChild(c)}
-  function boot(){style();if(renderWrapped)return;const old=window.renderBrain;if(typeof old==='function'){window.renderBrain=function(){const x=old.apply(this,arguments);setTimeout(addButton,0);return x};renderWrapped=true;window.renderBrain()}else setTimeout(boot,100)}
+  function watchBrain(){
+    if(observer||!document.body)return;
+    const target=document.getElementById('brainContent')||document.body;
+    observer=new MutationObserver(()=>addButton());
+    observer.observe(target,{childList:true,subtree:true});
+    addButton();
+  }
+  function boot(){
+    style();
+    if(renderWrapped)return;
+    const old=window.renderBrain;
+    if(typeof old==='function'){
+      window.renderBrain=function(){const x=old.apply(this,arguments);setTimeout(addButton,0);return x};
+      renderWrapped=true;
+      window.renderBrain();
+      watchBrain();
+    }else setTimeout(boot,100);
+  }
   window.Oracolo={version:VERSION,run:fillStrategy};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
