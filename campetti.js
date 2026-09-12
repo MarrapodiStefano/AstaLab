@@ -21,12 +21,20 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
 function campettiBoot(){renderCampetti();initCampettiZoom();}
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',campettiBoot,{once:true});}else{campettiBoot();}
 
-/* UI bootstrap */
-(function loadUIFixes(){
+/* UI + Oracolo bootstrap */
+(function loadAstaModules(){
   if(document.querySelector('script[data-ui-fixes]'))return;
-  const script=document.createElement('script');
-  script.src='./ui-fixes.js?v=3.5.5';
-  script.dataset.uiFixes='1';
-  script.async=false;
-  document.body.appendChild(script);
+  const ui=document.createElement('script');
+  ui.src='./ui-fixes.js?v=3.5.6';
+  ui.dataset.uiFixes='1';
+  ui.async=false;
+  document.body.appendChild(ui);
+  ui.onload=function(){
+    if(document.querySelector('script[data-oracolo]'))return;
+    const script=document.createElement('script');
+    script.src='./oracolo.js?v=3.5.6';
+    script.dataset.oracolo='1';
+    script.async=false;
+    document.body.appendChild(script);
+  };
 })();
