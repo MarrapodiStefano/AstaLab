@@ -1,7 +1,7 @@
-/* UI fixes 3.5.10 — funzioni di interfaccia indipendenti */
+/* UI fixes 3.5.11 — funzioni di interfaccia indipendenti */
 (function(){
   'use strict';
-  const VERSION='3.5.10';
+  const VERSION='3.5.11';
   let longPressTimer=null;
   let longPressFired=false;
   let pressTarget=null;
@@ -22,7 +22,7 @@
   function loadOracolo(){
     if(document.querySelector('script[data-oracolo]'))return;
     const script=document.createElement('script');
-    script.src='./oracolo.js?v=3.5.10';
+    script.src='./oracolo.js?v=3.5.11';
     script.dataset.oracolo='1';
     script.async=false;
     document.body.appendChild(script);
