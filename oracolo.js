@@ -1,7 +1,7 @@
-/* ORACOLO 1.0.16 — motore Smart 3.5.36 */
+/* ORACOLO 1.0.17 — motore Smart 3.5.37 */
 (function(){
 'use strict';
-const VERSION='3.5.36',ROLES=['P','D','C','A'],ROLE_NAMES={P:'Portieri',D:'Difensori',C:'Centrocampisti',A:'Attaccanti'};
+const VERSION='3.5.37',ROLES=['P','D','C','A'],ROLE_NAMES={P:'Portieri',D:'Difensori',C:'Centrocampisti',A:'Attaccanti'};
 let busy=false,observer=null,renderWrapped=false;
 function state(){try{return(typeof current!=='undefined'&&current)||JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}
 function players(){try{return typeof window.allPlayers==='function'?window.allPlayers():[]}catch(e){return[]}}
