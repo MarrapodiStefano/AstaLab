@@ -1,7 +1,7 @@
-/* UI fixes 3.5.5 — funzioni di interfaccia indipendenti */
+/* UI fixes 3.5.6 — funzioni di interfaccia indipendenti */
 (function(){
   'use strict';
-  const VERSION='3.5.5';
+  const VERSION='3.5.6';
   let longPressTimer=null;
   let longPressFired=false;
   let pressTarget=null;
@@ -141,7 +141,6 @@
         btn.classList.add('loading');
         btn.setAttribute('aria-label','Aggiornamento in corso');
       }
-      /* Il controllo del Service Worker è secondario: non deve ritardare il reload. */
       try{
         if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations){
           navigator.serviceWorker.getRegistrations().then(function(regs){
@@ -149,7 +148,6 @@
           }).catch(function(){});
         }
       }catch(e){}
-      /* Un solo breve intervallo consente al browser di dipingere lo spinner. */
       window.setTimeout(function(){window.location.reload();},350);
     };
   }
