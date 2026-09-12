@@ -1,4 +1,5 @@
-const CACHE = "asta-fantacalcio-v103";
+/* Service worker 3.5.32 */
+const CACHE = "asta-fantacalcio-v104";
 
 const ASSETS = [
     "./",
