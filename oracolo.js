@@ -82,11 +82,17 @@ function stats(id){
   }catch(e){return {}}
 }
 function candidatePool(s,r,used,priority){
-  const sold=soldMap(s),objectives=Array.isArray(s?.objectives)?s.objectives:[];
+  const sold=soldMap(s),wanted=priority||'base';
+  if(typeof window.brainSlotPlayers==='function'){
+    try{
+      return window.brainSlotPlayers(r,wanted).filter(p=>!sold.has(String(p.id))&&!used.has(String(p.id)));
+    }catch(e){}
+  }
+  const objectives=Array.isArray(s?.objectives)?s.objectives:[];
   return players().filter(p=>{
     if(p.role!==r||sold.has(String(p.id))||used.has(String(p.id)))return false;
     if(!objectives.includes(p.id))return false;
-    return objectivePriorityFor(s,p.id)===(priority||'base');
+    return objectivePriorityFor(s,p.id)===wanted;
   })
 }
 function score(p,s,r,maxBudget,priority){
