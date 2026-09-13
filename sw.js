@@ -1,6 +1,6 @@
 const CACHE = "asta-fantacalcio-v136";
 
-const ASSETS = ["./","./index.html","./app.js","./campetti.js","./ui-fixes.js","./oracolo.js","./brain-picker-fix.js","./players.js","./listone-version.json","./manifest.json","./icon.svg","./assets/campetto.JPG"];
+const ASSETS = ["./","./index.html","./app.js","./campetti.js","./ui-fixes.js","./oracolo.js","./brain-picker-fix.js","./players.js","./listone-version.json","./manifest.json","./icon.svg","./assets/campetti.JPG"];
 
 self.addEventListener("install", event => { event.waitUntil(self.skipWaiting()); });
 self.addEventListener("activate", event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith("asta-fantacalcio-") && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())); });
@@ -17,8 +17,8 @@ self.addEventListener("fetch", event => {
                 if(!type.includes("text/html")) return response;
                 const html=await response.text();
                 let injected=html;
-                if(!injected.includes("brain-picker-fix.js")) injected=injected.replace(/<\\/body>/i,'<script src="./brain-picker-fix.js?v=3.5.68" data-brain-picker-368></script>\n</body>');
-                if(!injected.includes("ui-fixes.js")) injected=injected.replace(/<\\/body>/i,'<script src="./ui-fixes.js?v=3.5.68" data-ui-fixes-368></script>\n</body>');
+                if(!injected.includes("brain-picker-fix.js")) injected=injected.replace(/<\/body>/i,'<script src="./brain-picker-fix.js?v=3.5.68" data-brain-picker-368></script>\n</body>');
+                if(!injected.includes("ui-fixes.js")) injected=injected.replace(/<\/body>/i,'<script src="./ui-fixes.js?v=3.5.68" data-ui-fixes-368></script>\n</body>');
                 const headers=new Headers(response.headers);
                 headers.set("content-type","text/html; charset=utf-8");
                 return new Response(injected,{status:response.status,statusText:response.statusText,headers});
