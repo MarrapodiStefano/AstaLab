@@ -1,4 +1,4 @@
-const CACHE = "asta-fantacalcio-v140";
+const CACHE = "asta-fantacalcio-v141";
 
 const ASSETS = ["./","./index.html","./app.js","./campetti.js","./ui-fixes.js","./oracolo.js","./brain-picker-fix.js","./brain-target-price-fix.js","./players.js","./listone-version.json","./manifest.json","./icon.svg","./assets/campetto.JPG"];
 
@@ -17,7 +17,7 @@ self.addEventListener("fetch", event => {
                 const html=await response.text();
                 let injected=html;
                 if(!injected.includes("brain-picker-fix.js")) injected=injected.replace(/<\/body>/i,'<script src="./brain-picker-fix.js?v=3.5.71" data-brain-picker-371></script>\n</body>');
-                if(!injected.includes("ui-fixes.js")) injected=injected.replace(/<\/body>/i,'<script src="./ui-fixes.js?v=3.5.69" data-ui-fixes-369></script>\n</body>');
+                if(!injected.includes("ui-fixes.js")) injected=injected.replace(/<\/body>/i,'<script src="./ui-fixes.js?v=3.5.73" data-ui-fixes-373></script>\n</body>');
                 if(!injected.includes("brain-target-price-fix.js")) injected=injected.replace(/<\/body>/i,'<script src="./brain-target-price-fix.js?v=3.5.72" data-brain-target-price-372></script>\n</body>');
                 const headers=new Headers(response.headers);
                 headers.set("content-type","text/html; charset=utf-8");
