@@ -1,4 +1,4 @@
-const CACHE = "asta-fantacalcio-v150";
+const CACHE = "asta-fantacalcio-v151";
 
 const ASSETS = ["./","./index.html","./app.js","./campetti.js","./ui-fixes.js","./oracolo.js","./brain-picker-fix.js","./brain-engine.js","./brain-oracolo-policy.js","./players.js","./listone-version.json","./manifest.json","./icon.svg","./assets/campetto.JPG"];
 
@@ -18,7 +18,7 @@ self.addEventListener("fetch", event => {
                 let injected=html;
                 if(!injected.includes("brain-picker-fix.js")) injected=injected.replace(/<\/body>/i,'<script src="./brain-picker-fix.js?v=3.5.71" data-brain-picker-371></script>\n</body>');
                 if(!injected.includes("ui-fixes.js")) injected=injected.replace(/<\/body>/i,'<script src="./ui-fixes.js?v=3.5.81" data-ui-fixes-381></script>\n</body>');
-                if(!injected.includes("brain-engine.js")) injected=injected.replace(/<\/body>/i,'<script src="./brain-engine.js?v=3.5.81" data-brain-engine-381></script>\n</body>');
+                if(!injected.includes("brain-engine.js")) injected=injected.replace(/<\/body>/i,'<script src="./brain-engine.js?v=3.5.82" data-brain-engine-382></script>\n</body>');
                 if(!injected.includes("brain-oracolo-policy.js")) injected=injected.replace(/<\/body>/i,'<script src="./brain-oracolo-policy.js?v=3.5.81" data-brain-oracolo-policy-381></script>\n</body>');
                 if(!injected.includes("oracolo.js")) injected=injected.replace(/<\/body>/i,'<script src="./oracolo.js?v=3.5.74" data-oracolo></script>\n</body>');
                 const headers=new Headers(response.headers);
