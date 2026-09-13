@@ -1,45 +1,18 @@
-/* Brain target price fix 3.5.71 — prezzo target dalla voce Crediti */
+/* Brain target price + budget rebalance 3.5.72 */
 (function(){
 'use strict';
-const VERSION='3.5.71';
-function state(){try{return JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}
-function sync(){
- const s=state();
- if(!s||!Array.isArray(s.brainStrategies)||typeof window.allPlayers!=='function')return;
- const st=s.brainStrategies.find(x=>Number(x.id)===Number(s.activeBrainStrategyId));
- if(!st)return;
- const my=s.teams?.find(t=>Number(t.id)===Number(s.myTeamId))||s.teams?.[0];
- const owned=new Set((my?.players||[]).map(p=>String(p.id)));
- ['P','D','C','A'].forEach(function(role){
-  const row=[...document.querySelectorAll('#brainContent .brain-role-row')].find(x=>x.classList.contains('role-'+role));
-  if(!row)return;
-  const roleBudget=(Number(s.initialCredits)||0)*(Math.max(0,Number(st.allocation?.[role])||0))/100;
-  row.querySelectorAll('.brain-slot').forEach(function(slot){
-   const p=slot.querySelector('.brain-slot-player');
-   if(!p)return;
-   const name=String(p.textContent||'').trim();
-   if(!name||name==='Scegli giocatore')return;
-   const player=window.allPlayers().find(x=>String(x.name||'').trim()===name);
-   if(!player||owned.has(String(player.id)))return;
-   const credits=Number(player.credits);
-   if(!Number.isFinite(credits))return;
-   const budget=slot.querySelector('.brain-slot-budget, .brain-slot-budget-input');
-   const pct=slot.querySelector('.brain-slot-percent input');
-   const value=String(Math.round(credits));
-   const percent=roleBudget>0?String(Math.round(credits/roleBudget*100)):'0';
-   if(budget){if('value' in budget)budget.value=value;if(budget.textContent!==value)budget.textContent=value}
-   if(pct&&String(pct.value)!==percent)pct.value=percent;
-  });
- });
- const v=document.querySelector('.app-version');if(v)v.textContent='V. '+VERSION;
-}
-function hook(){
- if(typeof window.renderBrain!=='function'||window.renderBrain.__brain371)return;
- const old=window.renderBrain;
- const wrapped=function(){const out=old.apply(this,arguments);setTimeout(sync,0);return out};
- wrapped.__brain371=true;window.renderBrain=wrapped;
-}
-function boot(){setTimeout(sync,0);setTimeout(sync,150);let tries=0;const id=setInterval(function(){hook();sync();if(++tries>40)clearInterval(id)},100)}
+const VERSION='3.5.72', ROLES=['P','D','C','A'];
+let busy=false;
+function read(){try{return JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}
+function save(s){localStorage.setItem('AF_CURRENT',JSON.stringify(s));try{const db=JSON.parse(localStorage.getItem('AF_DB')||'[]'),i=db.findIndex(x=>Number(x.id)===Number(s.id));if(i>=0){db[i]=s;localStorage.setItem('AF_DB',JSON.stringify(db))}}catch(e){}}
+function mine(s){return(s?.teams||[]).find(t=>Number(t.id)===Number(s.myTeamId))||(s?.teams||[])[0]||null}
+function players(){return typeof window.allPlayers==='function'?window.allPlayers():[]}
+function base(st){const b=st.baseAllocation&&typeof st.baseAllocation==='object'?st.baseAllocation:(st.allocation||{});st.baseAllocation=st.baseAllocation&&typeof st.baseAllocation==='object'?st.baseAllocation:{...b};ROLES.forEach(r=>st.baseAllocation[r]=Math.max(0,Number(st.baseAllocation[r])||0));return st.baseAllocation}
+function roleTargets(s,st,r){const f=st.slotFrozen?.[r]||[],t=st.slotTargets?.[r]||[],owned=new Set((mine(s)?.players||[]).filter(p=>String(p.role||'').toUpperCase()===r).map(p=>String(p.id))),seen=new Set(),out=[];for(let i=0;i<t.length;i++){if(f[i]){out.push(Math.max(0,Number(f[i].price)||0));continue}const id=t[i]?.playerId;if(id==null||seen.has(String(id))||owned.has(String(id)))continue;seen.add(String(id));const p=players().find(x=>String(x.id)===String(id));const c=Number(p?.credits);if(Number.isFinite(c)&&c>0)out.push(Math.round(c))}return out}
+function rebalance(s,st){const total=Number(s.initialCredits)||1200,b=base(st),a={};ROLES.forEach(r=>a[r]=b[r]);const req={};ROLES.forEach(r=>req[r]=roleTargets(s,st,r).reduce((x,y)=>x+y,0));const unit=total/100;for(let guard=0;guard<100;guard++){let needRole=null,need=0;ROLES.forEach(r=>{const d=req[r]-total*a[r]/100;if(d>need){need=d;needRole=r}});if(!needRole)break;let donor=null,slack=0;ROLES.forEach(r=>{if(r===needRole)return;const x=total*a[r]/100-req[r];if(x>=unit-0.001&&x>slack){slack=x;donor=r}});if(!donor)break;const move=Math.min(Math.ceil(need/unit),Math.floor(slack/unit));if(move<1)break;a[needRole]+=move;a[donor]-=move}const changed=ROLES.some(r=>Number(st.autoAllocation?.[r])!==Number(a[r])||Number(st.allocation?.[r])!==Number(a[r]));st.autoAllocation=a;st.allocation={...a};return changed}
+function sync(){if(busy)return;const s=read();if(!s?.brainStrategies?.length)return;busy=true;let changed=false;try{s.brainStrategies.forEach(st=>{if(rebalance(s,st))changed=true;ROLES.forEach(r=>{const f=st.slotFrozen?.[r]||[],t=st.slotTargets?.[r]||[],manual=st.slotBudgetManual?.[r]||[];st.slotBudgets=st.slotBudgets&&typeof st.slotBudgets==='object'?st.slotBudgets:{};st.slotBudgets[r]=Array.isArray(st.slotBudgets[r])?st.slotBudgets[r]:[];for(let i=0;i<t.length;i++){if(f[i]){st.slotBudgets[r][i]=Math.round(Number(f[i].price)||0);continue}if(manual[i])continue;const id=t[i]?.playerId;if(id==null)continue;const p=players().find(x=>String(x.id)===String(id));const c=Number(p?.credits);if(Number.isFinite(c)&&c>0)st.slotBudgets[r][i]=Math.round(c)}}})});if(changed)save(s)}finally{busy=false}}
+function patch(){const s=read(),st=s?.brainStrategies?.find(x=>Number(x.id)===Number(s.activeBrainStrategyId));if(!s||!st)return;const a=st.autoAllocation||st.allocation||base(st),total=Number(s.initialCredits)||1200;document.querySelectorAll('#brainContent .brain-role-row').forEach(row=>{const m=row.className.match(/\brole-([PDCA])\b/);if(!m)return;const r=m[1],plan=Math.round(total*(Number(a[r])||0)/100);const slots=[...row.querySelectorAll('.brain-slot')],f=st.slotFrozen?.[r]||[],t=st.slotTargets?.[r]||[];slots.forEach((slot,i)=>{const fr=f[i],target=t[i],p=slot.querySelector('.brain-slot-percent input'),b=slot.querySelector('.brain-slot-budget, .brain-slot-budget-input');if(fr){if(p)p.value=String(plan>0?Math.round(Number(fr.price||0)/plan*100):0);if(b){if('value'in b)b.value=String(Math.round(Number(fr.price)||0));b.textContent=String(Math.round(Number(fr.price)||0))}return}if(target?.playerId!=null){const pl=players().find(x=>String(x.id)===String(target.playerId)),c=Number(pl?.credits);if(Number.isFinite(c)&&c>0){if(b){if('value'in b)b.value=String(Math.round(c));b.textContent=String(Math.round(c))}if(p)p.value=String(plan>0?Math.round(c/plan*100):0)}}})});const v=document.querySelector('.app-version');if(v)v.textContent='V. '+VERSION}
+function boot(){sync();patch();setTimeout(function(){sync();patch();if(typeof window.renderBrain==='function'&&!window.renderBrain.__brainBudget72){const old=window.renderBrain;window.renderBrain=function(){const out=old.apply(this,arguments);setTimeout(function(){sync();patch()},0);return out};window.renderBrain.__brainBudget72=true}},120);setInterval(function(){sync();patch()},1000)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.BrainTargetPriceFix={version:VERSION,sync};
 })();
