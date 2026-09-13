@@ -1,6 +1,6 @@
-const CACHE = "asta-fantacalcio-v148";
+const CACHE = "asta-fantacalcio-v149";
 
-const ASSETS = ["./","./index.html","./app.js","./campetti.js","./ui-fixes.js","./oracolo.js","./brain-picker-fix.js","./brain-target-price-fix.js","./brain-strategy-normalizer.js","./brain-credit-sync.js","./players.js","./listone-version.json","./manifest.json","./icon.svg","./assets/campetto.JPG"];
+const ASSETS = ["./","./index.html","./app.js","./campetti.js","./ui-fixes.js","./oracolo.js","./brain-picker-fix.js","./brain-engine.js","./brain-oracolo-policy.js","./players.js","./listone-version.json","./manifest.json","./icon.svg","./assets/campetto.JPG"];
 
 self.addEventListener("install", event => { event.waitUntil(self.skipWaiting()); });
 self.addEventListener("activate", event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith("asta-fantacalcio-") && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())); });
@@ -18,9 +18,9 @@ self.addEventListener("fetch", event => {
                 let injected=html;
                 if(!injected.includes("brain-picker-fix.js")) injected=injected.replace(/<\/body>/i,'<script src="./brain-picker-fix.js?v=3.5.71" data-brain-picker-371></script>\n</body>');
                 if(!injected.includes("ui-fixes.js")) injected=injected.replace(/<\/body>/i,'<script src="./ui-fixes.js?v=3.5.79" data-ui-fixes-379></script>\n</body>');
-                if(!injected.includes("brain-target-price-fix.js")) injected=injected.replace(/<\/body>/i,'<script src="./brain-target-price-fix.js?v=3.5.72" data-brain-target-price-372></script>\n</body>');
-                if(!injected.includes("brain-strategy-normalizer.js")) injected=injected.replace(/<\/body>/i,'<script src="./brain-strategy-normalizer.js?v=3.5.78" data-brain-normalizer-378></script>\n</body>');
-                if(!injected.includes("brain-credit-sync.js")) injected=injected.replace(/<\/body>/i,'<script src="./brain-credit-sync.js?v=3.5.80" data-brain-credit-sync-380></script>\n</body>');
+                if(!injected.includes("brain-engine.js")) injected=injected.replace(/<\/body>/i,'<script src="./brain-engine.js?v=3.5.81" data-brain-engine-381></script>\n</body>');
+                if(!injected.includes("brain-oracolo-policy.js")) injected=injected.replace(/<\/body>/i,'<script src="./brain-oracolo-policy.js?v=3.5.81" data-brain-oracolo-policy-381></script>\n</body>');
+                if(!injected.includes("oracolo.js")) injected=injected.replace(/<\/body>/i,'<script src="./oracolo.js?v=3.5.74" data-oracolo></script>\n</body>');
                 const headers=new Headers(response.headers);
                 headers.set("content-type","text/html; charset=utf-8");
                 return new Response(injected,{status:response.status,statusText:response.statusText,headers});
