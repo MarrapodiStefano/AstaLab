@@ -1,7 +1,7 @@
-/* Brain target price fix 3.5.70 — prezzo target dalla voce Crediti */
+/* Brain target price fix 3.5.71 — prezzo target dalla voce Crediti */
 (function(){
 'use strict';
-const VERSION='3.5.70';
+const VERSION='3.5.71';
 function state(){try{return JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}
 function sync(){
  const s=state();
@@ -27,17 +27,17 @@ function sync(){
    const pct=slot.querySelector('.brain-slot-percent input');
    const value=String(Math.round(credits));
    const percent=roleBudget>0?String(Math.round(credits/roleBudget*100)):'0';
-   if(budget){if(String(budget.value)!==value)budget.value=value;if(budget.textContent!==value)budget.textContent=value}
+   if(budget){if('value' in budget)budget.value=value;if(budget.textContent!==value)budget.textContent=value}
    if(pct&&String(pct.value)!==percent)pct.value=percent;
   });
  });
  const v=document.querySelector('.app-version');if(v)v.textContent='V. '+VERSION;
 }
 function hook(){
- if(typeof window.renderBrain!=='function'||window.renderBrain.__brain370)return;
+ if(typeof window.renderBrain!=='function'||window.renderBrain.__brain371)return;
  const old=window.renderBrain;
  const wrapped=function(){const out=old.apply(this,arguments);setTimeout(sync,0);return out};
- wrapped.__brain370=true;window.renderBrain=wrapped;
+ wrapped.__brain371=true;window.renderBrain=wrapped;
 }
 function boot(){setTimeout(sync,0);setTimeout(sync,150);let tries=0;const id=setInterval(function(){hook();sync();if(++tries>40)clearInterval(id)},100)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
