@@ -15,12 +15,7 @@ function initCampettiZoom(){const area=document.getElementById('campettiImageSta
 function campettiBoot(){renderCampetti();initCampettiZoom()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',campettiBoot,{once:true});else campettiBoot();
 
-/* =========================================================
-   ASTALAB BOOTSTRAP — punto di ingresso indipendente dal vecchio SW
-   campetti.js è caricato direttamente da index.html, quindi questo
-   bootstrap può aggiornare il Service Worker anche quando la PWA sta
-   ancora usando un worker precedente.
-========================================================= */
+/* ASTALAB PWA BOOTSTRAP — campetti.js è caricato direttamente da index.html. */
 (function astaPwaBootstrap(){
   'use strict';
   if(!('serviceWorker' in navigator))return;
@@ -35,45 +30,23 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   navigator.serviceWorker.addEventListener('controllerchange',reload);
   navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'})
     .then(function(reg){
-      return reg.update().catch(function(){})
-        .then(function(){
-          const w=reg.waiting||reg.installing;
-          if(!w)return;
-          if(w.state==='installed'){
-            try{w.postMessage({type:'SKIP_WAITING'})}catch(e){}
-            return;
-          }
-          return new Promise(function(resolve){
-            let done=false;
-            function finish(){if(done)return;done=true;w.removeEventListener('statechange',onState);resolve()}
-            function onState(){if(w.state==='installed'||w.state==='redundant')finish()}
-            w.addEventListener('statechange',onState);
-            setTimeout(finish,4000);
-          }).then(function(){
-            if(reg.waiting){try{reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(e){}}
-          });
-        });
-    })
-    .catch(function(e){console.warn('AstaLab PWA bootstrap:',e)});
-})();
-
-/* Caricamento canonico dei moduli Brain: una sola catena, nessun modulo legacy. */
-(function loadAstaModules(){
-  function load(src,attr,next){
-    if(document.querySelector('script['+attr+']')){if(next)next();return}
-    const s=document.createElement('script');s.src=src;s.setAttribute(attr,'1');s.async=false;s.onload=function(){if(next)next()};document.body.appendChild(s)
-  }
-  load('./brain-picker-fix.js?v=3.5.103','data-brain-picker-fix',function(){
-    load('./ui-fixes.js?v=3.5.103','data-ui-fixes',function(){
-      load('./brain-engine.js?v=3.5.103','data-brain-engine',function(){
-        load('./brain-card-authority.js?v=3.5.103','data-brain-card-authority',function(){
-          load('./brain-purchase-lock.js?v=3.5.103','data-brain-purchase-lock',function(){
-            load('./brain-oracolo-policy.js?v=3.5.103','data-brain-oracolo-policy',function(){
-              load('./oracolo.js?v=3.5.103','data-oracolo');
-            });
-          });
+      return reg.update().catch(function(){}).then(function(){
+        const w=reg.waiting||reg.installing;
+        if(!w)return;
+        if(w.state==='installed'){
+          try{w.postMessage({type:'SKIP_WAITING'})}catch(e){}
+          return;
+        }
+        return new Promise(function(resolve){
+          let done=false;
+          function finish(){if(done)return;done=true;w.removeEventListener('statechange',onState);resolve()}
+          function onState(){if(w.state==='installed'||w.state==='redundant')finish()}
+          w.addEventListener('statechange',onState);
+          setTimeout(finish,4000);
+        }).then(function(){
+          if(reg.waiting){try{reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(e){}}
         });
       });
-    });
-  });
+    })
+    .catch(function(e){console.warn('AstaLab PWA bootstrap:',e)});
 })();
