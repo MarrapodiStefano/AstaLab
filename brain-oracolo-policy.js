@@ -1,7 +1,7 @@
-/* Brain Oracolo policy 3.5.103 — gerarchia 🔥 > ⭐️ > 👍 > 🎲 */
+/* Brain Oracolo policy 3.5.81 — gerarchia 🔥 > ⭐️ > 👍 > 🎲 */
 (function(){
 'use strict';
-const VERSION='3.5.103';
+const VERSION='3.5.81';
 let armed=false;
 function arm(){
   if(armed)return true;
@@ -15,8 +15,7 @@ function arm(){
   armed=true;
   return true;
 }
-function bootBrain(){if(arm())return;setTimeout(bootBrain,100)}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootBrain,{once:true});else bootBrain();
+function boot(){if(arm())return;setTimeout(boot,100)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.BrainOracoloPolicy={version:VERSION};
-const v=document.querySelector('.app-version');if(v)v.textContent='V. '+VERSION;
 })();
