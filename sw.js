@@ -1,5 +1,5 @@
-const CACHE = "asta-fantacalcio-v169";
-const ASSETS = ["./","./index.html","./app.js","./campetti.js","./ui-fixes.js","./oracolo.js","./brain-picker-fix.js","./brain-engine.js","./brain-card-authority.js","./brain-oracolo-policy.js","./players.js","./listone-version.json","./manifest.json","./icon.svg","./assets/campetto.JPG"];
+const CACHE = "asta-fantacalcio-v170";
+const ASSETS = ["./","./index.html","./app.js","./campetti.js","./ui-fixes.js","./oracolo.js","./brain-picker-fix.js","./brain-engine.js","./brain-card-authority.js","./brain-oracolo-policy.js","./brain-final-fix.js","./players.js","./listone-version.json","./manifest.json","./icon.svg","./assets/campetto.JPG"];
 self.addEventListener("install", event => { event.waitUntil(self.skipWaiting()); });
 self.addEventListener("activate", event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith("asta-fantacalcio-") && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", event => {
@@ -16,6 +16,7 @@ self.addEventListener("fetch", event => {
    if(!injected.includes("brain-card-authority.js"))injected=injected.replace(/<\/body>/i,'<script src="./brain-card-authority.js?v=3.5.99"></script>\n</body>');
    if(!injected.includes("brain-oracolo-policy.js"))injected=injected.replace(/<\/body>/i,'<script src="./brain-oracolo-policy.js?v=3.5.81"></script>\n</body>');
    if(!injected.includes("oracolo.js"))injected=injected.replace(/<\/body>/i,'<script src="./oracolo.js?v=3.5.74"></script>\n</body>');
+   if(!injected.includes("brain-final-fix.js"))injected=injected.replace(/<\/body>/i,'<script src="./brain-final-fix.js?v=3.5.100"></script>\n</body>');
    const headers=new Headers(response.headers);headers.set("content-type","text/html; charset=utf-8");
    return new Response(injected,{status:response.status,statusText:response.statusText,headers});
   }).catch(()=>caches.match(request).then(c=>c||caches.match("./index.html"))));
