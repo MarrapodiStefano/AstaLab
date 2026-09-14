@@ -1,7 +1,7 @@
-/* UI fixes 3.5.98 — aggiornamento PWA stabile senza race tra SW e reload */
+/* UI fixes 3.5.99 — aggiornamento PWA stabile senza race tra SW e reload */
 (function(){
 'use strict';
-const VERSION='3.5.98';
+const VERSION='3.5.99';
 let timer=null,target=null,fired=false;
 function state(){try{return(typeof current!=='undefined'&&current)||JSON.parse(localStorage.getItem('AF_CURRENT')||'null')}catch(e){return null}}
 function version(){const v=document.querySelector('.app-version');if(v)v.textContent='V. '+VERSION}
